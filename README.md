@@ -1,4 +1,4 @@
-# Smart Chatbot UI
+# Smart Chatbot UI - Abstracta
 
 This repo is forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui).
 
