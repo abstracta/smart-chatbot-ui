@@ -8,6 +8,7 @@ import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 
 export interface HomeInitialState {
+  appName: string;
   apiKey: string;
   chatModeKeys: ChatModeKey[];
   loading: boolean;
@@ -40,6 +41,7 @@ export interface HomeInitialState {
 }
 
 export const initialState: Partial<HomeInitialState> = {
+  appName: '',
   apiKey: '',
   loading: false,
   chatModeKeys: [],

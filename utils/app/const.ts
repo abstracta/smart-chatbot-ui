@@ -14,6 +14,8 @@ export const DEFAULT_MODEL_EMBEDDINGS: OpenAIModelID = (process.env.DEFAULT_MODE
     process.env.DEFAULT_MODEL_EMBEDDINGS as OpenAIModelID,
   ) && process.env.DEFAULT_MODEL_EMBEDDINGS as OpenAIModelID) || fallbackEmbeddingsModelID;
 
+export const APP_NAME = process.env.APP_NAME || 'Chatbot UI';
+
 export const OPENAI_API_HOST =
   process.env.OPENAI_API_HOST || 'https://api.openai.com';
 

@@ -1,6 +1,6 @@
 
 import { useTranslation } from 'next-i18next';
-import { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useContext, useMemo, useState } from 'react';
 import AdminLayout from '@/pages/admin/adminLayout';
 import { NextPageWithLayout } from '@/pages/_app.page';
 import { UserRole } from '@/types/user';
@@ -20,15 +20,16 @@ import Dropdown from '@/components/Buttons/Dropdown/';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { DropdownItem } from '@/components/Buttons/Dropdown/DropItem';
 import { downloadFile } from '@/utils/app/download';
+import { APP_NAME } from '@/utils/app/const';
 
 
 interface Props {
+  appName: string;
 }
 
-const Reports: NextPageWithLayout<Props> = ({
-}: Props) => {
+const Reports: NextPageWithLayout<typeof getServerSideProps> = ({
+}) => {
   const { t } = useTranslation('admin');
-
   const contextValue = useCreateReducer<ReportsInitialState>({
     initialState: {
       ...initialState,
@@ -161,9 +162,9 @@ const Reports: NextPageWithLayout<Props> = ({
   );
 };
 
-Reports.getLayout = function getLayout(page: ReactElement) {
+Reports.getLayout = function getLayout(page: ReactElement, { appName }: Props) {
   return (
-    <AdminLayout>
+    <AdminLayout pageName="Usage report" appName={appName}>
       {page}
     </AdminLayout>
   )
@@ -172,7 +173,7 @@ Reports.getLayout = function getLayout(page: ReactElement) {
 export default Reports;
 
 
-export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
+export const getServerSideProps: GetServerSideProps<Props> = async ({ locale, req, res }) => {
   const session = await getServerSession(req, res, authOptions)
   if (!session || session?.user?.role !== UserRole.ADMIN) {
     return {
@@ -184,6 +185,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   }
   return {
     props: {
+      appName: APP_NAME,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'sidebar',
@@ -194,5 +196,3 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
     },
   };
 };
-
-
