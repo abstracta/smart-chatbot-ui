@@ -7,7 +7,7 @@ export const getOpenAIApi = (deploymentId?: string): OpenAIApi => {
     let openaiConfig;
     if (OPENAI_API_TYPE == "azure") {
         openaiConfig = new Configuration({
-            basePath: new URL(OPENAI_API_HOST + "/openai/deployments/" + deploymentId).toString(),
+            basePath: OPENAI_API_HOST + "/openai" + (deploymentId ? `/deployments/${deploymentId}` : ""),
             baseOptions: {
                 headers: { 'api-key': apiKey },
                 params: {
