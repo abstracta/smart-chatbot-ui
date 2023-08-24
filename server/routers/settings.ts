@@ -6,13 +6,8 @@ import { procedure, router } from '../trpc';
 
 export const settings = router({
   get: procedure.query(async ({ ctx }) => {
-    try {
-      const userDb = await UserDb.fromUserHash(ctx.userHash);
-      return await userDb.getSettings();
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
+    const userDb = await UserDb.fromUserHash(ctx.userHash);
+    return await userDb.getSettings();
   }),
   settingsUpdate: procedure
     .input(SettingsSchema)

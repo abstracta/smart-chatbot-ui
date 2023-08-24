@@ -32,7 +32,8 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
-  promptSharingEnabled: boolean
+  promptSharingEnabled: boolean;
+  consumptionLimitEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
@@ -62,5 +63,6 @@ export const initialState: Partial<HomeInitialState> = {
   defaultModelId: undefined,
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
-  promptSharingEnabled: false
+  promptSharingEnabled: false,
+  consumptionLimitEnabled: false,
 };

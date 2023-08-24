@@ -1,12 +1,10 @@
 import { Conversation } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
-import { Prompt, PromptSchema } from '@/types/prompt';
+import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
-
 import { MONGODB_DB } from '../app/const';
-
 import { Collection, Db, MongoClient } from 'mongodb';
-import { User, UserRole } from '@/types/user';
+import { User } from '@/types/user';
 import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
 import { OpenAIModelID } from '@/types/openai';
 
@@ -204,14 +202,22 @@ export class UserDb {
       });
   }
 
-  async getLlmUsageBetweenDates(start: Date, end: Date): Promise<UserLlmUsage[]> {
-    return (await this._llmUsage.find({
-      userId: this._userId,
-      date: {
-        $gt: start,
-        $lt: end,
-      }
-    }).toArray());
+  async getLlmUsageUSD(start: Date, end: Date): Promise<number> {
+    const aggCursor = await this._llmUsage.aggregate()
+      .match({
+        date: {
+          $gte: start,
+          $lt: end,
+        }
+      })
+      .group({
+        _id: null,
+        totalUSD: {
+          $sum: "$totalPriceUSD",
+        },
+      })
+    const res: any = await aggCursor.next();
+    return res?.totalUSD || 0;
   }
 
   async addLlmUsage(llmApiUsage: NewUserLlmUsage) {
@@ -283,7 +289,7 @@ export class PublicPromptsDb {
       'prompt.id': id,
     });
   }
- 
+
 }
 
 export class UserInfoDb {
