@@ -38,9 +38,7 @@ const Home = ({
   const settingsQuery = trpc.settings.get.useQuery();
   const promptsQuery = trpc.prompts.list.useQuery();
   const foldersQuery = trpc.folders.list.useQuery();
-  const conversationsQuery = trpc.conversations.list.useQuery(undefined, {
-    enabled: false,
-  });
+  const conversationsQuery = trpc.conversations.list.useQuery();
   const publicPromptsQuery = trpc.publicPrompts.list.useQuery();
   const publicFoldersQuery = trpc.publicFolders.list.useQuery();
 
@@ -109,10 +107,6 @@ const Home = ({
   ]);
 
   // ON LOAD --------------------------------------------
-
-  useEffect(() => {
-    conversationsQuery.refetch();
-  }, [conversationsQuery]);
 
   useEffect(() => {
     if (settingsQuery.data) {
