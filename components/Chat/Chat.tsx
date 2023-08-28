@@ -59,7 +59,6 @@ export const Chat = memo(() => {
 
   const [conversations, conversationsAction] = useConversations();
 
-  const [currentMessage, setCurrentMessage] = useState<Message>();
   const [autoScrollEnabled, setAutoScrollEnabled] = useState<boolean>(true);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
@@ -170,10 +169,6 @@ export const Chat = memo(() => {
   const throttledScrollDown = throttle(scrollDown, 250);
   useEffect(() => {
     throttledScrollDown();
-    selectedConversation &&
-      setCurrentMessage(
-        selectedConversation.messages[selectedConversation.messages.length - 2],
-      );
   }, [selectedConversation, throttledScrollDown]);
 
   useEffect(() => {
@@ -338,13 +333,13 @@ export const Chat = memo(() => {
             <ChatInput
               textareaRef={textareaRef}
               onSend={(message, chatMode, plugins) => {
-                setCurrentMessage(message);
                 handleSend(message, 0, chatMode, plugins);
               }}
               onRegenerate={(chatMode, plugins) => {
-                if (currentMessage) {
-                  handleSend(currentMessage, 2, chatMode, plugins);
-                }
+                const latestIndex = selectedConversation?.messages.findLastIndex(m => m.role == "user");
+                if (latestIndex != undefined)
+                  handleSend(selectedConversation!.messages[latestIndex], 
+                    selectedConversation!.messages.length - latestIndex, chatMode, plugins);
               }}
             />
           </>
