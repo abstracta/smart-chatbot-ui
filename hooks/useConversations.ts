@@ -82,12 +82,15 @@ export default function useConversations(): [
 
   const update = useCallback(
     async (conversation: Conversation) => {
-      const newConversations = conversations.map((f) => {
-        if (f.id === conversation.id) {
-          return conversation;
-        }
-        return f;
-      });
+      const newConversations = conversations.length == 0 ?
+        [conversation] :
+        conversations.map((f) => {
+          if (f.id === conversation.id) {
+            return conversation;
+          }
+          return f;
+        })
+      
       await conversationUpdate.mutateAsync(conversation);
       dispatch({ field: 'conversations', value: newConversations });
       if (selectedConversation?.id === conversation.id) {
