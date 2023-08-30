@@ -12,7 +12,7 @@ import { DEFAULT_SYSTEM_PROMPT, PROMPT_SHARING_ENABLED } from '@/utils/app/const
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
+import { OpenAIModelID, fallbackModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -24,14 +24,14 @@ import { v4 as uuidv4 } from 'uuid';
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
-  defaultModelId: OpenAIModelID;
+  systemDefaultModelId: OpenAIModelID;
   promptSharingEnabled: boolean
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
-  defaultModelId,
+  systemDefaultModelId,
   promptSharingEnabled
 }: Props) => {
   const { t } = useTranslation('chat');
@@ -54,7 +54,7 @@ const Home = ({
   });
 
   const {
-    state: { apiKey, settings, conversations, selectedConversation, prompts, models },
+    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId },
     dispatch,
   } = contextValue;
 
@@ -89,8 +89,9 @@ const Home = ({
   }, [dispatch, selectedConversation]);
 
   useEffect(() => {
-    defaultModelId &&
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
+    dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
+    dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+    
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -102,10 +103,11 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
+    settings
   ]);
 
   // ON LOAD --------------------------------------------
@@ -118,10 +120,10 @@ const Home = ({
     if (settingsQuery.data) {
       dispatch({
         field: 'settings',
-        value: settingsQuery.data,
+        value: settingsQuery.data
       });
     }
-  }, [dispatch, settingsQuery.data]);
+  }, [dispatch, settingsQuery.data, systemDefaultModelId]);
 
   useEffect(() => {
     if (promptsQuery.data) {
@@ -172,7 +174,7 @@ const Home = ({
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: models.find(m=>m.id == defaultModelId),
+            model: models.find(m => m.id == defaultModelId),
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: settings.defaultTemperature,
             folderId: null,
@@ -223,7 +225,7 @@ const Home = ({
       dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
     }
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
@@ -254,7 +256,7 @@ const Home = ({
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  const defaultModelId =
+  const systemDefaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
         process.env.DEFAULT_MODEL as OpenAIModelID,
@@ -274,7 +276,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
-      defaultModelId,
+      systemDefaultModelId,
       serverSidePluginKeysSet,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',

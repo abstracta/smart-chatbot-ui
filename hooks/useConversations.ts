@@ -6,7 +6,6 @@ import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
-import { OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -39,6 +38,18 @@ export default function useConversations(): [
     dispatch,
   } = useContext(HomeContext);
 
+  const buildNewConversation = (latestConversation?: Conversation): Conversation => {
+    return {
+      id: uuidv4(),
+      name: `${t('New Conversation')}`,
+      messages: [],
+      model: latestConversation?.model || models.find(m => m.id == defaultModelId)!,
+      prompt: t(DEFAULT_SYSTEM_PROMPT),
+      temperature: settings.defaultTemperature,
+      folderId: null,
+    };
+  }
+
   const updateAll = useCallback(
     async (updated: Conversation[]): Promise<Conversation[]> => {
       await conversationUpdateAll.mutateAsync(updated);
@@ -53,16 +64,7 @@ export default function useConversations(): [
       throw new Error('No default model');
     }
 
-    const lastConversation = conversations[conversations.length - 1];
-    const newConversation: Conversation = {
-      id: uuidv4(),
-      name: `${t('New Conversation')}`,
-      messages: [],
-      model: lastConversation?.model || models.find(m => m.id == defaultModelId),
-      prompt: t(DEFAULT_SYSTEM_PROMPT),
-      temperature: settings.defaultTemperature,
-      folderId: null,
-    };
+    const newConversation = buildNewConversation(conversations[0]);
 
     await conversationUpdate.mutateAsync(newConversation);
     const newState = [newConversation, ...conversations];
@@ -120,6 +122,10 @@ export default function useConversations(): [
         (c) => c.id !== conversation.id,
       );
       dispatch({ field: 'conversations', value: updatedConversations });
+      dispatch({
+        field: 'selectedConversation',
+        value: updatedConversations.length > 0 ? updatedConversations[0] : buildNewConversation(),
+      });
       return updatedConversations;
     },
     [conversationRemove, conversations, dispatch],
@@ -128,6 +134,10 @@ export default function useConversations(): [
   const clear = useCallback(async () => {
     await conversationRemoveAll.mutateAsync();
     dispatch({ field: 'conversations', value: [] });
+    dispatch({
+      field: 'selectedConversation',
+      value: buildNewConversation(),
+    });
     return [];
   }, [conversationRemoveAll, dispatch]);
 
