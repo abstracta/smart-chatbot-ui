@@ -208,7 +208,8 @@ export class UserDb {
         date: {
           $gte: start,
           $lt: end,
-        }
+        },
+        userId: this._userId,
       })
       .group({
         _id: null,
