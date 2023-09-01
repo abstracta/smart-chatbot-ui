@@ -86,8 +86,9 @@ export const Chat = memo(() => {
       }
       const conversation = selectedConversation;
       if (
-        conversation.prompt !== systemPrompt ||
-        conversation.temperature !== temperature
+        conversation.messages.length === 0 &&
+        (conversation.prompt !== systemPrompt ||
+        conversation.temperature !== temperature)
       ) {
         conversation.prompt = systemPrompt;
         conversation.temperature = temperature;
@@ -103,13 +104,6 @@ export const Chat = memo(() => {
       conversationsAction,
     ],
   );
-
-  const scrollToBottom = useCallback(() => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      textareaRef.current?.focus();
-    }
-  }, [autoScrollEnabled]);
 
   const handleScroll = () => {
     if (chatContainerRef.current) {
@@ -157,9 +151,9 @@ export const Chat = memo(() => {
   };
 
   useEffect(() => {
-    setSystemPrompt(selectedConversation?.prompt || defaultSystemPrompt);
+    setSystemPrompt(defaultSystemPrompt);
     setTemperature(settings.defaultTemperature);
-  }, [selectedConversation, settings.defaultTemperature, t]);
+  }, [selectedConversation, settings.defaultTemperature, defaultSystemPrompt]);
 
   const throttledScrollDown = throttle(scrollDown, 250);
   useEffect(() => {
