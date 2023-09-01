@@ -29,6 +29,7 @@ export interface HomeInitialState {
   searchTerm: string;
   systemDefaultModelId: OpenAIModelID;
   defaultModelId: OpenAIModelID | undefined;
+  defaultSystemPrompt: string;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
@@ -43,7 +44,8 @@ export const initialState: Partial<HomeInitialState> = {
     userId: '',
     theme: 'dark',
     defaultTemperature: 1.0,
-    defaultModelId: undefined
+    defaultModelId: undefined,
+    defaultSystemPrompt: '',
   },
   messageIsStreaming: false,
   modelError: null,
@@ -62,6 +64,7 @@ export const initialState: Partial<HomeInitialState> = {
   searchTerm: '',
   systemDefaultModelId: undefined,
   defaultModelId: undefined,
+  defaultSystemPrompt: '',
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   promptSharingEnabled: false

@@ -1,7 +1,6 @@
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
@@ -34,17 +33,17 @@ export default function useConversations(): [
   const conversationRemove = trpc.conversations.remove.useMutation();
   const conversationRemoveAll = trpc.conversations.removeAll.useMutation();
   const {
-    state: { defaultModelId, conversations, selectedConversation, settings, models },
+    state: { defaultModelId, conversations, selectedConversation, settings, models, defaultSystemPrompt },
     dispatch,
   } = useContext(HomeContext);
 
-  const buildNewConversation = (latestConversation?: Conversation): Conversation => {
+  const buildNewConversation = (): Conversation => {
     return {
       id: uuidv4(),
       name: `${t('New Conversation')}`,
       messages: [],
-      model: latestConversation?.model || models.find(m => m.id == defaultModelId)!,
-      prompt: t(DEFAULT_SYSTEM_PROMPT),
+      model: models.find(m => m.id == defaultModelId)!,
+      prompt: defaultSystemPrompt,
       temperature: settings.defaultTemperature,
       folderId: null,
     };
@@ -64,7 +63,7 @@ export default function useConversations(): [
       throw new Error('No default model');
     }
 
-    const newConversation = buildNewConversation(conversations[0]);
+    const newConversation = buildNewConversation();
 
     await conversationUpdate.mutateAsync(newConversation);
     const newState = [newConversation, ...conversations];

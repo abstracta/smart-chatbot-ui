@@ -14,6 +14,7 @@ import { Dialog } from '../Dialog/Dialog';
 import { OpenAIModelID } from '@/types/openai';
 import { Select } from '../Input/Select';
 import useSettings from '@/hooks/useSettings';
+import { SystemPrompt } from '../Home/SystemPrompt';
 
 interface Props {
   open: boolean;
@@ -94,6 +95,20 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           onChangeTemperature={(temperature) =>
             dispatch({ field: 'defaultTemperature', value: temperature })
           }
+        />
+      </div>
+
+      <div className="flex flex-col mb-2 ">
+        <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+          {t('Default system prompt')}
+        </div>
+
+        <SystemPrompt
+          systemPrompt={state.defaultSystemPrompt || ""}
+          prompts={[]}
+          publicPrompts={[]}
+          onChangePrompt={(prompt) => dispatch({ field: "defaultSystemPrompt", value: prompt })}
+          placeholder={t('Enter a prompt or leave empty to use system default') || ""}
         />
       </div>
 

@@ -54,7 +54,7 @@ const Home = ({
   });
 
   const {
-    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId },
+    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId, defaultSystemPrompt },
     dispatch,
   } = contextValue;
 
@@ -91,6 +91,8 @@ const Home = ({
   useEffect(() => {
     dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
     dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+
+    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
     
     serverSideApiKeyIsSet &&
       dispatch({
@@ -175,7 +177,7 @@ const Home = ({
             name: t('New Conversation'),
             messages: [],
             model: models.find(m => m.id == defaultModelId),
-            prompt: DEFAULT_SYSTEM_PROMPT,
+            prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
           },

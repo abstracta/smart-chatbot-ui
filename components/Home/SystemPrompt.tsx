@@ -9,28 +9,29 @@ import React, {
 
 import { useTranslation } from 'next-i18next';
 
-import { Conversation } from '@/types/chat';
 import { Prompt } from '@/types/prompt';
 
 import { Textarea } from '@/components/Input/Textarea';
 
-import { PromptList } from './PromptList';
-import { VariableModal } from './VariableModal';
+import { PromptList } from '../Chat/PromptList';
+import { VariableModal } from '../Chat/VariableModal';
 
 interface Props {
-  conversation: Conversation;
+  maxLength?: number;
   systemPrompt: string;
   prompts: Prompt[];
   publicPrompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
+  placeholder?: string;
 }
 
 export const SystemPrompt: FC<Props> = ({
-  conversation,
+  maxLength,
   systemPrompt,
   prompts,
   publicPrompts,
   onChangePrompt,
+  placeholder,
 }) => {
   const { t } = useTranslation('chat');
 
@@ -48,16 +49,16 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const maxLength = conversation.model.maxLength;
-
-    if (value.length > maxLength) {
-      alert(
-        t(
-          `Prompt limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
-          { maxLength, valueLength: value.length },
-        ),
-      );
-      return;
+    if (maxLength != undefined) {
+      if (value.length > maxLength) {
+        alert(
+          t(
+            `Prompt limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
+            { maxLength, valueLength: value.length },
+          ),
+        );
+        return;
+      }
     }
 
     setValue(value);
@@ -204,10 +205,7 @@ export const SystemPrompt: FC<Props> = ({
   }, []);
 
   return (
-    <div className="flex flex-col">
-      <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
-        {t('System Prompt')}
-      </label>
+    <>
       <Textarea
         textareaRef={textareaRef}
         className="w-full rounded-lg border border-neutral-200 bg-transparent px-4 py-3 text-neutral-900 dark:border-neutral-600 dark:text-neutral-100"
@@ -221,9 +219,7 @@ export const SystemPrompt: FC<Props> = ({
               : 'hidden'
           }`,
         }}
-        placeholder={
-          t(`Enter a prompt or type "/" to select a prompt...`) || ''
-        }
+        placeholder={placeholder || ''}
         value={systemPrompt}
         rows={3}
         onChange={handleChange}
@@ -251,6 +247,6 @@ export const SystemPrompt: FC<Props> = ({
           onClose={() => setIsModalVisible(false)}
         />
       )}
-    </div>
+    </>
   );
 };
