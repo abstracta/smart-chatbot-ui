@@ -177,9 +177,7 @@ const Home = ({
   }, [
     dispatch,
     conversationsQuery.data,
-    settings.defaultTemperature,
     t,
-    defaultModelId,
     models
   ]);
 
