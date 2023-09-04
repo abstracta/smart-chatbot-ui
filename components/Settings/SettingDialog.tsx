@@ -92,6 +92,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         </div>
 
         <TemperatureSlider
+          temperature={state.defaultTemperature}
           onChangeTemperature={(temperature) =>
             dispatch({ field: 'defaultTemperature', value: temperature })
           }

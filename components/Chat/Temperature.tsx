@@ -5,18 +5,17 @@ import { useTranslation } from 'next-i18next';
 import HomeContext from '@/pages/api/home/home.context';
 
 interface Props {
+  temperature: number;
   onChangeTemperature: (temperature: number) => void;
 }
 
-export const TemperatureSlider: FC<Props> = ({ onChangeTemperature }) => {
-  const {
-    state: { conversations, settings },
-  } = useContext(HomeContext);
-  const [temperature, setTemperature] = useState(settings.defaultTemperature);
+export const TemperatureSlider: FC<Props> = ({ 
+  temperature,
+  onChangeTemperature 
+}) => {
   const { t } = useTranslation('chat');
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseFloat(event.target.value);
-    setTemperature(newValue);
     onChangeTemperature(newValue);
   };
 

@@ -14,7 +14,6 @@ import useConversations from '@/hooks/useConversations';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useMesseageSender from '@/hooks/useMessageSender';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { throttle } from '@/utils/data/throttle';
 
 import { Plugin } from '@/types/agent';
@@ -276,6 +275,7 @@ export const Chat = memo(() => {
                         </label>
 
                         <TemperatureSlider
+                          temperature={temperature}
                           onChangeTemperature={(temperature) =>
                             setTemperature(temperature)
                           }
