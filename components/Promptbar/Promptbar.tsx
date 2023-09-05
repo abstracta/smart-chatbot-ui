@@ -18,6 +18,7 @@ import { PromptbarInitialState, initialState } from './Promptbar.state';
 import usePublicFolders from '@/hooks/usePublicFolders';
 import usePublicPrompts from '@/hooks/usePublicPrompts';
 import { FolderInterface } from '@/types/folder';
+import Fuse from 'fuse.js';
 
 const Promptbar = () => {
   const { t } = useTranslation('promptbar');
@@ -110,25 +111,24 @@ const Promptbar = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filter = (prompts: Prompt[]) => {
-        return prompts.filter((prompt) => {
-          const searchable =
-            prompt.name.toLowerCase() +
-            ' ' +
-            prompt.description.toLowerCase() +
-            ' ' +
-            prompt.content.toLowerCase();
-          return searchable.includes(searchTerm.toLowerCase());
-        })
-      }
+      const fusePrompts = new Fuse(prompts, {
+        keys: ["name", "description", "content"],
+        threshold: 0.5
+      })
+      const results = fusePrompts.search((searchTerm))
       promptDispatch({
         field: 'filteredPrompts',
-        value: filter(prompts),
+        value: results.map(r=>r.item),
       });
       if (promptSharingEnabled) {
+        const fusePublicPrompts = new Fuse(publicPrompts, {
+          keys: ["name", "description", "content"],
+          threshold: 0.5
+        })
+        const results = fusePublicPrompts.search((searchTerm))
         promptDispatch({
           field: 'filteredPublicPrompts',
-          value: filter(publicPrompts),
+          value: results.map(r=>r.item),
         });
       }
     } else {
