@@ -176,6 +176,7 @@ const Promptbar = () => {
         }
         folderComponent={<PromptFolders />}
         items={filteredPrompts}
+        showSearch={prompts.length > 0 || publicPrompts.length > 0}
         searchTerm={searchTerm}
         searchPlaceholder={t('Search prompts...')}
         noItemsPlaceholder={t('No prompts.')}

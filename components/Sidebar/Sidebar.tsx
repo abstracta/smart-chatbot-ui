@@ -20,6 +20,7 @@ interface Props<T> {
   searchTerm: string;
   searchPlaceholder: string;
   noItemsPlaceholder: string;
+  showSearch:boolean;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen: () => void;
   handleCreateItem: () => void;
@@ -38,6 +39,7 @@ const Sidebar = <T,>({
   searchTerm,
   searchPlaceholder,
   noItemsPlaceholder,
+  showSearch,
   handleSearchTerm,
   toggleOpen,
   handleCreateItem,
@@ -82,7 +84,7 @@ const Sidebar = <T,>({
             <IconFolderPlus size={16} />
           </button>
         </div>
-        {(items?.length > 0 || searchTerm) && (
+        {showSearch && (
           <Search
             placeholder={searchPlaceholder || ''}
             searchTerm={searchTerm}
