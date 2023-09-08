@@ -29,6 +29,7 @@ export const ChatbarSettings = () => {
       serverSideApiKeyIsSet,
       serverSidePluginKeysSet,
       conversations,
+      folders
     },
   } = useContext(HomeContext);
 
@@ -41,7 +42,7 @@ export const ChatbarSettings = () => {
 
   return (
     <div className="flex flex-col items-center space-y-1 border-t border-white/20 pt-1 text-sm">
-      {conversations.length > 0 ? (
+      {conversations.length > 0 || folders.find(f => f.type === "chat") ? (
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
 
