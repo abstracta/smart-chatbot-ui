@@ -6,11 +6,11 @@ import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
-import { OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
 import { v4 as uuidv4 } from 'uuid';
+import { updateOrInsertItem } from '@/utils/app/arrays';
 
 type ConversationsAction = {
   update: (newState: Conversation) => Promise<Conversation>;
@@ -19,7 +19,7 @@ type ConversationsAction = {
     kv: KeyValuePair,
   ) => Promise<Conversation>;
   updateAll: (newState: Conversation[]) => Promise<Conversation[]>;
-  add: () => Promise<Conversation[]>;
+  add: () => Promise<Conversation>;
   clear: () => Promise<Conversation[]>;
   remove: (conversation: Conversation) => Promise<Conversation[]>;
 };
@@ -29,11 +29,109 @@ export default function useConversations(): [
   ConversationsAction,
 ] {
   const { t } = useTranslation('chat');
-  const { t: tErr } = useTranslation('error');
-  const conversationUpdateAll = trpc.conversations.updateAll.useMutation();
-  const conversationUpdate = trpc.conversations.update.useMutation();
-  const conversationRemove = trpc.conversations.remove.useMutation();
-  const conversationRemoveAll = trpc.conversations.removeAll.useMutation();
+  const trpcContext = trpc.useContext();
+
+  const conversationUpdateAll = trpc.conversations.updateAll.useMutation({
+    onMutate: async (updatedConversations: Conversation[]) => {
+      const listQuery = trpcContext.conversations.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined, updatedConversations);
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.conversations.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.conversations.list.invalidate();
+    },
+  });
+
+  const conversationAdd = trpc.conversations.update.useMutation({
+    onMutate: async (conversation: Conversation) => {
+      const listQuery = trpcContext.conversations.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined,
+        (oldQueryData: Conversation[] | undefined) =>
+          [conversation, ...(oldQueryData || [])]
+      );
+      const previousConversation = selectedConversation;
+      dispatch({ field: 'selectedConversation', value: conversation });
+      return { previousData, previousConversation };
+    },
+    onError: (err, input, context) => {
+      trpcContext.conversations.list.setData(undefined, context?.previousData);
+      dispatch({ field: 'selectedConversation', value: context?.previousConversation });
+    },
+    onSettled: () => {
+      trpcContext.conversations.list.invalidate();
+    },
+  });
+
+  const conversationUpdate = trpc.conversations.update.useMutation({
+    onMutate: async (conversation: Conversation) => {
+      const listQuery = trpcContext.conversations.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined,
+        (oldQueryData: Conversation[] | undefined) =>
+          updateOrInsertItem(oldQueryData, conversation, (a, b) => a.id == b.id, false)
+      );
+      let previousConversation;
+      if (selectedConversation?.id === conversation.id) {
+        previousConversation = selectedConversation;
+        dispatch({ field: 'selectedConversation', value: conversation });
+      }
+      return { previousData, previousConversation };
+    },
+    onError: (err, input, context) => {
+      trpcContext.conversations.list.setData(undefined, context?.previousData);
+      context?.previousConversation &&
+        dispatch({ field: 'selectedConversation', value: context?.previousConversation });
+    },
+    onSettled: () => {
+      trpcContext.conversations.list.invalidate();
+    },
+  });
+
+  const conversationRemove = trpc.conversations.remove.useMutation({
+    onMutate: async ({ id }) => {
+      const listQuery = trpcContext.conversations.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined,
+        (oldQueryData: Conversation[] | undefined) =>
+          oldQueryData && oldQueryData.filter(
+            (c) => c.id !== id,
+          )
+      );
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.conversations.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.conversations.list.invalidate();
+    },
+  });
+
+  const conversationRemoveAll = trpc.conversations.removeAll.useMutation({
+    onMutate: async () => {
+      const listQuery = trpcContext.conversations.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined, []);
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.conversations.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.conversations.list.invalidate();
+    },
+  });
+
   const {
     state: { defaultModelId, conversations, selectedConversation, settings, models },
     dispatch,
@@ -42,7 +140,6 @@ export default function useConversations(): [
   const updateAll = useCallback(
     async (updated: Conversation[]): Promise<Conversation[]> => {
       await conversationUpdateAll.mutateAsync(updated);
-      dispatch({ field: 'conversations', value: updated });
       return updated;
     },
     [conversationUpdateAll, dispatch],
@@ -64,15 +161,10 @@ export default function useConversations(): [
       folderId: null,
     };
 
-    await conversationUpdate.mutateAsync(newConversation);
-    const newState = [newConversation, ...conversations];
-    dispatch({ field: 'conversations', value: newState });
-
-    dispatch({ field: 'selectedConversation', value: newConversation });
-    dispatch({ field: 'loading', value: false });
-    return newState;
+    await conversationAdd.mutateAsync(newConversation);
+    return newConversation;
   }, [
-    conversationUpdate,
+    conversationAdd,
     conversations,
     defaultModelId,
     dispatch,
@@ -82,23 +174,10 @@ export default function useConversations(): [
 
   const update = useCallback(
     async (conversation: Conversation) => {
-      const newConversations = conversations.length == 0 ?
-        [conversation] :
-        conversations.map((f) => {
-          if (f.id === conversation.id) {
-            return conversation;
-          }
-          return f;
-        })
-      
       await conversationUpdate.mutateAsync(conversation);
-      dispatch({ field: 'conversations', value: newConversations });
-      if (selectedConversation?.id === conversation.id) {
-        dispatch({ field: 'selectedConversation', value: conversation });
-      }
       return conversation;
     },
-    [conversationUpdate, conversations, dispatch, selectedConversation?.id],
+    [conversationUpdate, dispatch, selectedConversation?.id],
   );
 
   const updateValue = useCallback(
@@ -107,30 +186,23 @@ export default function useConversations(): [
         ...conversation,
         [kv.key]: kv.value,
       };
-      const newState = await update(updatedConversation);
-      if (selectedConversation?.id === conversation.id) {
-        dispatch({ field: 'selectedConversation', value: updatedConversation });
-      }
-      return newState;
+      return await update(updatedConversation);
     },
-    [dispatch, selectedConversation?.id, update],
+    [dispatch, update],
   );
 
   const remove = useCallback(
     async (conversation: Conversation) => {
       await conversationRemove.mutateAsync({ id: conversation.id });
-      const updatedConversations = conversations.filter(
+      return conversations.filter(
         (c) => c.id !== conversation.id,
-      );
-      dispatch({ field: 'conversations', value: updatedConversations });
-      return updatedConversations;
+      );;
     },
     [conversationRemove, conversations, dispatch],
   );
 
   const clear = useCallback(async () => {
     await conversationRemoveAll.mutateAsync();
-    dispatch({ field: 'conversations', value: [] });
     return [];
   }, [conversationRemoveAll, dispatch]);
 

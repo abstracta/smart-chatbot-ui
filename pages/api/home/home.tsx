@@ -154,31 +154,29 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (conversation && !selectedConversation) {
+      if (!selectedConversation) {
         dispatch({
           field: 'selectedConversation',
-          value: conversation,
-        });
-      } else if (!conversation) {
-        dispatch({
-          field: 'selectedConversation',
-          value: {
+          value: conversation ?? {
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: models.find(m=>m.id == defaultModelId),
+            model: models.find(m => m.id == defaultModelId),
             prompt: DEFAULT_SYSTEM_PROMPT,
             temperature: settings.defaultTemperature,
             folderId: null,
-          },
+          }
         });
       }
     }
   }, [
     dispatch,
+    defaultModelId,
     conversationsQuery.data,
+    settings.defaultTemperature,
     t,
-    models
+    models,
+    selectedConversation
   ]);
 
   useEffect(() => {

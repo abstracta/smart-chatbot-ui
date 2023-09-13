@@ -9,11 +9,12 @@ import { Prompt } from '@/types/prompt';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { v4 as uuidv4 } from 'uuid';
+import { updateOrInsertItem } from '@/utils/app/arrays';
 
 type PromptsAction = {
-  update: (newState: Prompt) => Promise<Prompt[]>;
+  update: (newState: Prompt) => Promise<Prompt>;
   updateAll: (newState: Prompt[]) => Promise<Prompt[]>;
-  add: () => Promise<Prompt[]>;
+  add: () => Promise<Prompt>;
   remove: (prompt: Prompt) => Promise<Prompt[]>;
 };
 
@@ -23,14 +24,69 @@ export default function usePrompts(): [Prompt[], PromptsAction] {
     state: { defaultModelId, prompts },
     dispatch,
   } = useContext(HomeContext);
-  const promptsUpdateAll = trpc.prompts.updateAll.useMutation();
-  const promptsUpdate = trpc.prompts.update.useMutation();
-  const promptRemove = trpc.prompts.remove.useMutation();
+  const trpcContext = trpc.useContext();
+  const promptsListQuery = trpc.prompts.list.useQuery();
+
+  const promptsUpdateAll = trpc.prompts.updateAll.useMutation({
+    onMutate: async (prompts: Prompt[]) => {
+      const promptsQuery = trpcContext.prompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined, prompts);
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.prompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.prompts.list.invalidate();
+    },
+  });
+
+  const promptsUpdate = trpc.prompts.update.useMutation({
+    onMutate: async (prompt: Prompt) => {
+      const promptsQuery = trpcContext.prompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) =>
+          updateOrInsertItem(oldQueryData, prompt, (a, b) => a.id == b.id)
+            .sort((a, b) => a.name > b.name ? 1 : -1)
+      );
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.prompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.prompts.list.invalidate();
+    },
+  });
+
+  const promptRemove = trpc.prompts.remove.useMutation({
+    onMutate: async ({ id }) => {
+      const promptsQuery = trpcContext.prompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) =>
+          oldQueryData && oldQueryData.filter(
+            (c) => c.id !== id,
+          )
+      );
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.prompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.prompts.list.invalidate();
+    },
+  });
 
   const updateAll = useCallback(
     async (updated: Prompt[]): Promise<Prompt[]> => {
       await promptsUpdateAll.mutateAsync(updated);
-      dispatch({ field: 'prompts', value: updated });
       return updated;
     },
     [dispatch, promptsUpdateAll],
@@ -43,39 +99,28 @@ export default function usePrompts(): [Prompt[], PromptsAction] {
     }
     const newPrompt: Prompt = {
       id: uuidv4(),
-      name: `Prompt ${prompts.length + 1}`,
+      name: `Prompt ${(promptsListQuery.data?.length || 0) + 1}`,
       description: '',
       content: '',
       model: OpenAIModels[defaultModelId],
       folderId: null,
     };
     await promptsUpdate.mutateAsync(newPrompt);
-    const newState = [newPrompt, ...prompts];
-    dispatch({ field: 'prompts', value: newState });
-    return newState;
-  }, [defaultModelId, dispatch, prompts, promptsUpdate, tErr]);
+    return newPrompt;
+  }, [defaultModelId, dispatch, promptsUpdate, tErr, promptsListQuery.data]);
 
   const update = useCallback(
     async (prompt: Prompt) => {
-      const newState = prompts.map((f) => {
-        if (f.id === prompt.id) {
-          return prompt;
-        }
-        return f;
-      });
       await promptsUpdate.mutateAsync(prompt);
-      dispatch({ field: 'prompts', value: newState });
-      return newState;
+      return prompt;
     },
-    [dispatch, prompts, promptsUpdate],
+    [dispatch, promptsUpdate],
   );
 
   const remove = useCallback(
     async (prompt: Prompt) => {
-      const newState = prompts.filter((f) => f.id !== prompt.id);
       await promptRemove.mutateAsync({ id: prompt.id });
-      dispatch({ field: 'prompts', value: newState });
-      return newState;
+      return prompts.filter((f) => f.id !== prompt.id);
     },
     [dispatch, promptRemove, prompts],
   );
