@@ -21,14 +21,16 @@ export const getUserHash = async (
 
   const session = await getServerSession(req, res, authOptions);
   if (!session) {
-    throw new Error('Unauthorized');
+    throw new AuthError('Unauthorized');
   }
   const email = session.user?.email;
   if (!email) {
-    throw new Error('Unauthorized. No email found in session');
+    throw new AuthError('Unauthorized. No email found in session');
   }
   return getUserHashFromMail(email);
 };
+
+export class AuthError extends Error{}
 
 export const getUserHashFromMail = (email: string): string => {
   const hash = crypto.createHash('sha256').update(email).digest('hex');

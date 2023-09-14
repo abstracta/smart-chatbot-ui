@@ -1,6 +1,6 @@
 import { getServerSession } from 'next-auth';
 
-import { getUserHash } from '@/utils/server/auth';
+import { getUserHash, AuthError } from '@/utils/server/auth';
 
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
@@ -12,7 +12,15 @@ export async function createContext(opts: CreateNextContextOptions) {
   const session = await getServerSession(opts.req, opts.res, authOptions);
   let userHash: string | undefined;
   if (session) {
-    userHash = await getUserHash(opts.req, opts.res);
+    try {
+      userHash = await getUserHash(opts.req, opts.res);
+    }
+    catch (e) {
+      if (e instanceof AuthError) {
+        authError();
+      }
+      throw e;
+    }
   }
   return {
     req: opts.req,
