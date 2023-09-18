@@ -157,6 +157,7 @@ export const Chatbar = () => {
         itemComponent={<Conversations conversations={filteredConversations} />}
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
         items={filteredConversations}
+        showSearch={conversations.length > 0}
         searchTerm={searchTerm}
         searchPlaceholder={t('Search conversations...')}
         noItemsPlaceholder={t('No conversations.')}
