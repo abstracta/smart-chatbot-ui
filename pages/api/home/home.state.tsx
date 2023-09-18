@@ -31,6 +31,7 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
+  isAzureOpenAI: boolean;
   supportEmail: string;
   promptSharingEnabled: boolean;
 }
@@ -62,6 +63,7 @@ export const initialState: Partial<HomeInitialState> = {
   defaultModelId: undefined,
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
+  isAzureOpenAI: false,
   supportEmail: '',
   promptSharingEnabled: false,
 };
