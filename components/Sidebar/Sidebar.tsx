@@ -2,8 +2,6 @@ import { IconFolderPlus, IconMistOff, IconPlus } from '@tabler/icons-react';
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { FolderInterface } from '@/types/folder';
-
 import {
   CloseSidebarButton,
   OpenSidebarButton,
@@ -20,6 +18,8 @@ interface Props<T> {
   folderComponent: ReactNode;
   footerComponent?: ReactNode;
   searchTerm: string;
+  searchPlaceholder: string;
+  noItemsPlaceholder: string;
   handleSearchTerm: (searchTerm: string) => void;
   toggleOpen: () => void;
   handleCreateItem: () => void;
@@ -36,6 +36,8 @@ const Sidebar = <T,>({
   folderComponent,
   footerComponent,
   searchTerm,
+  searchPlaceholder,
+  noItemsPlaceholder,
   handleSearchTerm,
   toggleOpen,
   handleCreateItem,
@@ -82,7 +84,7 @@ const Sidebar = <T,>({
         </div>
         {(items?.length > 0 || searchTerm) && (
           <Search
-            placeholder={t('Search conversations...') || ''}
+            placeholder={searchPlaceholder || ''}
             searchTerm={searchTerm}
             onSearch={handleSearchTerm}
           />
@@ -107,7 +109,7 @@ const Sidebar = <T,>({
             <div className="mt-8 select-none text-center text-white opacity-50">
               <IconMistOff className="mx-auto mb-3" />
               <span className="text-[14px] leading-normal">
-                {t('No conversations.')}
+                {noItemsPlaceholder}
               </span>
             </div>
           )}

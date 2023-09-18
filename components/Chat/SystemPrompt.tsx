@@ -21,6 +21,7 @@ interface Props {
   conversation: Conversation;
   systemPrompt: string;
   prompts: Prompt[];
+  publicPrompts: Prompt[];
   onChangePrompt: (prompt: string) => void;
 }
 
@@ -28,6 +29,7 @@ export const SystemPrompt: FC<Props> = ({
   conversation,
   systemPrompt,
   prompts,
+  publicPrompts,
   onChangePrompt,
 }) => {
   const { t } = useTranslation('chat');
@@ -38,13 +40,11 @@ export const SystemPrompt: FC<Props> = ({
   const [promptInputValue, setPromptInputValue] = useState('');
   const [variables, setVariables] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>(prompts);
+  const [filteredPublicPrompts, setFilteredPublicPrompts] = useState<Prompt[]>(publicPrompts);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const promptListRef = useRef<HTMLUListElement | null>(null);
-
-  const filteredPrompts = prompts.filter((prompt) =>
-    prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
-  );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -66,7 +66,7 @@ export const SystemPrompt: FC<Props> = ({
   };
 
   const handleInitModal = () => {
-    const selectedPrompt = filteredPrompts[activePromptIndex];
+    const selectedPrompt = [...filteredPrompts, ...filteredPublicPrompts][activePromptIndex];
     setValue((prevVal) => {
       const newContent = prevVal?.replace(/\/\w*$/, selectedPrompt.content);
       return newContent;
@@ -131,10 +131,11 @@ export const SystemPrompt: FC<Props> = ({
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (showPromptList) {
+      const totalPrompts = filteredPrompts.length + filteredPublicPrompts.length;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : prevIndex,
+          prevIndex < totalPrompts - 1 ? prevIndex + 1 : prevIndex,
         );
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
@@ -144,7 +145,7 @@ export const SystemPrompt: FC<Props> = ({
       } else if (e.key === 'Tab') {
         e.preventDefault();
         setActivePromptIndex((prevIndex) =>
-          prevIndex < prompts.length - 1 ? prevIndex + 1 : 0,
+          prevIndex < totalPrompts - 1 ? prevIndex + 1 : 0,
         );
       } else if (e.key === 'Enter') {
         e.preventDefault();
@@ -161,6 +162,22 @@ export const SystemPrompt: FC<Props> = ({
       e.preventDefault();
     }
   };
+
+
+  useEffect(() => {
+    const filteredPrompts = prompts.filter((prompt) =>
+      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+    );
+    setFilteredPrompts(filteredPrompts)
+  }, [prompts, promptInputValue, setFilteredPrompts]);
+
+  useEffect(() => {
+    const filteredPublicPrompts = publicPrompts.filter((prompt) =>
+      prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
+    );
+    setFilteredPublicPrompts(filteredPublicPrompts)
+  }, [publicPrompts, promptInputValue, setFilteredPublicPrompts]);
+
 
   useEffect(() => {
     if (textareaRef && textareaRef.current) {
@@ -213,11 +230,12 @@ export const SystemPrompt: FC<Props> = ({
         onKeyDown={handleKeyDown}
       />
 
-      {showPromptList && filteredPrompts.length > 0 && (
+      {showPromptList && (filteredPrompts.length > 0 || filteredPublicPrompts.length > 0) && (
         <div>
           <PromptList
             activePromptIndex={activePromptIndex}
             prompts={filteredPrompts}
+            publicPrompts={filteredPublicPrompts}
             onSelect={handleInitModal}
             onMouseOver={setActivePromptIndex}
             promptListRef={promptListRef}
@@ -227,7 +245,7 @@ export const SystemPrompt: FC<Props> = ({
 
       {isModalVisible && (
         <VariableModal
-          prompt={prompts[activePromptIndex]}
+          prompt={[...filteredPrompts, ...filteredPublicPrompts][activePromptIndex]}
           variables={variables}
           onSubmit={handleSubmit}
           onClose={() => setIsModalVisible(false)}

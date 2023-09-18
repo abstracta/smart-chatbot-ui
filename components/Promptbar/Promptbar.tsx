@@ -15,18 +15,23 @@ import { Prompts } from './components/Prompts';
 import Sidebar from '../Sidebar';
 import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
+import usePublicFolders from '@/hooks/usePublicFolders';
+import usePublicPrompts from '@/hooks/usePublicPrompts';
+import { FolderInterface } from '@/types/folder';
 
 const Promptbar = () => {
   const { t } = useTranslation('promptbar');
   const [_, foldersAction] = useFolders();
+  const [publicFolders, publicFoldersAction] = usePublicFolders();
   const [prompts, promptsAction] = usePrompts();
+  const [publicPrompts, publicPromptsAction] = usePublicPrompts();
 
   const promptBarContextValue = useCreateReducer<PromptbarInitialState>({
     initialState,
   });
 
   const {
-    state: { showPromptbar },
+    state: { showPromptbar, promptSharingEnabled },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
@@ -52,6 +57,42 @@ const Promptbar = () => {
     promptsAction.update(prompt);
   };
 
+  const handleCreatePublicPrompt = (prompt: Prompt) => {
+    publicPromptsAction.add(prompt);
+  };
+
+  const handleDeletePublicPrompt = (prompt: Prompt) => {
+    publicPromptsAction.remove(prompt);
+  };
+
+  const handleUpdatePublicPrompt = (prompt: Prompt) => {
+    publicPromptsAction.update(prompt);
+  };
+
+  const handleCreateFolder = () => {
+    foldersAction.add(t('New folder'), "prompt");
+  };
+
+  const handleEditFolder = (folder: FolderInterface) => {
+    foldersAction.update(folder);
+  };
+
+  const handleDeleteFolder = (folder: FolderInterface) => {
+    foldersAction.remove(folder.id);
+  };
+
+  const handleCreatePublicFolder = () => {
+    publicFoldersAction.add(t('New folder'));
+  };
+
+  const handleEditPublicFolder = (folder: FolderInterface) => {
+    publicFoldersAction.update(folder);
+  };
+
+  const handleDeletePublicFolder = (folder: FolderInterface) => {
+    publicFoldersAction.remove(folder.id);
+  };
+
   const handleDrop = (e: any) => {
     if (e.dataTransfer) {
       const prompt = JSON.parse(e.dataTransfer.getData('prompt'));
@@ -69,9 +110,8 @@ const Promptbar = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      promptDispatch({
-        field: 'filteredPrompts',
-        value: prompts.filter((prompt) => {
+      const filter = (prompts: Prompt[]) => {
+        return prompts.filter((prompt) => {
           const searchable =
             prompt.name.toLowerCase() +
             ' ' +
@@ -79,12 +119,29 @@ const Promptbar = () => {
             ' ' +
             prompt.content.toLowerCase();
           return searchable.includes(searchTerm.toLowerCase());
-        }),
+        })
+      }
+      promptDispatch({
+        field: 'filteredPrompts',
+        value: filter(prompts),
       });
+      if (promptSharingEnabled) {
+        promptDispatch({
+          field: 'filteredPublicPrompts',
+          value: filter(publicPrompts),
+        });
+      }
     } else {
       promptDispatch({ field: 'filteredPrompts', value: prompts });
+      if (promptSharingEnabled) {
+        promptDispatch({ field: 'filteredPublicPrompts', value: publicPrompts });
+      }
     }
-  }, [searchTerm, prompts]);
+  }, [searchTerm, prompts, publicPrompts, promptDispatch, promptSharingEnabled]);
+
+  useEffect(() => {
+  }, [publicFolders]);
+
 
   return (
     <PromptbarContext.Provider
@@ -93,6 +150,15 @@ const Promptbar = () => {
         handleCreatePrompt,
         handleDeletePrompt,
         handleUpdatePrompt,
+        handleCreatePublicPrompt,
+        handleDeletePublicPrompt,
+        handleUpdatePublicPrompt,
+        handleCreateFolder,
+        handleEditFolder,
+        handleDeleteFolder,
+        handleCreatePublicFolder,
+        handleEditPublicFolder,
+        handleDeletePublicFolder
       }}
     >
       <Sidebar<Prompt>
@@ -102,11 +168,17 @@ const Promptbar = () => {
         itemComponent={
           <Prompts
             prompts={filteredPrompts.filter((prompt) => !prompt.folderId)}
+            handleUpdatePrompt={handleUpdatePrompt}
+            handleDeletePrompt={handleDeletePrompt}
+            handleCreatePublicPrompt={handleCreatePublicPrompt}
+            isShareable={promptSharingEnabled}
           />
         }
         folderComponent={<PromptFolders />}
         items={filteredPrompts}
         searchTerm={searchTerm}
+        searchPlaceholder={t('Search prompts...')}
+        noItemsPlaceholder={t('No prompts.')}
         handleSearchTerm={(searchTerm: string) =>
           promptDispatch({ field: 'searchTerm', value: searchTerm })
         }

@@ -4,21 +4,18 @@ import {
   IconCheck,
   IconPencil,
   IconTrash,
+  IconFolderPlus,
   IconX,
 } from '@tabler/icons-react';
 import {
   KeyboardEvent,
   ReactElement,
-  useContext,
   useEffect,
   useState,
 } from 'react';
 
-import useFolders from '@/hooks/useFolders';
 
 import { FolderInterface } from '@/types/folder';
-
-import HomeContext from '@/pages/api/home/home.context';
 
 import SidebarActionButton from '@/components/Buttons/SidebarActionButton';
 
@@ -27,8 +24,11 @@ import { InputText } from '../Input/InputText';
 interface Props {
   currentFolder: FolderInterface;
   searchTerm: string;
-  handleDrop: (e: any, folder: FolderInterface) => void;
+  handleDrop?: ((e: any, folder: FolderInterface) => void);
   folderComponent: (ReactElement | undefined)[];
+  handleAddItem?: () => void;
+  handleEditFolder?: (folder: FolderInterface) => void;
+  handleDeleteFolder?: (folder: FolderInterface) => void;
 }
 
 const Folder = ({
@@ -36,9 +36,10 @@ const Folder = ({
   searchTerm,
   handleDrop,
   folderComponent,
+  handleAddItem,
+  handleEditFolder,
+  handleDeleteFolder
 }: Props) => {
-  const [folders, foldersAction] = useFolders();
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -47,12 +48,12 @@ const Folder = ({
   const handleEnterDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleRename();
+      handleEditFolder && handleRename();
     }
   };
 
   const handleRename = async () => {
-    foldersAction.update({
+    handleEditFolder && handleEditFolder({
       ...currentFolder,
       name: renameValue,
     });
@@ -64,7 +65,7 @@ const Folder = ({
     if (e.dataTransfer) {
       setIsOpen(true);
 
-      handleDrop(e, currentFolder);
+      handleDrop && handleDrop(e, currentFolder);
 
       e.target.style.background = 'none';
     }
@@ -120,10 +121,10 @@ const Folder = ({
           <button
             className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90`}
             onClick={() => setIsOpen(!isOpen)}
-            onDrop={(e) => dropHandler(e)}
-            onDragOver={allowDrop}
-            onDragEnter={highlightDrop}
-            onDragLeave={removeHighlight}
+            onDrop={handleDrop ? (e) => dropHandler(e) : undefined}
+            onDragOver={handleDrop ? allowDrop : undefined}
+            onDragEnter={handleDrop ? highlightDrop : undefined}
+            onDragLeave={handleDrop ? removeHighlight : undefined}
           >
             {isOpen ? (
               <IconCaretDown size={18} />
@@ -144,7 +145,7 @@ const Folder = ({
                 e.stopPropagation();
 
                 if (isDeleting) {
-                  foldersAction.remove(currentFolder.id);
+                  handleDeleteFolder!(currentFolder);
                 } else if (isRenaming) {
                   handleRename();
                 }
@@ -169,28 +170,42 @@ const Folder = ({
 
         {!isDeleting && !isRenaming && (
           <div className="absolute right-1 z-10 flex text-gray-300">
-            <SidebarActionButton
-              handleClick={(e) => {
-                e.stopPropagation();
-                setIsRenaming(true);
-                setRenameValue(currentFolder.name);
-              }}
-            >
-              <IconPencil size={18} />
-            </SidebarActionButton>
-            <SidebarActionButton
-              handleClick={(e) => {
-                e.stopPropagation();
-                setIsDeleting(true);
-              }}
-            >
-              <IconTrash size={18} />
-            </SidebarActionButton>
+            {handleEditFolder && (
+              <SidebarActionButton
+                handleClick={(e) => {
+                  e.stopPropagation();
+                  setIsRenaming(true);
+                  setRenameValue(currentFolder.name);
+                }}
+              >
+                <IconPencil size={18} />
+              </SidebarActionButton>
+            )}
+            {handleDeleteFolder && (
+              <SidebarActionButton
+                handleClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleting(true);
+                }}
+              >
+                <IconTrash size={18} />
+              </SidebarActionButton>
+            )}
+            {handleAddItem && (
+              <SidebarActionButton
+                handleClick={(e) => {
+                  e.stopPropagation();
+                  handleAddItem();
+                }}
+              >
+                <IconFolderPlus size={18} />
+              </SidebarActionButton>
+            )}
           </div>
         )}
       </div>
 
-      {isOpen ? folderComponent : null}
+      {isOpen ? (<div className="pl-2"> {folderComponent} </div>) : null}
     </>
   );
 };

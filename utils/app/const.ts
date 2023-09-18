@@ -15,3 +15,9 @@ export const OPENAI_ORGANIZATION = process.env.OPENAI_ORGANIZATION || '';
 export const AZURE_DEPLOYMENT_ID_EMBEDDINGS = process.env.AZURE_DEPLOYMENT_ID_EMBEDDINGS || '';
 
 export const MONGODB_DB = process.env.MONGODB_DB || '';
+
+export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || '';
+
+export const PROMPT_SHARING_ENABLED: boolean = process.env.PROMPT_SHARING_ENABLED === "true" || false;
+
+export const DEFAULT_USER_LIMIT_USD_MONTHLY: number = process.env.DEFAULT_USER_LIMIT_USD_MONTHLY != undefined ? Number.parseFloat(process.env.DEFAULT_USER_LIMIT_USD_MONTHLY) : -1;

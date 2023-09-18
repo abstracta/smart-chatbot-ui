@@ -48,6 +48,7 @@ export const Chat = memo(() => {
       modelError,
       loading,
       prompts,
+      publicPrompts,
       settings,
     },
   } = useContext(HomeContext);
@@ -272,6 +273,7 @@ export const Chat = memo(() => {
                           conversation={selectedConversation}
                           systemPrompt={systemPrompt}
                           prompts={prompts}
+                          publicPrompts={publicPrompts}
                           onChangePrompt={(prompt) => setSystemPrompt(prompt)}
                         />
 

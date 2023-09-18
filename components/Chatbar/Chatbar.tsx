@@ -122,7 +122,7 @@ export const Chatbar = () => {
     if (updatedConversations.length > 0) {
       homeDispatch({
         field: 'selectedConversation',
-        value: updatedConversations[updatedConversations.length - 1],
+        value: updatedConversations[0],
       });
     } else {
       defaultModelId &&
@@ -197,6 +197,8 @@ export const Chatbar = () => {
         folderComponent={<ChatFolders searchTerm={searchTerm} />}
         items={filteredConversations}
         searchTerm={searchTerm}
+        searchPlaceholder={t('Search conversations...')}
+        noItemsPlaceholder={t('No conversations.')}
         handleSearchTerm={(searchTerm: string) =>
           chatDispatch({ field: 'searchTerm', value: searchTerm })
         }

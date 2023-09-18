@@ -2,11 +2,13 @@ import { useCallback, useState } from 'react';
 
 interface Props {
   inputRef?: React.RefObject<HTMLInputElement>;
+  isEditable?: boolean
 }
 export const InputText = ({
   inputRef,
   onChange,
   onKeyDown,
+  isEditable = true,
   ...restProps
 }: Props & React.InputHTMLAttributes<HTMLInputElement>) => {
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -51,6 +53,7 @@ export const InputText = ({
           setEndComposing(true);
         }
       }}
+      readOnly={!isEditable}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       {...restProps}

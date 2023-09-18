@@ -3,6 +3,7 @@ import React, { DetailedHTMLProps, useCallback, useState } from 'react';
 interface Props {
   textareaRef?: React.RefObject<HTMLTextAreaElement>;
   rows?: number;
+  isEditable?: boolean;
 }
 
 export const Textarea = ({
@@ -10,6 +11,7 @@ export const Textarea = ({
   rows,
   onChange,
   onKeyDown,
+  isEditable = true,
   ...restProps
 }: Props &
   DetailedHTMLProps<
@@ -55,6 +57,7 @@ export const Textarea = ({
           setEndComposing(true);
         }
       }}
+      readOnly={!isEditable}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
       {...restProps}

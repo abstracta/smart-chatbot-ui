@@ -13,6 +13,7 @@ interface Props {
   prompt: Prompt;
   onClose: () => void;
   onUpdatePrompt: (prompt: Prompt) => void;
+  isEditable?: boolean;
 }
 
 export const PromptModal: FC<Props> = ({
@@ -20,6 +21,7 @@ export const PromptModal: FC<Props> = ({
   prompt,
   onClose,
   onUpdatePrompt,
+  isEditable = true
 }) => {
   const { t } = useTranslation('promptbar');
   const [name, setName] = useState(prompt.name);
@@ -35,6 +37,20 @@ export const PromptModal: FC<Props> = ({
       onClose();
     }
   };
+
+  const handleEditPrompt = (prompt: Prompt) => {
+    if (isEditable) {
+      const updatedPrompt = {
+        ...prompt,
+        name,
+        description,
+        content: content.trim(),
+      };
+
+      onUpdatePrompt(updatedPrompt);
+    }
+    onClose();
+  }
 
   useEffect(() => {
     nameInputRef.current?.focus();
@@ -62,6 +78,7 @@ export const PromptModal: FC<Props> = ({
         placeholder={t('A name for your prompt.') || ''}
         value={name}
         onChange={(e) => setName(e.target.value)}
+        isEditable={isEditable}
       />
       <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
         {t('Description')}
@@ -73,6 +90,7 @@ export const PromptModal: FC<Props> = ({
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         rows={3}
+        isEditable={isEditable}
       />
       <div className="mt-6 text-sm font-bold text-black dark:text-neutral-200">
         {t('Prompt')}
@@ -88,23 +106,14 @@ export const PromptModal: FC<Props> = ({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={10}
+        isEditable={isEditable}
       />
       <button
         type="button"
         className="w-full px-4 py-2 mt-6 border rounded-lg shadow border-neutral-500 text-neutral-900 hover:bg-neutral-100 focus:outline-none dark:border-neutral-800 dark:border-opacity-50 dark:bg-white dark:text-black dark:hover:bg-neutral-300"
-        onClick={() => {
-          const updatedPrompt = {
-            ...prompt,
-            name,
-            description,
-            content: content.trim(),
-          };
-
-          onUpdatePrompt(updatedPrompt);
-          onClose();
-        }}
+        onClick={isEditable ? () => handleEditPrompt(prompt) : onClose}
       >
-        {t('Save')}
+        {t(isEditable ? 'Save' : 'Close')}
       </button>
     </Dialog>
   );

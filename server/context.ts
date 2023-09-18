@@ -4,8 +4,9 @@ import { getUserHash } from '@/utils/server/auth';
 
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 
-import { inferAsyncReturnType } from '@trpc/server';
+import { TRPCError, inferAsyncReturnType } from '@trpc/server';
 import { CreateNextContextOptions } from '@trpc/server/adapters/next';
+import { UserRole } from '@/types/user';
 
 export async function createContext(opts: CreateNextContextOptions) {
   const session = await getServerSession(opts.req, opts.res, authOptions);
@@ -21,3 +22,15 @@ export async function createContext(opts: CreateNextContextOptions) {
   };
 }
 export type Context = inferAsyncReturnType<typeof createContext>;
+
+export async function validateAdminAccess(ctx: Context) {
+  if (!isAdminUser(ctx)) authError();
+}
+
+export function isAdminUser(ctx: Context): boolean {
+  return ctx.session?.user?.role === UserRole.ADMIN;
+}
+
+export async function authError() {
+  throw new TRPCError({ code: 'UNAUTHORIZED' });
+}

@@ -93,7 +93,7 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
         }
         return c;
       });
-      await conversationUpdateAll.mutateAsync(targetConversations);
+      await conversationUpdateAll.mutateAsync(updatedConversations);
       dispatch({ field: 'conversations', value: updatedConversations });
 
       const updatedPrompts: Prompt[] = prompts.map((p) => {

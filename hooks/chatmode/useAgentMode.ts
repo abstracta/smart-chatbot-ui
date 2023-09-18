@@ -19,6 +19,7 @@ import {
 import HomeContext from '@/pages/api/home/home.context';
 
 import useConversations from '../useConversations';
+import useApiError from '@/services/useApiError';
 
 export function useAgentMode(
   conversations: Conversation[],
@@ -26,10 +27,10 @@ export function useAgentMode(
   conversational: boolean,
 ): ChatModeRunner {
   const { t } = useTranslation('chat');
-  const { t: errT } = useTranslation('error');
 
   const { dispatch: homeDispatch } = useContext(HomeContext);
   const apiService = useApiService();
+  const apiError = useApiError();
   const [_, conversationsAction] = useConversations();
 
   const updater = new HomeUpdater(homeDispatch);
@@ -154,11 +155,9 @@ export function useAgentMode(
       homeDispatch({ field: 'messageIsStreaming', value: false });
       if (error instanceof DOMException && error.name === 'AbortError') {
         toast.error(t('Conversation stopped'));
-      } else if (error instanceof Response) {
-        const json = await error.json();
-        toast.error(errT(json.error || json.message || 'error'));
       } else {
-        toast.error(error?.toString() || 'error');
+        const errorMessage = await apiError.resolveResponseMessage(error);
+        toast.error(errorMessage, { duration: 10000 });
       }
     },
   });

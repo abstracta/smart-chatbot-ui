@@ -5,7 +5,7 @@ import { useTranslation } from 'next-i18next';
 
 import useConversations from '@/hooks/useConversations';
 
-import { OpenAIModel } from '@/types/openai';
+import { OpenAIModel, OpenAIModelType } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -14,7 +14,7 @@ export const ModelSelect = () => {
   const [_, conversationsAction] = useConversations();
 
   const {
-    state: { selectedConversation, models, defaultModelId },
+    state: { selectedConversation, models, defaultModelId, isAzureOpenAI },
   } = useContext(HomeContext);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -39,7 +39,7 @@ export const ModelSelect = () => {
           value={selectedConversation?.model?.id || defaultModelId}
           onChange={handleChange}
         >
-          {models.map((model) => (
+          {models.filter(m => m.type === OpenAIModelType.CHAT).map((model) => (
             <option
               key={model.id}
               value={model.id}
@@ -52,7 +52,7 @@ export const ModelSelect = () => {
           ))}
         </select>
       </div>
-      <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
+      {!isAzureOpenAI && <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
         <a
           href="https://platform.openai.com/account/usage"
           target="_blank"
@@ -62,6 +62,7 @@ export const ModelSelect = () => {
           {t('View Account Usage')}
         </a>
       </div>
+      }
     </div>
   );
 };

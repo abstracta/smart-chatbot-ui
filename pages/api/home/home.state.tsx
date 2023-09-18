@@ -2,7 +2,6 @@ import { MutableRefObject } from 'react';
 
 import { Conversation, Message } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
-import { ErrorMessage } from '@/types/error';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -17,10 +16,12 @@ export interface HomeInitialState {
   modelError: Error | null;
   models: OpenAIModel[];
   folders: FolderInterface[];
+  publicFolders: FolderInterface[];
   conversations: Conversation[];
   selectedConversation: Conversation | undefined;
   currentMessage: Message | undefined;
   prompts: Prompt[];
+  publicPrompts: Prompt[];
   showChatbar: boolean;
   showPromptbar: boolean;
   currentFolder: FolderInterface | undefined;
@@ -30,6 +31,9 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
+  isAzureOpenAI: boolean;
+  supportEmail: string;
+  promptSharingEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
@@ -45,10 +49,12 @@ export const initialState: Partial<HomeInitialState> = {
   modelError: null,
   models: [],
   folders: [],
+  publicFolders: [],
   conversations: [],
   selectedConversation: undefined,
   currentMessage: undefined,
   prompts: [],
+  publicPrompts: [],
   showPromptbar: true,
   showChatbar: true,
   currentFolder: undefined,
@@ -57,4 +63,7 @@ export const initialState: Partial<HomeInitialState> = {
   defaultModelId: undefined,
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
+  isAzureOpenAI: false,
+  supportEmail: '',
+  promptSharingEnabled: false,
 };

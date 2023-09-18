@@ -9,7 +9,7 @@ export const createMessagesToSend = (
   systemPrompt: string,
   reservedForCompletion: number,
   messages: Message[],
-): { messages: Message[]; maxToken: number } => {
+): { messages: Message[]; maxToken: number; tokenCount: number } => {
   let messagesToSend: Message[] = [];
   const systemPromptMessage: Message = {
     role: 'system',
@@ -33,7 +33,7 @@ export const createMessagesToSend = (
     messagesToSend = [message, ...messagesToSend];
   }
   const maxToken = model.tokenLimit - contentLength;
-  return { messages: messagesToSend, maxToken };
+  return { messages: messagesToSend, maxToken, tokenCount: contentLength };
 };
 
 // Borrow from:

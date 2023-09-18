@@ -9,6 +9,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import Folder from '@/components/Folder';
 
 import { ConversationComponent } from './Conversation';
+import useFolders from '@/hooks/useFolders';
 
 interface Props {
   searchTerm: string;
@@ -19,6 +20,7 @@ export const ChatFolders = ({ searchTerm }: Props) => {
     state: { folders, conversations },
   } = useContext(HomeContext);
   const [_, conversationsAction] = useConversations();
+  const [_f, foldersAction] = useFolders();
 
   const handleDrop = (e: any, folder: FolderInterface) => {
     if (e.dataTransfer) {
@@ -28,6 +30,14 @@ export const ChatFolders = ({ searchTerm }: Props) => {
         value: folder.id,
       });
     }
+  };
+
+  const handleEditFolder = (folder: FolderInterface) => {
+    foldersAction.update(folder);
+  };
+
+  const handleDeleteFolder = (folder: FolderInterface) => {
+    foldersAction.remove(folder.id);
   };
 
   const ChatFolders = (currentFolder: FolderInterface) => {
@@ -59,6 +69,8 @@ export const ChatFolders = ({ searchTerm }: Props) => {
             currentFolder={folder}
             handleDrop={handleDrop}
             folderComponent={ChatFolders(folder)}
+            handleEditFolder={handleEditFolder}
+            handleDeleteFolder={handleDeleteFolder}
           />
         ))}
     </div>

@@ -9,6 +9,7 @@ export const PromptSchema = z.object({
   content: z.string(),
   model: OpenAIModelSchema,
   folderId: z.string().nullable(),
+  userId: z.string().optional(),
 });
 
 export const PromptSchemaArray = z.array(PromptSchema);
