@@ -19,6 +19,7 @@ import { Conversations } from './components/Conversations';
 import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
+import Fuse from 'fuse.js';
 
 
 export const Chatbar = () => {
@@ -121,15 +122,14 @@ export const Chatbar = () => {
 
   useEffect(() => {
     if (searchTerm) {
+      const fuse = new Fuse(conversations, {
+        keys: ["name", "messages.content"],
+        threshold: 0.5
+      })
+      const results = fuse.search((searchTerm))
       chatDispatch({
         field: 'filteredConversations',
-        value: conversations.filter((conversation) => {
-          const searchable =
-            conversation.name.toLocaleLowerCase() +
-            ' ' +
-            conversation.messages.map((message) => message.content).join(' ');
-          return searchable.toLowerCase().includes(searchTerm.toLowerCase());
-        }),
+        value: results.map(r=>r.item),
       });
     } else {
       chatDispatch({
