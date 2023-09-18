@@ -99,16 +99,20 @@ export default function useConversations(): [
       const listQuery = trpcContext.conversations.list;
       await listQuery.cancel();
       const previousData = listQuery.getData();
+      let newData;
       listQuery.setData(undefined,
         (oldQueryData: Conversation[] | undefined) =>
-          oldQueryData && oldQueryData.filter(
+          newData = oldQueryData && oldQueryData.filter(
             (c) => c.id !== id,
           )
       );
-      return { previousData };
+      let previousConversation = selectedConversation;
+      dispatch({ field: 'selectedConversation', value: newData && newData[0] || buildNewConversation() });
+      return { previousData, previousConversation };
     },
     onError: (err, input, context) => {
       trpcContext.conversations.list.setData(undefined, context?.previousData);
+      dispatch({ field: 'selectedConversation', value: context?.previousConversation });
     },
     onSettled: () => {
       trpcContext.conversations.list.invalidate();
@@ -121,10 +125,13 @@ export default function useConversations(): [
       await listQuery.cancel();
       const previousData = listQuery.getData();
       listQuery.setData(undefined, []);
-      return { previousData };
+      let previousConversation = selectedConversation;
+      dispatch({ field: 'selectedConversation', value: buildNewConversation() });
+      return { previousData, previousConversation };
     },
     onError: (err, input, context) => {
       trpcContext.conversations.list.setData(undefined, context?.previousData);
+      dispatch({ field: 'selectedConversation', value: context?.previousConversation });
     },
     onSettled: () => {
       trpcContext.conversations.list.invalidate();
