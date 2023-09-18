@@ -13,6 +13,7 @@ services:
     volumes:
       - mongodb-configdb:/data/configdb
       - mongodb-data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
     env_file:
       # Specify these envs through .env.local
       # MONGO_INITDB_ROOT_USERNAME: root

@@ -64,7 +64,6 @@ export default function useConversations(): [
     }
 
     const newConversation = buildNewConversation();
-
     await conversationUpdate.mutateAsync(newConversation);
     const newState = [newConversation, ...conversations];
     dispatch({ field: 'conversations', value: newState });

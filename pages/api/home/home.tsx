@@ -8,7 +8,7 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, PROMPT_SHARING_ENABLED } from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
@@ -20,19 +20,27 @@ import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
 import { v4 as uuidv4 } from 'uuid';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
+  consumptionLimitEnabled: boolean;
+  isAzureOpenAI: boolean;
+  promptSharingEnabled: boolean;
+  supportEmail: string;
   systemDefaultModelId: OpenAIModelID;
-  promptSharingEnabled: boolean
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
+  consumptionLimitEnabled,
+  isAzureOpenAI,
+  supportEmail,
+  promptSharingEnabled,
   systemDefaultModelId,
-  promptSharingEnabled
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -49,7 +57,10 @@ const Home = ({
     initialState: {
       ...initialState,
       stopConversationRef: stopConversationRef,
-      promptSharingEnabled: promptSharingEnabled
+      consumptionLimitEnabled: consumptionLimitEnabled,
+      isAzureOpenAI,
+      supportEmail,
+      promptSharingEnabled: promptSharingEnabled,
     } as HomeInitialState,
   });
 
@@ -257,7 +268,7 @@ const Home = ({
 };
 export default Home;
 
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
   const systemDefaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
@@ -275,11 +286,16 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     serverSidePluginKeysSet = true;
   }
 
+  const session = await getServerSession(req, res, authOptions)
+  const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
+    || DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
+    
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
-      systemDefaultModelId,
+      isAzureOpenAI: OPENAI_API_TYPE === "azure",
       serverSidePluginKeysSet,
+      supportEmail: SUPPORT_EMAIL,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
@@ -287,8 +303,11 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
         'markdown',
         'promptbar',
         'settings',
+        'error'
       ])),
-      promptSharingEnabled: PROMPT_SHARING_ENABLED
+      promptSharingEnabled: PROMPT_SHARING_ENABLED,
+      consumptionLimitEnabled,
+      systemDefaultModelId,
     },
   };
 };

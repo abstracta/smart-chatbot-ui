@@ -3,16 +3,18 @@ import { useContext } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
+import useConversations from '@/hooks/useConversations';
+
+import { OpenAIModel, OpenAIModelType } from '@/types/openai';
+
 import HomeContext from '@/pages/api/home/home.context';
 import { Select } from '../Input/Select';
-import useConversations from '@/hooks/useConversations';
-import { OpenAIModel } from '@/types/openai';
 
 export const ModelSelect = () => {
   const { t } = useTranslation('chat');
   const [_, conversationsAction] = useConversations();
   const {
-    state: { models, selectedConversation, defaultModelId },
+    state: { models, selectedConversation, defaultModelId, isAzureOpenAI },
   } = useContext(HomeContext);
 
   const handleModelSelect = (modelId: string) => {
@@ -31,7 +33,7 @@ export const ModelSelect = () => {
         {t('Model')}
       </label>
       <Select placeholder={t('Select a model') || ""}
-        options={models.map((m) => {
+        options={models.filter(m => m.type == OpenAIModelType.CHAT).map((m) => {
           return {
             value: m.id,
             label: m.id == defaultModelId ? `${t('Default')} (${m.name})` : m.name
@@ -40,7 +42,7 @@ export const ModelSelect = () => {
         onSelect={handleModelSelect}
         selectedValue={selectedConversation?.model?.id || defaultModelId}
       />
-      <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
+      {!isAzureOpenAI && <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
         <a
           href="https://platform.openai.com/account/usage"
           target="_blank"
@@ -50,6 +52,7 @@ export const ModelSelect = () => {
           {t('View Account Usage')}
         </a>
       </div>
+      }
     </div>
   );
 };

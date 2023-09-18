@@ -4,6 +4,7 @@ import { Tiktoken } from 'tiktoken';
 import { Readability } from '@mozilla/readability';
 import jsdom, { JSDOM } from 'jsdom';
 import { getOpenAIApiEmbeddings } from './openai';
+import { TaskExecutionContext } from '@/agent/plugins/executor';
 
 export const extractTextFromHtml = (html: string): string => {
   const virtualConsole = new jsdom.VirtualConsole();
@@ -58,15 +59,16 @@ export const getSimilarChunks = async (
   encoding: Tiktoken,
   input: string,
   text: string,
-  chunkSize: number
+  chunkSize: number,
+  context: TaskExecutionContext,
 ): Promise<string[]> => {
   const openAIApi = getOpenAIApiEmbeddings();
-  const inputEmbedding = await createEmbedding(input, openAIApi);
+  const inputEmbedding = await createEmbedding(input, openAIApi, context.userId);
   const chunks = chunkTextByTokenSize(encoding, text, chunkSize);
   // get embedding for each chunk
   const chunkEmbeddings = await Promise.all(
     chunks.map((chunk) => {
-      return createEmbedding(chunk, openAIApi).then((embedding) => {
+      return createEmbedding(chunk, openAIApi, context.userId).then((embedding) => {
         return {
           embedding,
           chunk,

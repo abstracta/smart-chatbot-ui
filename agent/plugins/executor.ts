@@ -1,4 +1,4 @@
-import { NextApiRequest } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
 
 import { extractHeaders } from '@/utils/server/http';
 import { getTiktokenEncoding } from '@/utils/server/tiktoken';
@@ -10,6 +10,7 @@ import { listAllTools } from './list';
 import { Headers } from './requests';
 
 import { Tiktoken } from 'tiktoken';
+import { getUserHash } from '@/utils/server/auth';
 
 export interface TaskExecutionContext {
   taskId: string;
@@ -19,16 +20,19 @@ export interface TaskExecutionContext {
   getEncoding: () => Promise<Tiktoken>;
   withEncoding: (fn: (encoding: Tiktoken) => Promise<any>) => Promise<any>;
   verbose: boolean;
+  userId: string;
 }
 
-export const createContext = (
+export const createContext = async (
   taskId: string,
-  request: Request | NextApiRequest,
+  request: NextApiRequest,
+  response: NextApiResponse,
   model: OpenAIModel,
   verbose: boolean,
-): TaskExecutionContext => {
+): Promise<TaskExecutionContext> => {
   const headers = extractHeaders(request);
-  const locale = headers['accept-language']?.split(',')[0] || 'en';
+  const locale = headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en';
+  const userId = await getUserHash(request, response);
   return {
     taskId,
     headers,
@@ -50,6 +54,7 @@ export const createContext = (
         }
       }
     },
+    userId
   };
 };
 

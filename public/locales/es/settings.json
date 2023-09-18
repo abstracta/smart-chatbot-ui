@@ -4,5 +4,8 @@
   "Default Model": "Modelo predeterminado",
   "System default": "Predeterminado del sistema",
   "Default system prompt": "Mensaje del sistema predeterminado",
-  "Enter a prompt or leave empty to use system default": "Ingrese un mensaje o deje vacio para usar el predeterminado del sistema"
+  "Enter a prompt or leave empty to use system default": "Ingrese un mensaje o deje vacio para usar el predeterminado del sistema",
+  "Theme": "Tema",
+  "Temperature": "Temperatura",
+  "Save": "Guardar"
 }

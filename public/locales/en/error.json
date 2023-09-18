@@ -1,0 +1,5 @@
+{
+    "openAIRateLimitReached": "Whoops! High demand is causing our service to be temporarily unresponsive. Please be patient and retry in a moment. If the problem persists, please contact {{supportEmail}}.",
+    "openAIServiceOverloaded": "Whoops! High demand is causing our service to be temporarily unresponsive. Please be patient and retry in a moment. If the problem persists, please contact {{supportEmail}}.",
+    "errorDefault": "An unexpected error occurred. Please try again in a few moments. If the problem persists, please contact {{supportEmail}}."
+}

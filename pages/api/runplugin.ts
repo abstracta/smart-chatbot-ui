@@ -1,13 +1,13 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { OpenAIError } from '@/utils/server';
-import { ensureHasValidSession } from '@/utils/server/auth';
-import { getTiktokenEncoding } from '@/utils/server/tiktoken';
+import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 
 import { PluginResult, RunPluginRequest } from '@/types/agent';
 
 import { createContext, executeTool } from '@/agent/plugins/executor';
 import path from 'node:path';
+import { getErrorResponseBody } from '@/utils/server/error';
+import { verifyUserLlmUsage } from '@/utils/server/llmUsage';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   // Vercel Hack
@@ -18,6 +18,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!(await ensureHasValidSession(req, res))) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  const userId = await getUserHash(req, res);
 
   try {
     const {
@@ -25,8 +26,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       model,
       action: toolAction,
     } = (await req.body) as RunPluginRequest;
+    try {
+      await verifyUserLlmUsage(userId, model.id);
+    } catch (e: any) {
+      return res.status(429).json({ error: e.message });
+    }
+
     const verbose = process.env.DEBUG_AGENT_LLM_LOGGING === 'true';
-    const context = createContext(taskId, req, model, verbose);
+    const context = await createContext(taskId, req, res, model, verbose);
     const toolResult = await executeTool(context, toolAction);
     const result: PluginResult = {
       action: toolAction,
@@ -35,11 +42,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).json(result);
   } catch (error) {
     console.error(error);
-    if (error instanceof OpenAIError) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Error' });
-    }
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   }
 };
 

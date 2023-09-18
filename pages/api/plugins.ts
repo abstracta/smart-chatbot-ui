@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { OpenAIError } from '@/utils/server';
 import { ensureHasValidSession } from '@/utils/server/auth';
 
 import { listTools } from '@/agent/plugins/list';
+import { getErrorResponseBody } from '@/utils/server/error';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (!(await ensureHasValidSession(req, res))) {
@@ -15,11 +15,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).json(tools);
   } catch (error) {
     console.error(error);
-    if (error instanceof OpenAIError) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Error' });
-    }
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   }
 };
 

@@ -33,7 +33,10 @@ export interface HomeInitialState {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
-  promptSharingEnabled: boolean
+  consumptionLimitEnabled: boolean;
+  isAzureOpenAI: boolean;
+  supportEmail: string;
+  promptSharingEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
@@ -67,5 +70,8 @@ export const initialState: Partial<HomeInitialState> = {
   defaultSystemPrompt: '',
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
-  promptSharingEnabled: false
+  consumptionLimitEnabled: false,
+  isAzureOpenAI: false,
+  supportEmail: '',
+  promptSharingEnabled: false,
 };

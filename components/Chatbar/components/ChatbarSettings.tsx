@@ -1,8 +1,5 @@
 import {
-  IconFileExport,
-  IconMoon,
   IconSettings,
-  IconSun,
 } from '@tabler/icons-react';
 import { useContext, useState } from 'react';
 
@@ -12,7 +9,6 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { SettingDialog } from '@/components/Settings/SettingDialog';
 
-import { Import } from '../../Settings/Import';
 import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
@@ -34,8 +30,6 @@ export const ChatbarSettings = () => {
 
   const {
     handleClearConversations,
-    handleImportConversations,
-    handleExportData,
     handleApiKeyChange,
   } = useContext(ChatbarContext);
 
@@ -44,14 +38,6 @@ export const ChatbarSettings = () => {
       {conversations.length > 0 ? (
         <ClearConversations onClearConversations={handleClearConversations} />
       ) : null}
-
-      <Import onImport={handleImportConversations} />
-
-      <SidebarButton
-        text={t('Export data')}
-        icon={<IconFileExport size={18} />}
-        onClick={() => handleExportData()}
-      />
 
       <SidebarButton
         text={t('Settings')}

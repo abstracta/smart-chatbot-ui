@@ -11,7 +11,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { TemperatureSlider } from '../Chat/Temperature';
 import { Dialog } from '../Dialog/Dialog';
-import { OpenAIModelID } from '@/types/openai';
+import { OpenAIModelID, OpenAIModelType } from '@/types/openai';
 import { Select } from '../Input/Select';
 import useSettings from '@/hooks/useSettings';
 import { SystemPrompt } from '../Home/SystemPrompt';
@@ -74,7 +74,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         <Select placeholder={t('Select a model') || ""}
           options={[
             { value: "", label: `${t("System default")} (${models.find(m => m.id == systemDefaultModelId)?.name})` },
-            ...models.map((m) => {
+            ...models.filter(m => m.type == OpenAIModelType.CHAT).map((m) => {
               return {
                 value: m.id,
                 label: m.name
