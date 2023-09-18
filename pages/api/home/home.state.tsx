@@ -27,7 +27,9 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
+  systemDefaultModelId: OpenAIModelID;
   defaultModelId: OpenAIModelID | undefined;
+  defaultSystemPrompt: string;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
@@ -45,6 +47,8 @@ export const initialState: Partial<HomeInitialState> = {
     userId: '',
     theme: 'dark',
     defaultTemperature: 1.0,
+    defaultModelId: undefined,
+    defaultSystemPrompt: '',
   },
   messageIsStreaming: false,
   modelError: null,
@@ -61,7 +65,9 @@ export const initialState: Partial<HomeInitialState> = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
+  systemDefaultModelId: undefined,
   defaultModelId: undefined,
+  defaultSystemPrompt: '',
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
   consumptionLimitEnabled: false,

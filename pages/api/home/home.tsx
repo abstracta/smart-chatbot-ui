@@ -26,21 +26,21 @@ import { getServerSession } from 'next-auth/next';
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
-  defaultModelId: OpenAIModelID;
   consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
+  systemDefaultModelId: OpenAIModelID;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
-  defaultModelId,
   consumptionLimitEnabled,
   isAzureOpenAI,
   supportEmail,
   promptSharingEnabled,
+  systemDefaultModelId,
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -65,7 +65,7 @@ const Home = ({
   });
 
   const {
-    state: { apiKey, settings, conversations, selectedConversation, prompts, models },
+    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId, defaultSystemPrompt },
     dispatch,
   } = contextValue;
 
@@ -100,8 +100,11 @@ const Home = ({
   }, [dispatch, selectedConversation]);
 
   useEffect(() => {
-    defaultModelId &&
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
+    dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
+    dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+
+    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
+    
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -113,10 +116,11 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
+    settings
   ]);
 
   // ON LOAD --------------------------------------------
@@ -129,10 +133,10 @@ const Home = ({
     if (settingsQuery.data) {
       dispatch({
         field: 'settings',
-        value: settingsQuery.data,
+        value: settingsQuery.data
       });
     }
-  }, [dispatch, settingsQuery.data]);
+  }, [dispatch, settingsQuery.data, systemDefaultModelId]);
 
   useEffect(() => {
     if (promptsQuery.data) {
@@ -183,8 +187,8 @@ const Home = ({
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: models.find(m=>m.id == defaultModelId),
-            prompt: DEFAULT_SYSTEM_PROMPT,
+            model: models.find(m => m.id == defaultModelId),
+            prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
           },
@@ -234,7 +238,7 @@ const Home = ({
       dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
     }
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
@@ -265,7 +269,7 @@ const Home = ({
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
-  const defaultModelId =
+  const systemDefaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
         process.env.DEFAULT_MODEL as OpenAIModelID,
@@ -289,7 +293,6 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
-      defaultModelId,
       isAzureOpenAI: OPENAI_API_TYPE === "azure",
       serverSidePluginKeysSet,
       supportEmail: SUPPORT_EMAIL,
@@ -304,6 +307,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       ])),
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,
+      systemDefaultModelId,
     },
   };
 };

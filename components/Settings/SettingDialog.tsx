@@ -4,7 +4,6 @@ import { useTranslation } from 'next-i18next';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { trpc } from '@/utils/trpc';
 
 import { Settings } from '@/types/settings';
 
@@ -12,6 +11,10 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { TemperatureSlider } from '../Chat/Temperature';
 import { Dialog } from '../Dialog/Dialog';
+import { OpenAIModelID, OpenAIModelType } from '@/types/openai';
+import { Select } from '../Input/Select';
+import useSettings from '@/hooks/useSettings';
+import { SystemPrompt } from '../Home/SystemPrompt';
 
 interface Props {
   open: boolean;
@@ -21,13 +24,12 @@ interface Props {
 export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation('settings');
   const {
-    state: { settings },
-    dispatch: homeDispatch,
+    state: { models, systemDefaultModelId },
   } = useContext(HomeContext);
+  const [settings, settingsActions] = useSettings();
   const { state, dispatch } = useCreateReducer<Settings>({
     initialState: settings,
   });
-  const updateMutation = trpc.settings.settingsUpdate.useMutation();
 
   useEffect(() => {
     if (open) {
@@ -36,8 +38,11 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   }, [dispatch, open, settings]);
 
   const handleSave = async () => {
-    await updateMutation.mutate(state);
-    homeDispatch({ field: 'settings', value: state });
+    await settingsActions.update(state);
+  };
+
+  const handleModelSelect = (value: string) => {
+    dispatch({ field: "defaultModelId", value: value ? value as OpenAIModelID : undefined });
   };
 
   // Render the dialog.
@@ -47,30 +52,66 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
         {t('Settings')}
       </div>
 
-      <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
-        {t('Theme')}
+      <div className="flex flex-col mb-2 ">
+        <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+          {t('Theme')}
+        </div>
+
+        <Select
+          options={[
+            { value: "dark", label: t('Dark mode') },
+            { value: "light", label: t('Light mode') },
+          ]}
+          onSelect={(value) => dispatch({ field: 'theme', value })}
+          selectedValue={state.theme}
+        />
       </div>
 
-      <select
-        className="w-full cursor-pointer bg-transparent p-2 text-neutral-700 dark:text-neutral-200"
-        value={state.theme}
-        onChange={(event) =>
-          dispatch({ field: 'theme', value: event.target.value })
-        }
-      >
-        <option value="dark">{t('Dark mode')}</option>
-        <option value="light">{t('Light mode')}</option>
-      </select>
-
-      <div className="text-sm font-bold mt-2 mb-2 text-black dark:text-neutral-200">
-        {t('Temperature')}
+      <div className="flex flex-col mb-2 ">
+        <label className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+          {t('Default Model')}
+        </label>
+        <Select placeholder={t('Select a model') || ""}
+          options={[
+            { value: "", label: `${t("System default")} (${models.find(m => m.id == systemDefaultModelId)?.name})` },
+            ...models.filter(m => m.type == OpenAIModelType.CHAT).map((m) => {
+              return {
+                value: m.id,
+                label: m.name
+              }
+            }),
+          ]}
+          onSelect={handleModelSelect}
+          selectedValue={state.defaultModelId || ""}
+        />
       </div>
 
-      <TemperatureSlider
-        onChangeTemperature={(temperature) =>
-          dispatch({ field: 'defaultTemperature', value: temperature })
-        }
-      />
+      <div className="flex flex-col mb-2 ">
+        <div className="text-sm font-bold mt-2 mb-2 text-black dark:text-neutral-200">
+          {t('Temperature')}
+        </div>
+
+        <TemperatureSlider
+          temperature={state.defaultTemperature}
+          onChangeTemperature={(temperature) =>
+            dispatch({ field: 'defaultTemperature', value: temperature })
+          }
+        />
+      </div>
+
+      <div className="flex flex-col mb-2 ">
+        <div className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
+          {t('Default system prompt')}
+        </div>
+
+        <SystemPrompt
+          systemPrompt={state.defaultSystemPrompt || ""}
+          prompts={[]}
+          publicPrompts={[]}
+          onChangePrompt={(prompt) => dispatch({ field: "defaultSystemPrompt", value: prompt })}
+          placeholder={t('Enter a prompt or leave empty to use system default') || ""}
+        />
+      </div>
 
       <button
         type="button"

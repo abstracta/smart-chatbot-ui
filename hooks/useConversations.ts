@@ -1,12 +1,10 @@
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
 import { KeyValuePair } from '@/types/data';
-import { OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -35,9 +33,21 @@ export default function useConversations(): [
   const conversationRemove = trpc.conversations.remove.useMutation();
   const conversationRemoveAll = trpc.conversations.removeAll.useMutation();
   const {
-    state: { defaultModelId, conversations, selectedConversation, settings, models },
+    state: { defaultModelId, conversations, selectedConversation, settings, models, defaultSystemPrompt },
     dispatch,
   } = useContext(HomeContext);
+
+  const buildNewConversation = (): Conversation => {
+    return {
+      id: uuidv4(),
+      name: `${t('New Conversation')}`,
+      messages: [],
+      model: models.find(m => m.id == defaultModelId)!,
+      prompt: defaultSystemPrompt,
+      temperature: settings.defaultTemperature,
+      folderId: null,
+    };
+  }
 
   const updateAll = useCallback(
     async (updated: Conversation[]): Promise<Conversation[]> => {
@@ -53,17 +63,7 @@ export default function useConversations(): [
       throw new Error('No default model');
     }
 
-    const lastConversation = conversations[0];
-    const newConversation: Conversation = {
-      id: uuidv4(),
-      name: `${t('New Conversation')}`,
-      messages: [],
-      model: lastConversation?.model || models.find(m => m.id == defaultModelId),
-      prompt: t(DEFAULT_SYSTEM_PROMPT),
-      temperature: settings.defaultTemperature,
-      folderId: null,
-    };
-
+    const newConversation = buildNewConversation();
     await conversationUpdate.mutateAsync(newConversation);
     const newState = [newConversation, ...conversations];
     dispatch({ field: 'conversations', value: newState });
@@ -120,6 +120,10 @@ export default function useConversations(): [
         (c) => c.id !== conversation.id,
       );
       dispatch({ field: 'conversations', value: updatedConversations });
+      dispatch({
+        field: 'selectedConversation',
+        value: updatedConversations.length > 0 ? updatedConversations[0] : buildNewConversation(),
+      });
       return updatedConversations;
     },
     [conversationRemove, conversations, dispatch],
@@ -128,6 +132,10 @@ export default function useConversations(): [
   const clear = useCallback(async () => {
     await conversationRemoveAll.mutateAsync();
     dispatch({ field: 'conversations', value: [] });
+    dispatch({
+      field: 'selectedConversation',
+      value: buildNewConversation(),
+    });
     return [];
   }, [conversationRemoveAll, dispatch]);
 
