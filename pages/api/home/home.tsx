@@ -8,11 +8,11 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL } from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
+import { OpenAIModelID, fallbackModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -20,11 +20,14 @@ import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
 import { v4 as uuidv4 } from 'uuid';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   defaultModelId: OpenAIModelID;
+  consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
@@ -34,6 +37,7 @@ const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
   defaultModelId,
+  consumptionLimitEnabled,
   isAzureOpenAI,
   supportEmail,
   promptSharingEnabled,
@@ -53,6 +57,7 @@ const Home = ({
     initialState: {
       ...initialState,
       stopConversationRef: stopConversationRef,
+      consumptionLimitEnabled: consumptionLimitEnabled,
       isAzureOpenAI,
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
@@ -259,7 +264,7 @@ const Home = ({
 };
 export default Home;
 
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
+export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
   const defaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
@@ -277,6 +282,10 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     serverSidePluginKeysSet = true;
   }
 
+  const session = await getServerSession(req, res, authOptions)
+  const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
+    || DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
+    
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
@@ -293,7 +302,8 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
         'settings',
         'error'
       ])),
-      promptSharingEnabled: PROMPT_SHARING_ENABLED
+      promptSharingEnabled: PROMPT_SHARING_ENABLED,
+      consumptionLimitEnabled,
     },
   };
 };
