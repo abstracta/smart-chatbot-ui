@@ -4,15 +4,12 @@ import { useTranslation } from 'next-i18next';
 
 import useConversations from '@/hooks/useConversations';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
-import { useExporter } from '@/hooks/useExporter';
 import useFolders from '@/hooks/useFolders';
-import { useImporter } from '@/hooks/useImporter';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 
 import { Conversation } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
-import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
 import { OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -31,8 +28,6 @@ export const Chatbar = () => {
   const { t } = useTranslation('sidebar');
   const { t: tChat } = useTranslation('chat');
   const [folders, foldersAction] = useFolders();
-  const exporter = useExporter();
-  const importer = useImporter();
 
   const chatBarContextValue = useCreateReducer<ChatbarInitialState>({
     initialState,
@@ -98,22 +93,6 @@ export const Chatbar = () => {
     homeDispatch({ field: 'chatModeKeys', value: updatedPluginKeys });
 
     localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
-  };
-
-  const handleExportData = async () => {
-    return exporter.exportData();
-  };
-
-  const handleImportConversations = async (data: SupportedExportFormats) => {
-    const { history, folders, prompts }: LatestExportFormat =
-      await importer.importData(settings, data);
-    homeDispatch({ field: 'conversations', value: history });
-    homeDispatch({
-      field: 'selectedConversation',
-      value: history[history.length - 1],
-    });
-    homeDispatch({ field: 'folders', value: folders });
-    homeDispatch({ field: 'prompts', value: prompts });
   };
 
   const handleClearConversations = async () => {
@@ -205,8 +184,6 @@ export const Chatbar = () => {
         ...chatBarContextValue,
         handleDeleteConversation,
         handleClearConversations,
-        handleImportConversations,
-        handleExportData,
         handlePluginKeyChange,
         handleClearPluginKey,
         handleApiKeyChange,
