@@ -4,16 +4,11 @@ import { useTranslation } from 'next-i18next';
 
 import useConversations from '@/hooks/useConversations';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
-import { useExporter } from '@/hooks/useExporter';
 import useFolders from '@/hooks/useFolders';
-import { useImporter } from '@/hooks/useImporter';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 
 import { Conversation } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
-import { LatestExportFormat, SupportedExportFormats } from '@/types/export';
-import { OpenAIModels } from '@/types/openai';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -25,21 +20,18 @@ import Sidebar from '../Sidebar';
 import ChatbarContext from './Chatbar.context';
 import { ChatbarInitialState, initialState } from './Chatbar.state';
 
-import { v4 as uuidv4 } from 'uuid';
 
 export const Chatbar = () => {
   const { t } = useTranslation('sidebar');
   const { t: tChat } = useTranslation('chat');
   const [folders, foldersAction] = useFolders();
-  const exporter = useExporter();
-  const importer = useImporter();
 
   const chatBarContextValue = useCreateReducer<ChatbarInitialState>({
     initialState,
   });
 
   const {
-    state: { showChatbar, defaultModelId, chatModeKeys: pluginKeys, settings },
+    state: { showChatbar, chatModeKeys: pluginKeys, settings },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const [conversations, conversationsAction] = useConversations();
@@ -100,66 +92,14 @@ export const Chatbar = () => {
     localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
   };
 
-  const handleExportData = async () => {
-    return exporter.exportData();
-  };
-
-  const handleImportConversations = async (data: SupportedExportFormats) => {
-    const { history, folders, prompts }: LatestExportFormat =
-      await importer.importData(settings, data);
-    homeDispatch({ field: 'conversations', value: history });
-    homeDispatch({
-      field: 'selectedConversation',
-      value: history[history.length - 1],
-    });
-    homeDispatch({ field: 'folders', value: folders });
-    homeDispatch({ field: 'prompts', value: prompts });
-  };
-
   const handleClearConversations = async () => {
-    defaultModelId &&
-      homeDispatch({
-        field: 'selectedConversation',
-        value: {
-          id: uuidv4(),
-          name: t('New Conversation'),
-          messages: [],
-          model: OpenAIModels[defaultModelId],
-          prompt: tChat(DEFAULT_SYSTEM_PROMPT),
-          temperature: settings.defaultTemperature,
-          folderId: null,
-        },
-      });
-
     await conversationsAction.clear();
     await foldersAction.clear();
   };
 
   const handleDeleteConversation = async (conversation: Conversation) => {
-    const updatedConversations = await conversationsAction.remove(conversation);
-
+    await conversationsAction.remove(conversation);
     chatDispatch({ field: 'searchTerm', value: '' });
-
-    if (updatedConversations.length > 0) {
-      homeDispatch({
-        field: 'selectedConversation',
-        value: updatedConversations[updatedConversations.length - 1],
-      });
-    } else {
-      defaultModelId &&
-        homeDispatch({
-          field: 'selectedConversation',
-          value: {
-            id: uuidv4(),
-            name: t('New Conversation'),
-            messages: [],
-            model: OpenAIModels[defaultModelId],
-            prompt: tChat(DEFAULT_SYSTEM_PROMPT),
-            temperature: settings.defaultTemperature,
-            folderId: null,
-          },
-        });
-    }
   };
 
   const handleToggleChatbar = () => {
@@ -205,8 +145,6 @@ export const Chatbar = () => {
         ...chatBarContextValue,
         handleDeleteConversation,
         handleClearConversations,
-        handleImportConversations,
-        handleExportData,
         handlePluginKeyChange,
         handleClearPluginKey,
         handleApiKeyChange,

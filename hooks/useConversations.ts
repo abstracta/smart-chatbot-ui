@@ -1,7 +1,6 @@
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
@@ -133,9 +132,21 @@ export default function useConversations(): [
   });
 
   const {
-    state: { defaultModelId, conversations, selectedConversation, settings, models },
+    state: { defaultModelId, conversations, selectedConversation, settings, models, defaultSystemPrompt },
     dispatch,
   } = useContext(HomeContext);
+
+  const buildNewConversation = (): Conversation => {
+    return {
+      id: uuidv4(),
+      name: `${t('New Conversation')}`,
+      messages: [],
+      model: models.find(m => m.id == defaultModelId)!,
+      prompt: defaultSystemPrompt,
+      temperature: settings.defaultTemperature,
+      folderId: null,
+    };
+  }
 
   const updateAll = useCallback(
     async (updated: Conversation[]): Promise<Conversation[]> => {
@@ -150,18 +161,8 @@ export default function useConversations(): [
       throw new Error('No default model');
     }
 
-    const lastConversation = conversations[conversations.length - 1];
-    const newConversation: Conversation = {
-      id: uuidv4(),
-      name: `${t('New Conversation')}`,
-      messages: [],
-      model: lastConversation?.model || models.find(m => m.id == defaultModelId),
-      prompt: t(DEFAULT_SYSTEM_PROMPT),
-      temperature: settings.defaultTemperature,
-      folderId: null,
-    };
-
-    await conversationAdd.mutateAsync(newConversation);
+    const newConversation = buildNewConversation();
+    await conversationUpdate.mutateAsync(newConversation);
     return newConversation;
   }, [
     conversationAdd,
@@ -196,7 +197,7 @@ export default function useConversations(): [
       await conversationRemove.mutateAsync({ id: conversation.id });
       return conversations.filter(
         (c) => c.id !== conversation.id,
-      );;
+      );
     },
     [conversationRemove, conversations, dispatch],
   );

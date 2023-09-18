@@ -16,14 +16,15 @@ import {
 import HomeContext from '@/pages/api/home/home.context';
 
 import useConversations from '../useConversations';
+import useApiError from '@/services/useApiError';
 
 export function useGoogleMode(conversations: Conversation[]): ChatModeRunner {
-  const { t: errT } = useTranslation('error');
   const {
     state: { chatModeKeys },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const apiService = useApiService();
+  const apiError = useApiError();
   const [_, conversationsAction] = useConversations();
   const updater = new HomeUpdater(homeDispatch);
   const mutation = useMutation({
@@ -61,12 +62,8 @@ export function useGoogleMode(conversations: Conversation[]): ChatModeRunner {
     onError: async (error) => {
       homeDispatch({ field: 'loading', value: false });
       homeDispatch({ field: 'messageIsStreaming', value: false });
-      if (error instanceof Response) {
-        const json = await error.json();
-        toast.error(errT(json.error || json.message || 'error'));
-      } else {
-        toast.error(error?.toString() || 'error');
-      }
+      const errorMessage = await apiError.resolveResponseMessage(error);
+      toast.error(errorMessage, { duration: 10000 });
     },
   });
 

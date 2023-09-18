@@ -3,9 +3,11 @@ import { getServerSession } from 'next-auth';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { OpenAIStream } from '@/utils/server';
-import { ensureHasValidSession } from '@/utils/server/auth';
+import { saveLlmUsage, verifyUserLlmUsage } from '@/utils/server/llmUsage';
+import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 import { createMessagesToSend } from '@/utils/server/message';
 import { getTiktokenEncoding } from '@/utils/server/tiktoken';
+import { getErrorResponseBody } from '@/utils/server/error';
 
 import { ChatBodySchema } from '@/types/chat';
 
@@ -31,16 +33,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     logger.info({ event: 'chat', user: session.user });
   }
 
+  const userId = await getUserHash(req, res);
   const { model, messages, key, prompt, temperature } = ChatBodySchema.parse(
     req.body,
   );
+  try {
+    await verifyUserLlmUsage(userId, model.id);
+  } catch (e: any) {
+    return res.status(429).json({ error: e.message });
+  }
+
   const encoding = await getTiktokenEncoding(model.id);
   try {
     let systemPromptToSend = prompt;
     if (!systemPromptToSend) {
       systemPromptToSend = DEFAULT_SYSTEM_PROMPT;
     }
-    let { messages: messagesToSend, maxToken } = createMessagesToSend(
+    let { messages: messagesToSend, maxToken, tokenCount } = createMessagesToSend(
       encoding,
       model,
       systemPromptToSend,
@@ -69,6 +78,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const decoder = new TextDecoder();
     const reader = stream.getReader();
     let closed = false;
+    let responseText = "";
     while (!closed) {
       await reader.read().then(({ done, value }) => {
         if (done) {
@@ -76,20 +86,25 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           res.end();
         } else {
           const text = decoder.decode(value);
+          responseText += text;
           res.write(text);
         }
       });
     }
+    const completionTokenCount = encoding.encode(responseText).length;
+    await saveLlmUsage(userId, model.id, "chat", {
+      prompt: tokenCount,
+      completion: completionTokenCount,
+      total: tokenCount + completionTokenCount
+    })
   } catch (error) {
     console.error(error);
-    if (error instanceof Error) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Error' });
-    }
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   } finally {
     encoding.free();
   }
 };
+
 
 export default handler;

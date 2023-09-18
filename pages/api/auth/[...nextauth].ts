@@ -61,6 +61,14 @@ if (process.env.AZURE_AD_CLIENT_ID) {
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       tenantId: process.env.AZURE_AD_TENANT_ID,
+      profile(profile) {
+        return {
+          id: profile.oid,
+          name: profile.name,
+          email: profile.email,
+          image: null
+        }
+      }
     }),
   );
 }

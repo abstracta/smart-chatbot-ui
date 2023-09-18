@@ -2,11 +2,11 @@ import { Conversation } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
 import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
-
 import { MONGODB_DB } from '../app/const';
-
 import { Collection, Db, MongoClient } from 'mongodb';
-import { User, UserRole } from '@/types/user';
+import { User } from '@/types/user';
+import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
+import { OpenAIModelID } from '@/types/openai';
 
 let _db: Db | null = null;
 export async function getDb(): Promise<Db> {
@@ -52,6 +52,8 @@ export class UserDb {
   private _prompts: Collection<PromptsCollectionItem>;
   private _publicPrompts: Collection<PromptsCollectionItem>;
   private _settings: Collection<SettingsCollectionItem>;
+  private _llmUsage: Collection<UserLlmUsage>;
+  private _users: Collection<User>;
 
   constructor(_db: Db, private _userId: string) {
     this._conversations =
@@ -60,10 +62,17 @@ export class UserDb {
     this._prompts = _db.collection<PromptsCollectionItem>('prompts');
     this._publicPrompts = _db.collection<PromptsCollectionItem>('publicPrompts');
     this._settings = _db.collection<SettingsCollectionItem>('settings');
+    this._llmUsage = _db.collection<UserLlmUsage>('userLlmUsage');
+    this._users = _db.collection<User>('users');
   }
 
-  static async fromUserHash(userId: string): Promise<UserDb> {
-    return new UserDb(await getDb(), userId);
+  static async fromUserHash(userId: string, db?: Db): Promise<UserDb> {
+    if (!db) db = await getDb()
+    return new UserDb(db, userId);
+  }
+
+  async getCurrenUser(): Promise<User> {
+    return (await this._users.findOne({ _id: this._userId }))!;
   }
 
   async getConversations(): Promise<Conversation[]> {
@@ -192,6 +201,30 @@ export class UserDb {
         userId: this._userId
       });
   }
+
+  async getLlmUsageUSD(start: Date, end: Date): Promise<number> {
+    const aggCursor = await this._llmUsage.aggregate()
+      .match({
+        date: {
+          $gte: start,
+          $lt: end,
+        },
+        userId: this._userId,
+      })
+      .group({
+        _id: null,
+        totalUSD: {
+          $sum: "$totalPriceUSD",
+        },
+      })
+    const res: any = await aggCursor.next();
+    return res?.totalUSD || 0;
+  }
+
+  async addLlmUsage(llmApiUsage: NewUserLlmUsage) {
+    return this._llmUsage.insertOne({ ...llmApiUsage, userId: this._userId });
+  }
+
 }
 
 export class PublicPromptsDb {
@@ -257,6 +290,7 @@ export class PublicPromptsDb {
       'prompt.id': id,
     });
   }
+
 }
 
 export class UserInfoDb {
@@ -298,4 +332,16 @@ export class UserInfoDb {
     return await this._users.deleteOne({ _id: id });
   }
 
+}
+
+export class LlmsDb {
+  private _llmPriceRate: Collection<LlmPriceRate>;
+
+  constructor(_db: Db) {
+    this._llmPriceRate = _db.collection<LlmPriceRate>('llmPriceRate');
+  }
+
+  async getModelPriceRate(id: OpenAIModelID): Promise<LlmPriceRate | null> {
+    return await this._llmPriceRate.findOne({ modelId: id });
+  }
 }

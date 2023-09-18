@@ -28,7 +28,7 @@ export class RequestsGetTool implements Plugin, RequestTool {
   nameForModel = 'requests_get_api';
   displayForUser = false;
 
-  constructor(public headers: Headers = {}) {}
+  constructor(public headers: Headers = {}) { }
 
   async execute(context: TaskExecutionContext, action: Action) {
     const input = action.pluginInput;
@@ -48,7 +48,7 @@ export class RequestsPostTool implements Plugin, RequestTool {
   nameForModel = 'requests_post_api';
   displayForUser = false;
 
-  constructor(public headers: Headers = {}) {}
+  constructor(public headers: Headers = {}) { }
 
   async execute(context: TaskExecutionContext, action: Action) {
     const input = action.pluginInput;
@@ -82,7 +82,7 @@ export class RequestsGetWebpageTool implements Plugin, RequestTool {
   nameForModel = 'requests_get_webpage_content';
   displayForUser = true;
 
-  constructor(public headers: Headers = {}) {}
+  constructor(public headers: Headers = {}) { }
 
   async execute(context: TaskExecutionContext, action: Action) {
     const input = action.pluginInput;
@@ -101,14 +101,15 @@ export class RequestsGetWebpageTool implements Plugin, RequestTool {
     const promises = chunkTextByTokenSize(encoding, text, 200)
       .slice(0, 10)
       .map((chunk) =>
-        createEmbedding(chunk, openai).then((embedding) => {
+        createEmbedding(chunk, openai, context.userId).then((embedding) => {
           return { chunk, embedding };
         }),
       );
     encoding.free();
     const thoughtEmbedding = await createEmbedding(
       action.thought,
-      openai
+      openai,
+      context.userId
     );
     const webEmbeddings = await Promise.all(promises);
     const sortedWebChunks = webEmbeddings
@@ -137,7 +138,7 @@ export class RequestsPostWebpageTool implements Plugin, RequestTool {
   nameForModel = 'requests_post_webpage';
   displayForUser = false;
 
-  constructor(public headers: Headers = {}) {}
+  constructor(public headers: Headers = {}) { }
 
   async execute(context: TaskExecutionContext, action: Action) {
     const input = action.pluginInput;

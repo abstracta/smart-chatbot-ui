@@ -28,6 +28,7 @@ import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
 
 import classNames from 'classnames';
+import { ChatInputUsedBudget } from './ChatInputUsedBudget';
 
 interface Props {
   onSend: (
@@ -121,6 +122,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
       prompts,
       publicPrompts,
       stopConversationRef,
+      consumptionLimitEnabled,
     },
   } = useContext(HomeContext);
 
@@ -472,7 +474,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
             onClose={() => setIsModalVisible(false)}
           />
         )}
-        <div className="absolute -bottom-6 mx-auto flex w-full justify-center md:justify-end pointer-events-none">
+        <div className={`absolute -bottom-6 mx-auto flex w-full pointer-events-none ${consumptionLimitEnabled ? "justify-between" : "justify-center md:justify-end"}`}>
+          {consumptionLimitEnabled && <ChatInputUsedBudget />}
           <ChatInputTokenCount content={content} />
         </div>
       </ChatInputContainer>

@@ -1,13 +1,21 @@
 import { OpenAIApi } from 'openai';
-
+import { saveLlmUsage } from './llmUsage';
+import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 export const createEmbedding = async (
   text: string,
   openai: OpenAIApi,
+  userId: string,
 ): Promise<number[]> => {
+  const modelId = OpenAIModels[OpenAIModelID.TEXT_EMBEDDING_ADA_002].id;
   const result = await openai.createEmbedding({
-    model: 'text-embedding-ada-002',
+    model: modelId,
     input: text,
   });
+  await saveLlmUsage(userId, modelId, "embedding", {
+    prompt: result.data.usage?.prompt_tokens,
+    completion: 0,
+    total: result.data.usage?.total_tokens
+  })
   return result.data.data[0].embedding;
 };
 

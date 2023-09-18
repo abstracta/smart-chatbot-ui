@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 
 import useApiService from '@/services/useApiService';
+import useApiError from '@/services/useApiError';
 
 import { updateConversationFromStream } from '@/utils/app/clientstream';
 import { createConversationNameFromMessage } from '@/utils/app/conversation';
@@ -25,11 +26,10 @@ export function useDirectMode(
   conversations: Conversation[],
   stopConversationRef: MutableRefObject<boolean>,
 ): ChatModeRunner {
-  const { t: errT } = useTranslation('error');
-
   const { dispatch: homeDispatch } = useContext(HomeContext);
   const apiService = useApiService();
   const [_, conversationsAction] = useConversations();
+  const apiError = useApiError();
 
   const mutation = useMutation({
     mutationFn: async (params: ChatPluginParams) => {
@@ -80,12 +80,8 @@ export function useDirectMode(
       console.log(error);
       homeDispatch({ field: 'loading', value: false });
       homeDispatch({ field: 'messageIsStreaming', value: false });
-      if (error instanceof Response) {
-        const json = await error.json();
-        toast.error(errT(json.error || json.message || 'error'));
-      } else {
-        toast.error(error?.toString() || 'error');
-      }
+      const errorMessage = await apiError.resolveResponseMessage(error);
+      toast.error(errorMessage, { duration: 10000 });
     },
   });
   return {

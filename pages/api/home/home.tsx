@@ -8,11 +8,11 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, PROMPT_SHARING_ENABLED } from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, OpenAIModels, fallbackModelID } from '@/types/openai';
+import { OpenAIModelID, fallbackModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -20,19 +20,27 @@ import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
 import { v4 as uuidv4 } from 'uuid';
+import { authOptions } from '../auth/[...nextauth]';
+import { getServerSession } from 'next-auth/next';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
-  defaultModelId: OpenAIModelID;
-  promptSharingEnabled: boolean
+  consumptionLimitEnabled: boolean;
+  isAzureOpenAI: boolean;
+  promptSharingEnabled: boolean;
+  supportEmail: string;
+  systemDefaultModelId: OpenAIModelID;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
-  defaultModelId,
-  promptSharingEnabled
+  consumptionLimitEnabled,
+  isAzureOpenAI,
+  supportEmail,
+  promptSharingEnabled,
+  systemDefaultModelId,
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -47,12 +55,15 @@ const Home = ({
     initialState: {
       ...initialState,
       stopConversationRef: stopConversationRef,
-      promptSharingEnabled: promptSharingEnabled
+      consumptionLimitEnabled: consumptionLimitEnabled,
+      isAzureOpenAI,
+      supportEmail,
+      promptSharingEnabled: promptSharingEnabled,
     } as HomeInitialState,
   });
 
   const {
-    state: { apiKey, settings, conversations, selectedConversation, prompts, models },
+    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId, defaultSystemPrompt },
     dispatch,
   } = contextValue;
 
@@ -87,8 +98,11 @@ const Home = ({
   }, [dispatch, selectedConversation]);
 
   useEffect(() => {
-    defaultModelId &&
-      dispatch({ field: 'defaultModelId', value: defaultModelId });
+    dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
+    dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+
+    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
+    
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -100,10 +114,11 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
+    settings
   ]);
 
   // ON LOAD --------------------------------------------
@@ -112,10 +127,10 @@ const Home = ({
     if (settingsQuery.data) {
       dispatch({
         field: 'settings',
-        value: settingsQuery.data,
+        value: settingsQuery.data
       });
     }
-  }, [dispatch, settingsQuery.data]);
+  }, [dispatch, settingsQuery.data, systemDefaultModelId]);
 
   useEffect(() => {
     if (promptsQuery.data) {
@@ -162,7 +177,7 @@ const Home = ({
             name: t('New Conversation'),
             messages: [],
             model: models.find(m => m.id == defaultModelId),
-            prompt: DEFAULT_SYSTEM_PROMPT,
+            prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
           }
@@ -213,7 +228,7 @@ const Home = ({
       dispatch({ field: 'showPromptbar', value: showPromptbar === 'true' });
     }
   }, [
-    defaultModelId,
+    systemDefaultModelId,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
@@ -243,8 +258,8 @@ const Home = ({
 };
 export default Home;
 
-export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
-  const defaultModelId =
+export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
+  const systemDefaultModelId =
     (process.env.DEFAULT_MODEL &&
       Object.values(OpenAIModelID).includes(
         process.env.DEFAULT_MODEL as OpenAIModelID,
@@ -261,11 +276,16 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
     serverSidePluginKeysSet = true;
   }
 
+  const session = await getServerSession(req, res, authOptions)
+  const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
+    || DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
+    
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
-      defaultModelId,
+      isAzureOpenAI: OPENAI_API_TYPE === "azure",
       serverSidePluginKeysSet,
+      supportEmail: SUPPORT_EMAIL,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
@@ -273,8 +293,11 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
         'markdown',
         'promptbar',
         'settings',
+        'error'
       ])),
-      promptSharingEnabled: PROMPT_SHARING_ENABLED
+      promptSharingEnabled: PROMPT_SHARING_ENABLED,
+      consumptionLimitEnabled,
+      systemDefaultModelId,
     },
   };
 };

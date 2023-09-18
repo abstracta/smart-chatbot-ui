@@ -13,8 +13,9 @@ import {
   ReconnectInterval,
   createParser,
 } from 'eventsource-parser';
+import { ApiError, ApiErrorBody, ErrorResponseCode } from '@/types/error';
 
-export class OpenAIError extends Error {
+export class OpenAIError extends ApiError {
   type: string;
   param: string;
   code: string;
@@ -25,6 +26,22 @@ export class OpenAIError extends Error {
     this.type = type;
     this.param = param;
     this.code = code;
+  }
+
+  getApiError(): ApiErrorBody {
+    let errorCode: ErrorResponseCode;
+    switch (this.code) {
+      case "429":
+        errorCode = ErrorResponseCode.OPENAI_RATE_LIMIT_REACHED;
+        break;
+      case "503":
+        errorCode = ErrorResponseCode.OPENAI_SERVICE_OVERLOADED;
+        break;
+      default:
+        errorCode = ErrorResponseCode.ERROR_DEFAULT;
+        break;
+    }
+    return { error: { code: errorCode, message: this.message } };
   }
 }
 

@@ -10,12 +10,10 @@ import {
 
 import { useTranslation } from 'next-i18next';
 
-import { useChatModeRunner } from '@/hooks/chatmode/useChatModeRunner';
 import useConversations from '@/hooks/useConversations';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useMesseageSender from '@/hooks/useMessageSender';
 
-import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
 import { throttle } from '@/utils/data/throttle';
 
 import { Plugin } from '@/types/agent';
@@ -32,7 +30,7 @@ import { ChatLoader } from './ChatLoader';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
-import { SystemPrompt } from './SystemPrompt';
+import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
 export const Chat = memo(() => {
@@ -50,6 +48,7 @@ export const Chat = memo(() => {
       prompts,
       publicPrompts,
       settings,
+      defaultSystemPrompt
     },
   } = useContext(HomeContext);
 
@@ -63,9 +62,7 @@ export const Chat = memo(() => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
-  const [systemPrompt, setSystemPrompt] = useState<string>(
-    t(DEFAULT_SYSTEM_PROMPT) || '',
-  );
+  const [systemPrompt, setSystemPrompt] = useState<string>(defaultSystemPrompt);
   const [temperature, setTemperature] = useState<number>(
     settings.defaultTemperature,
   );
@@ -87,8 +84,9 @@ export const Chat = memo(() => {
       }
       const conversation = selectedConversation;
       if (
-        conversation.prompt !== systemPrompt ||
-        conversation.temperature !== temperature
+        conversation.messages.length === 0 &&
+        (conversation.prompt !== systemPrompt ||
+        conversation.temperature !== temperature)
       ) {
         conversation.prompt = systemPrompt;
         conversation.temperature = temperature;
@@ -104,13 +102,6 @@ export const Chat = memo(() => {
       conversationsAction,
     ],
   );
-
-  const scrollToBottom = useCallback(() => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      textareaRef.current?.focus();
-    }
-  }, [autoScrollEnabled]);
 
   const handleScroll = () => {
     if (chatContainerRef.current) {
@@ -158,13 +149,9 @@ export const Chat = memo(() => {
   };
 
   useEffect(() => {
-    setSystemPrompt(
-      selectedConversation?.prompt ||
-        t(DEFAULT_SYSTEM_PROMPT) ||
-        DEFAULT_SYSTEM_PROMPT,
-    );
+    setSystemPrompt(defaultSystemPrompt);
     setTemperature(settings.defaultTemperature);
-  }, [selectedConversation, settings.defaultTemperature, t]);
+  }, [selectedConversation, settings.defaultTemperature, defaultSystemPrompt]);
 
   const throttledScrollDown = throttle(scrollDown, 250);
   useEffect(() => {
@@ -264,19 +251,26 @@ export const Chat = memo(() => {
                       <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
                         <ModelSelect />
 
-                        <SystemPrompt
-                          conversation={selectedConversation}
-                          systemPrompt={systemPrompt}
-                          prompts={prompts}
-                          publicPrompts={publicPrompts}
-                          onChangePrompt={(prompt) => setSystemPrompt(prompt)}
-                        />
+                        <div className="flex flex-col">
+                          <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
+                            {t('System Prompt')}
+                          </label>
+                          <SystemPrompt
+                            maxLength={selectedConversation.model?.maxLength}
+                            systemPrompt={systemPrompt}
+                            prompts={prompts}
+                            publicPrompts={publicPrompts}
+                            onChangePrompt={(prompt) => setSystemPrompt(prompt)}
+                            placeholder={t(`Enter a prompt or type "/" to select a prompt...`) || ""}
+                          />
+                        </div>
 
                         <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
                           {t('Temperature')}
                         </label>
 
                         <TemperatureSlider
+                          temperature={temperature}
                           onChangeTemperature={(temperature) =>
                             setTemperature(temperature)
                           }

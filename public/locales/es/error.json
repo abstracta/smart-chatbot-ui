@@ -1,0 +1,5 @@
+{
+    "openAIRateLimitReached": "¡Ups! Debido a la alta demanda, nuestro servicio esté temporalmente no disponible. Por favor, ten paciencia y vuelve a intentarlo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}.",
+    "openAIServiceOverloaded": "¡Ups! Debido a la alta demanda, nuestro servicio esté temporalmente no disponible. Por favor, ten paciencia y vuelve a intentarlo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}.",
+    "errorDefault": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}."
+}

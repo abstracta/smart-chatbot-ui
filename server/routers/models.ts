@@ -70,6 +70,7 @@ export const models = router({
                 name: OpenAIModels[value].name,
                 maxLength: OpenAIModels[value].maxLength,
                 tokenLimit: OpenAIModels[value].tokenLimit,
+                type: OpenAIModels[value].type,
               };
               return r;
             }

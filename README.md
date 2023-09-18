@@ -143,11 +143,43 @@ When deploying the application, the following environment variables can be set:
 | AZURE_AD_CLIENT_ID                |                                | Azure AD Application (client) ID (see: [Quickstart AD](https://learn.microsoft.com/en-us/azure/active-directory/develop/))                |
 | AZURE_AD_TENANT_ID                |                                | Azure AD Directory (tenant) ID                                                                                                            |
 | AZURE_AD_CLIENT_SECRET            |                                | Azure AD Client secret value (Certificates & secrets > Client Secrets > New Client Secret > Value)                                        |
+| SUPPORT_EMAIL                     |                                | Specify the support email address to show users in case of errors or issues are encountered while using the application.                  |
 | PROMPT_SHARING_ENABLED            | `false`                        | Enable prompt sharing between users. Only admin users are allowed to modify public folders. Add admins by setting db collection field `users.role` to `admin` for each individual user.   |
-
+| DEFAULT_USER_LIMIT_USD_MONTHLY    |                                | Requires API pricing to be configured. Set a default monthly limit on api consumption per user. Leave unset for unrestricted access       |
 
 If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
 If you don't have an OpenAI API key, you can get one [here](https://platform.openai.com/account/api-keys).
+
+### API Pricing Configuration
+In order to track the consumption of the OpenAI API in USD, it is necessary to configure the current pricing rates for the API. This can be accomplished by updating the `llmPriceRate` collection in MongoDB and adjusting the values for `promptPriceUSDPer1000` and `completionPriceUSDPer1000` for each model.
+
+Here is an example document for the gpt-3.5-turbo model:
+```
+{
+    modelId: "gpt-3.5-turbo",
+    promptPriceUSDPer1000: 0.0015,
+    completionPriceUSDPer1000: 0.002  
+}
+```
+To identify the model IDs available, you can refer to the `/types/openai.ts` file.
+By updating the pricing rates in this manner, you can ensure accurate tracking of API consumption and associated costs in USD.
+
+#### Initial Database Configuration
+In the process of initializing MongoDB on Docker, it is possible to configure the API rate pricing by utilizing environment variables. These variables should be appropriately named, taking into account the specific model and the corresponding prompt or completion price. The prescribed format for naming these variables is as follows: `MODEL_PRICING_1000_${PROMPT || COMPLETION}_${MODEL_ID} = VALUE`
+
+For instance, let's consider an example that demonstrates the configuration for the gpt-3.5-turbo model:
+```
+MODEL_PRICING_1000_PROMPT_gpt-3.5-turbo=0.002
+MODEL_PRICING_1000_COMPLETION_gpt-3.5-turbo=0.002
+```
+
+### Monthly consumption limit
+To set a monthly consumption limit for users, follow these steps:
+
+- Set a general user monthly limit in USD by configuring the environment variable `DEFAULT_USER_LIMIT_USD_MONTHLY`.
+- Alternatively, you can set a specific limit for individual users by modifying their respective records in the database. Set the value of `users.monthlyUSDConsumptionLimit` to the desired amount.
+
+Per-user limit takes precedence over the general limit.
 
 ## Plugin Settings
 

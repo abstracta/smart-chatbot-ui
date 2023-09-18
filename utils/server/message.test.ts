@@ -3,17 +3,18 @@ import {Message} from '@/types/chat';
 
 import {createMessagesToSend} from './message';
 import {getTiktokenEncoding} from './tiktoken';
-import {OpenAIModel} from "@/types/openai";
+import {OpenAIModel, OpenAIModelID, OpenAIModelType} from "@/types/openai";
 
 describe('createMessagesToSend', () => {
   it('should create messages to send and return max token', async () => {
     const encoding = await getTiktokenEncoding('gpt-3.5-turbo');
     const systemPrompt = 'Hello';
     const model: OpenAIModel = {
-      id: 'gpt-3.5-turbo',
+      id: OpenAIModelID.GPT_3_5,
       name: 'gpt-3.5-turbo',
       tokenLimit: 1100,
       maxLength: 4000,
+      type: OpenAIModelType.CHAT
     }
     const messages: Message[] = [
       {role: 'user', content: 'World'},

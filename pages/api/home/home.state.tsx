@@ -2,7 +2,6 @@ import { MutableRefObject } from 'react';
 
 import { Conversation, Message } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
-import { ErrorMessage } from '@/types/error';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
 import { Prompt } from '@/types/prompt';
@@ -28,11 +27,16 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
+  systemDefaultModelId: OpenAIModelID;
   defaultModelId: OpenAIModelID | undefined;
+  defaultSystemPrompt: string;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
-  promptSharingEnabled: boolean
+  consumptionLimitEnabled: boolean;
+  isAzureOpenAI: boolean;
+  supportEmail: string;
+  promptSharingEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
@@ -43,6 +47,8 @@ export const initialState: Partial<HomeInitialState> = {
     userId: '',
     theme: 'dark',
     defaultTemperature: 1.0,
+    defaultModelId: undefined,
+    defaultSystemPrompt: '',
   },
   messageIsStreaming: false,
   modelError: null,
@@ -59,8 +65,13 @@ export const initialState: Partial<HomeInitialState> = {
   currentFolder: undefined,
   messageError: false,
   searchTerm: '',
+  systemDefaultModelId: undefined,
   defaultModelId: undefined,
+  defaultSystemPrompt: '',
   serverSideApiKeyIsSet: false,
   serverSidePluginKeysSet: false,
-  promptSharingEnabled: false
+  consumptionLimitEnabled: false,
+  isAzureOpenAI: false,
+  supportEmail: '',
+  promptSharingEnabled: false,
 };
