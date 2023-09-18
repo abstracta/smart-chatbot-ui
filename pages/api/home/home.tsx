@@ -8,7 +8,7 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_LIMIT_USD_MONTHLY, PROMPT_SHARING_ENABLED } from '@/utils/app/const';
+import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
@@ -27,16 +27,20 @@ interface Props {
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   defaultModelId: OpenAIModelID;
-  promptSharingEnabled: boolean;
   consumptionLimitEnabled: boolean;
+  isAzureOpenAI: boolean;
+  promptSharingEnabled: boolean;
+  supportEmail: string;
 }
 
 const Home = ({
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
   defaultModelId,
+  consumptionLimitEnabled,
+  isAzureOpenAI,
+  supportEmail,
   promptSharingEnabled,
-  consumptionLimitEnabled
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -53,8 +57,10 @@ const Home = ({
     initialState: {
       ...initialState,
       stopConversationRef: stopConversationRef,
-      promptSharingEnabled: promptSharingEnabled,
       consumptionLimitEnabled: consumptionLimitEnabled,
+      isAzureOpenAI,
+      supportEmail,
+      promptSharingEnabled: promptSharingEnabled,
     } as HomeInitialState,
   });
 
@@ -284,7 +290,9 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       defaultModelId,
+      isAzureOpenAI: OPENAI_API_TYPE === "azure",
       serverSidePluginKeysSet,
+      supportEmail: SUPPORT_EMAIL,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'chat',
@@ -292,6 +300,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
         'markdown',
         'promptbar',
         'settings',
+        'error'
       ])),
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,

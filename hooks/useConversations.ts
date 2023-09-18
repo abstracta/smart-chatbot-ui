@@ -53,7 +53,7 @@ export default function useConversations(): [
       throw new Error('No default model');
     }
 
-    const lastConversation = conversations[conversations.length - 1];
+    const lastConversation = conversations[0];
     const newConversation: Conversation = {
       id: uuidv4(),
       name: `${t('New Conversation')}`,

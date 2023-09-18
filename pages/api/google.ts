@@ -13,6 +13,8 @@ import endent from 'endent';
 import jsdom, { JSDOM } from 'jsdom';
 import path from 'node:path';
 import { getOpenAIApi } from '@/utils/server/openai';
+import { OpenAIError } from '@/utils/server';
+import { getErrorResponseBody } from '@/utils/server/error';
 import { saveLlmUsage, verifyUserLlmUsage } from '@/utils/server/llmUsage';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
@@ -148,19 +150,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
 
     const answerMessage: Message = { role: 'user', content: answerPrompt };
     const openai = getOpenAIApi(model.azureDeploymentId);
-    const answerRes = await openai.createChatCompletion({
-      model: model.id,
-      messages: [
-        {
-          role: 'system',
-          content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
-        },
-        answerMessage,
-      ],
-      max_tokens: 1000,
-      temperature: 1,
-      stream: false,
-    })
+    let answerRes;
+    try {
+      answerRes = await openai.createChatCompletion({
+        model: model.id,
+        messages: [
+          {
+            role: 'system',
+            content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
+          },
+          answerMessage,
+        ],
+        max_tokens: 1000,
+        temperature: 1,
+        stream: false,
+      })
+    } catch (error: any) {
+      if (error.response) {
+        const { message, type, param, code } = error.response.data.error;
+        throw new OpenAIError(message, type, param, code)
+      } else throw error
+    }
 
     const { choices: choices2, usage } = await answerRes.data;
     const answer = choices2[0].message!.content;
@@ -174,7 +184,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     res.status(200).json({ answer });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Error' });
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   } finally {
     if (encoding !== null) {
       encoding.free();

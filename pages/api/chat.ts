@@ -7,6 +7,7 @@ import { saveLlmUsage, verifyUserLlmUsage } from '@/utils/server/llmUsage';
 import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 import { createMessagesToSend } from '@/utils/server/message';
 import { getTiktokenEncoding } from '@/utils/server/tiktoken';
+import { getErrorResponseBody } from '@/utils/server/error';
 
 import { ChatBodySchema } from '@/types/chat';
 
@@ -98,11 +99,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     })
   } catch (error) {
     console.error(error);
-    if (error instanceof Error) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Error' });
-    }
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   } finally {
     encoding.free();
   }

@@ -1,12 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { OpenAIError } from '@/utils/server';
 import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 
 import { PluginResult, RunPluginRequest } from '@/types/agent';
 
 import { createContext, executeTool } from '@/agent/plugins/executor';
 import path from 'node:path';
+import { getErrorResponseBody } from '@/utils/server/error';
 import { verifyUserLlmUsage } from '@/utils/server/llmUsage';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -42,11 +42,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(200).json(result);
   } catch (error) {
     console.error(error);
-    if (error instanceof OpenAIError) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: 'Error' });
-    }
+    const errorRes = getErrorResponseBody(error);
+    res.status(500).json(errorRes);
   }
 };
 

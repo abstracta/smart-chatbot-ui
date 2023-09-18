@@ -15,6 +15,7 @@ import { CallbackManager } from 'langchain/callbacks';
 import { PromptTemplate } from 'langchain/prompts';
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
 import { getOpenAIApi } from '@/utils/server/openai';
+import { OpenAIError } from '@/utils/server';
 import { saveLlmUsage } from '@/utils/server/llmUsage';
 
 const setupCallbackManager = (verbose: boolean): void => {
@@ -185,13 +186,20 @@ export const executeReactAgent = async (
   if (verbose) {
     logVerboseRequest(messages);
   }
-
-  const result = await openai.createChatCompletion({
-    model: modelId,
-    messages,
-    temperature: 0.0,
-    stop: ['\nObservation:'],
-  });
+  let result;
+  try {
+    result = await openai.createChatCompletion({
+      model: modelId,
+      messages,
+      temperature: 0.0,
+      stop: ['\nObservation:'],
+    });
+  } catch (error: any) {
+    if (error.response) {
+      const { message, type, param, code } = error.response.data.error;
+      throw new OpenAIError(message, type, param, code)
+    } else throw error
+  }
 
   await saveLlmUsage(context.userId, context.model.id, "agentConv", {
     prompt: result.data.usage!.prompt_tokens,

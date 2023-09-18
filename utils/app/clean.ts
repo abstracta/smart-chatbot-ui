@@ -3,7 +3,9 @@ import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { Settings } from '@/types/settings';
 
 import { DEFAULT_SYSTEM_PROMPT } from './const';
-import { CleaningFallback } from './importExport';
+export interface CleaningFallback {
+  temperature: number;
+}
 
 export const cleanSelectedConversation = (
   settings: Settings,

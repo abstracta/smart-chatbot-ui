@@ -31,7 +31,7 @@ export const createContext = async (
   verbose: boolean,
 ): Promise<TaskExecutionContext> => {
   const headers = extractHeaders(request);
-  const locale = headers['accept-language']?.split(',')[0] || 'en';
+  const locale = headers['accept-language']?.split(',')[0]?.split('-')[0] || 'en';
   const userId = await getUserHash(request, response);
   return {
     taskId,
