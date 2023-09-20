@@ -1,4 +1,4 @@
-import { IconArrowDown, IconClearAll, IconSettings } from '@tabler/icons-react';
+import { IconArrowDown, IconEraser, IconSettings } from '@tabler/icons-react';
 import {
   memo,
   useCallback,
@@ -299,7 +299,7 @@ export const Chat = memo(() => {
                         className="ml-2 cursor-pointer hover:opacity-50"
                         onClick={onClearAll}
                       >
-                        <IconClearAll size={18} />
+                        <IconEraser size={18} />
                       </button>
                     </div>
                     {showSettings && (
