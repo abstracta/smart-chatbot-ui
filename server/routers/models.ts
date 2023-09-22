@@ -1,7 +1,7 @@
 import {
+  AZURE_OPENAI_DEPLOYMENTS,
   OPENAI_API_HOST,
   OPENAI_API_TYPE,
-  OPENAI_API_VERSION,
   OPENAI_ORGANIZATION,
 } from '@/utils/app/const';
 
@@ -20,64 +20,56 @@ export const models = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const key = input.key;
+      if (OPENAI_API_TYPE === 'openai') {
+        const key = input.key;
 
-      let url = `${OPENAI_API_HOST}/v1/models`;
-      if (OPENAI_API_TYPE === 'azure') {
-        url = `${OPENAI_API_HOST}/openai/deployments?api-version=${OPENAI_API_VERSION}`;
-      }
+        let url = `${OPENAI_API_HOST}/v1/models`;
 
-      const response = await fetch(url, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(OPENAI_API_TYPE === 'openai' && {
+        const response = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
             Authorization: `Bearer ${key ? key : process.env.OPENAI_API_KEY}`,
-          }),
-          ...(OPENAI_API_TYPE === 'azure' && {
-            'api-key': `${key ? key : process.env.OPENAI_API_KEY}`,
-          }),
-          ...(OPENAI_API_TYPE === 'openai' &&
-            OPENAI_ORGANIZATION && {
+            ...(OPENAI_ORGANIZATION && {
               'OpenAI-Organization': OPENAI_ORGANIZATION,
             }),
-        },
-      });
-
-      if (response.status === 401) {
-        throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Unauthorized' });
-      } else if (response.status !== 200) {
-        console.error(
-          `OpenAI API returned an error ${
-            response.status
-          }: ${await response.text()}`,
-        );
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'OpenAI API returned an error',
+          },
         });
-      }
 
-      const json = await response.json();
+        if (response.status === 401) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Unauthorized' });
+        } else if (response.status !== 200) {
+          console.error(
+            `OpenAI API returned an error ${response.status
+            }: ${await response.text()}`,
+          );
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'OpenAI API returned an error',
+          });
+        }
 
-      const models: OpenAIModel[] = json.data
-        .map((model: any) => {
-          for (const [key, value] of Object.entries(OpenAIModelID)) {
-            const modelId = OPENAI_API_TYPE === 'azure' ? model.model : model.id;
-            if (value === modelId) {
-              const r: OpenAIModel = {
-                id: modelId,
-                azureDeploymentId: OPENAI_API_TYPE === 'azure' ? model.id : undefined,
-                name: OpenAIModels[value].name,
-                maxLength: OpenAIModels[value].maxLength,
-                tokenLimit: OpenAIModels[value].tokenLimit,
-                type: OpenAIModels[value].type,
-              };
-              return r;
+        const json = await response.json();
+
+        const models: OpenAIModel[] = json.data
+          .map((model: any) => {
+            for (const [key, value] of Object.entries(OpenAIModelID)) {
+              const modelId = model.id;
+              if (value === modelId) {
+                const r: OpenAIModel = {
+                  id: modelId,
+                  name: OpenAIModels[value].name,
+                  maxLength: OpenAIModels[value].maxLength,
+                  tokenLimit: OpenAIModels[value].tokenLimit,
+                  type: OpenAIModels[value].type,
+                };
+                return r;
+              }
             }
-          }
-        })
-        .filter(Boolean);
-
-      return models;
+          })
+          .filter(Boolean);
+        return models;
+      } else {
+        return AZURE_OPENAI_DEPLOYMENTS ? Object.values(AZURE_OPENAI_DEPLOYMENTS) : [];
+      }
     }),
 });
