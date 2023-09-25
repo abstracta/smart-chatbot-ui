@@ -169,7 +169,7 @@ export default function useConversations(): [
     }
 
     const newConversation = buildNewConversation();
-    await conversationUpdate.mutateAsync(newConversation);
+    await conversationAdd.mutateAsync(newConversation);
     return newConversation;
   }, [
     conversationAdd,
