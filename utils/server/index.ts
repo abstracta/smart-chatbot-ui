@@ -113,7 +113,9 @@ export const OpenAIStream = async (
       const onParse = (event: ParsedEvent | ReconnectInterval) => {
         if (event.type === 'event') {
           const data = event.data;
-
+          if (data === "[DONE]") {
+            return;
+          }
           try {
             const json = JSON.parse(data);
             if (json.choices[0].finish_reason != null) {
@@ -132,13 +134,9 @@ export const OpenAIStream = async (
       const parser = createParser(onParse);
 
       for await (const chunk of res.body as any) {
-        const content = decoder.decode(chunk)
-        if (content.trim() === "data: [DONE]") {
-          controller.close();
-        } else {
-          parser.feed(content);
-        }
+        parser.feed(decoder.decode(chunk));
       }
+      controller.close();
     },
   });
 
