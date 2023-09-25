@@ -46,9 +46,7 @@ const Home = ({
   const settingsQuery = trpc.settings.get.useQuery();
   const promptsQuery = trpc.prompts.list.useQuery();
   const foldersQuery = trpc.folders.list.useQuery();
-  const conversationsQuery = trpc.conversations.list.useQuery(undefined, {
-    enabled: false,
-  });
+  const conversationsQuery = trpc.conversations.list.useQuery();
   const publicPromptsQuery = trpc.publicPrompts.list.useQuery();
   const publicFoldersQuery = trpc.publicFolders.list.useQuery();
 
@@ -126,10 +124,6 @@ const Home = ({
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    conversationsQuery.refetch();
-  }, [conversationsQuery]);
-
-  useEffect(() => {
     if (settingsQuery.data) {
       dispatch({
         field: 'settings',
@@ -175,15 +169,10 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (conversation && !selectedConversation) {
+      if (!selectedConversation) {
         dispatch({
           field: 'selectedConversation',
-          value: conversation,
-        });
-      } else if (!conversation) {
-        dispatch({
-          field: 'selectedConversation',
-          value: {
+          value: conversation ?? {
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
@@ -191,17 +180,18 @@ const Home = ({
             prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
-          },
+          }
         });
       }
     }
   }, [
     dispatch,
+    defaultModelId,
     conversationsQuery.data,
     settings.defaultTemperature,
     t,
-    defaultModelId,
-    models
+    models,
+    selectedConversation
   ]);
 
   useEffect(() => {

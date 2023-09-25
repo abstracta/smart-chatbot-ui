@@ -22,7 +22,7 @@ export const OpenAIModelSchema = z.object({
   name: z.string(),
   maxLength: z.number(), // max length of a message.
   tokenLimit: z.number(),
-  type: z.nativeEnum(OpenAIModelType).default(OpenAIModelType.CHAT)
+  type: z.nativeEnum(OpenAIModelType)
 });
 export type OpenAIModel = z.infer<typeof OpenAIModelSchema>;
 

@@ -134,18 +134,7 @@ export function useAgentMode(
         role: 'assistant',
         content: answer.answer,
       });
-      const updatedConversations: Conversation[] = conversations.map(
-        (conversation) => {
-          if (conversation.id === selectedConversation.id) {
-            return updatedConversation;
-          }
-          return conversation;
-        },
-      );
-      if (updatedConversations.length === 0) {
-        updatedConversations.push(updatedConversation);
-      }
-      await conversationsAction.updateAll(updatedConversations);
+      await conversationsAction.update(updatedConversation);
 
       homeDispatch({ field: 'loading', value: false });
       homeDispatch({ field: 'messageIsStreaming', value: false });

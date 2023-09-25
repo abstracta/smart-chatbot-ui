@@ -9,22 +9,94 @@ import { Prompt } from '@/types/prompt';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { v4 as uuidv4 } from 'uuid';
+import useConversations from './useConversations';
+import { updateOrInsertItem } from '@/utils/app/arrays';
+import usePrompts from './usePrompts';
 
 type FoldersAction = {
-  update: (newState: FolderInterface) => Promise<FolderInterface[]>;
+  update: (newState: FolderInterface) => Promise<FolderInterface>;
   updateAll: (newState: FolderInterface[]) => Promise<FolderInterface[]>;
-  add: (name: string, type: FolderType) => Promise<FolderInterface[]>;
+  add: (name: string, type: FolderType) => Promise<FolderInterface>;
   remove: (folderId: string) => Promise<FolderInterface[]>;
   clear: () => Promise<FolderInterface[]>;
 };
 
 export default function useFolders(): [FolderInterface[], FoldersAction] {
-  const promptsUpdateAll = trpc.prompts.updateAll.useMutation();
-  const conversationUpdateAll = trpc.conversations.updateAll.useMutation();
-  const folderUpdateAll = trpc.folders.updateAll.useMutation();
-  const folderUpdate = trpc.folders.update.useMutation();
-  const folderRemove = trpc.folders.remove.useMutation();
-  const folderRemoveAll = trpc.folders.removeAll.useMutation();
+
+  const { updateAll: conversationsUpdateAll } = useConversations()[1];
+  const { updateAll: promptsUpdateAll } = usePrompts()[1];
+  const trpcContext = trpc.useContext();
+
+  const folderUpdateAll = trpc.folders.updateAll.useMutation({
+    onMutate: async (folders: FolderInterface[]) => {
+      const listQuery = trpcContext.folders.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined, folders);
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.folders.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.folders.list.invalidate();
+    },
+  });
+
+  const folderUpdate = trpc.folders.update.useMutation({
+    onMutate: async (folder: FolderInterface) => {
+      const listQuery = trpcContext.folders.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined,
+        (oldQueryData: FolderInterface[] | undefined) =>
+          updateOrInsertItem(oldQueryData, folder, (a, b) => a.id == b.id)
+            .sort((a, b) => a.name > b.name ? 1 : -1)
+      )
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.folders.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.folders.list.invalidate();
+    },
+  });
+
+  const folderRemove = trpc.folders.remove.useMutation({
+    onMutate: async ({ id }) => {
+      const listQuery = trpcContext.folders.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined,
+        (oldQueryData: FolderInterface[] | undefined) =>
+          oldQueryData?.filter((f) => f.id !== id) || [])
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.folders.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.folders.list.invalidate();
+    },
+  });
+
+  const folderRemoveAll = trpc.folders.removeAll.useMutation({
+    onMutate: async () => {
+      const listQuery = trpcContext.folders.list;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined, [])
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.folders.list.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.folders.list.invalidate();
+    },
+  });
+
   const {
     state: { folders, conversations, prompts },
     dispatch,
@@ -33,7 +105,6 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
   const updateAll = useCallback(
     async (updated: FolderInterface[]): Promise<FolderInterface[]> => {
       await folderUpdateAll.mutateAsync(updated);
-      dispatch({ field: 'folders', value: updated });
       return updated;
     },
     [dispatch, folderUpdateAll],
@@ -46,25 +117,16 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
         name,
         type,
       };
-      const newState = [newFolder, ...folders];
       await folderUpdate.mutateAsync(newFolder);
-      dispatch({ field: 'folders', value: newState });
-      return newState;
+      return newFolder;
     },
     [dispatch, folderUpdate, folders],
   );
 
   const update = useCallback(
     async (folder: FolderInterface) => {
-      const newState = folders.map((f) => {
-        if (f.id === folder.id) {
-          return folder;
-        }
-        return f;
-      });
       await folderUpdate.mutateAsync(folder);
-      dispatch({ field: 'folders', value: newState });
-      return newState;
+      return folder;
     },
     [dispatch, folderUpdate, folders],
   );
@@ -78,14 +140,10 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
 
   const remove = useCallback(
     async (folderId: string) => {
-      const newState = folders.filter((f) => f.id !== folderId);
       await folderRemove.mutateAsync({ id: folderId });
-      dispatch({ field: 'folders', value: newState });
 
-      const targetConversations: Conversation[] = [];
       const updatedConversations: Conversation[] = conversations.map((c) => {
         if (c.folderId === folderId) {
-          targetConversations.push(c);
           return {
             ...c,
             folderId: null,
@@ -93,8 +151,7 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
         }
         return c;
       });
-      await conversationUpdateAll.mutateAsync(updatedConversations);
-      dispatch({ field: 'conversations', value: updatedConversations });
+      conversationsUpdateAll(updatedConversations);
 
       const updatedPrompts: Prompt[] = prompts.map((p) => {
         if (p.folderId === folderId) {
@@ -106,18 +163,17 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
 
         return p;
       });
+      promptsUpdateAll(updatedPrompts);
 
-      await promptsUpdateAll.mutateAsync(updatedPrompts);
-      dispatch({ field: 'prompts', value: updatedPrompts });
-      return newState;
+      return folders.filter((f) => f.id !== folderId);
     },
     [
-      conversationUpdateAll,
       conversations,
       dispatch,
       folderRemove,
       folders,
       prompts,
+      conversationsUpdateAll,
       promptsUpdateAll,
     ],
   );

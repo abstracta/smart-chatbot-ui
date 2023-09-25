@@ -6,10 +6,11 @@ import { trpc } from '@/utils/trpc';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
+import { updateOrInsertItem } from '@/utils/app/arrays';
 
 type PublicPromptsAction = {
-  update: (newState: Prompt) => Promise<Prompt[]>;
-  add: (prompt: Prompt) => Promise<Prompt[]>;
+  update: (newState: Prompt) => Promise<Prompt>;
+  add: (prompt: Prompt) => Promise<Prompt>;
   remove: (prompt: Prompt) => Promise<Prompt[]>;
 };
 
@@ -19,9 +20,64 @@ export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
     state: { defaultModelId, publicPrompts },
     dispatch,
   } = useContext(HomeContext);
-  const promptsAdd = trpc.publicPrompts.add.useMutation();
-  const promptsUpdate = trpc.publicPrompts.update.useMutation();
-  const promptRemove = trpc.publicPrompts.remove.useMutation();
+  const trpcContext = trpc.useContext();
+  const promptsAdd = trpc.publicPrompts.add.useMutation({
+    onMutate: async (prompt: Prompt) => {
+      const promptsQuery = trpcContext.publicPrompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) => {
+          if (!oldQueryData || oldQueryData.length == 0) return [prompt]
+          else return [...oldQueryData, prompt]
+            .sort((a, b) => a.name > b.name ? 1 : -1);
+        });
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.publicPrompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.publicPrompts.list.invalidate();
+    },
+  });
+  const promptsUpdate = trpc.publicPrompts.update.useMutation({
+    onMutate: async (prompt: Prompt) => {
+      const promptsQuery = trpcContext.publicPrompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) =>
+          updateOrInsertItem(oldQueryData, prompt, (a, b) => a.id == b.id)
+            .sort((a, b) => a.name > b.name ? 1 : -1)
+      );
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.publicPrompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.publicPrompts.list.invalidate();
+    },
+  });
+  const promptRemove = trpc.publicPrompts.remove.useMutation({
+    onMutate: async ({ id }) => {
+      const promptsQuery = trpcContext.publicPrompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) => {
+          return oldQueryData?.filter((f) => f.id !== id) || []
+        });
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.publicPrompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.publicPrompts.list.invalidate();
+    },
+  });
 
   const add = useCallback(async (prompt: Prompt) => {
     if (!defaultModelId) {
@@ -29,27 +85,21 @@ export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
       throw new Error(err);
     }
     await promptsAdd.mutateAsync(prompt);
-    const newState = [prompt, ...publicPrompts];
-    dispatch({ field: 'publicPrompts', value: newState });
-    return newState;
-  }, [defaultModelId, dispatch, publicPrompts, promptsAdd, tErr]);
+    return prompt;
+  }, [defaultModelId, dispatch, promptsAdd, tErr]);
 
   const update = useCallback(
     async (prompt: Prompt) => {
-      const newState = publicPrompts.map((f) => f.id === prompt.id ? prompt : f);
       await promptsUpdate.mutateAsync(prompt);
-      dispatch({ field: 'publicPrompts', value: newState });
-      return newState;
+      return prompt;
     },
-    [dispatch, publicPrompts, promptsUpdate],
+    [dispatch, promptsUpdate],
   );
 
   const remove = useCallback(
     async (prompt: Prompt) => {
-      const newState = publicPrompts.filter((f) => f.id !== prompt.id);
       await promptRemove.mutateAsync({ id: prompt.id });
-      dispatch({ field: 'publicPrompts', value: newState });
-      return newState;
+      return publicPrompts.filter((f) => f.id !== prompt.id);
     },
     [dispatch, promptRemove, publicPrompts],
   );
