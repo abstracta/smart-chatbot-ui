@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
-import { OPENAI_API_TYPE, OPENAI_API_HOST, OPENAI_API_VERSION, AZURE_DEPLOYMENT_ID_EMBEDDINGS } from "../app/const";
+import { OPENAI_API_TYPE, OPENAI_API_HOST, OPENAI_API_VERSION, DEFAULT_MODEL_EMBEDDINGS, AZURE_OPENAI_DEPLOYMENTS } from "../app/const";
 
 export const getOpenAIApi = (deploymentId?: string): OpenAIApi => {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -24,5 +24,5 @@ export const getOpenAIApi = (deploymentId?: string): OpenAIApi => {
 }
 
 export const getOpenAIApiEmbeddings = (): OpenAIApi => {
-    return getOpenAIApi(AZURE_DEPLOYMENT_ID_EMBEDDINGS)
+    return getOpenAIApi(AZURE_OPENAI_DEPLOYMENTS && AZURE_OPENAI_DEPLOYMENTS[DEFAULT_MODEL_EMBEDDINGS].azureDeploymentId)
 }

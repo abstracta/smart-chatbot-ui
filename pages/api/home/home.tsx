@@ -8,11 +8,11 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
+import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, fallbackModelID } from '@/types/openai';
+import { OpenAIModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -102,7 +102,7 @@ const Home = ({
     dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
 
     dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
-    
+
     serverSideApiKeyIsSet &&
       dispatch({
         field: 'serverSideApiKeyIsSet',
@@ -259,14 +259,6 @@ const Home = ({
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
-  const systemDefaultModelId =
-    (process.env.DEFAULT_MODEL &&
-      Object.values(OpenAIModelID).includes(
-        process.env.DEFAULT_MODEL as OpenAIModelID,
-      ) &&
-      process.env.DEFAULT_MODEL) ||
-    fallbackModelID;
-
   let serverSidePluginKeysSet = false;
 
   const googleApiKey = process.env.GOOGLE_API_KEY;
@@ -279,7 +271,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   const session = await getServerSession(req, res, authOptions)
   const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
     || DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
-    
+
   return {
     props: {
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
@@ -297,7 +289,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       ])),
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,
-      systemDefaultModelId,
+      systemDefaultModelId: DEFAULT_MODEL,
     },
   };
 };
