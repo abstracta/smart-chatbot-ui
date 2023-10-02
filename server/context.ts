@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 
 import { getUserHash, AuthError } from '@/utils/server/auth';
 
-import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 
 import { TRPCError, inferAsyncReturnType } from '@trpc/server';
 import { CreateNextContextOptions } from '@trpc/server/adapters/next';

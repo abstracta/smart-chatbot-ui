@@ -2,7 +2,7 @@
 import { useTranslation } from 'next-i18next';
 import { ReactElement } from 'react';
 import AdminLayout from '@/pages/admin/adminLayout';
-import { NextPageWithLayout } from '@/pages/_app';
+import { NextPageWithLayout } from '@/pages/_app.page';
 import { User, UserRole } from '@/types/user';
 import useUsers from '@/hooks/useUsers';
 import UserTable from '@/components/UserTable';
@@ -10,7 +10,7 @@ import { DEFAULT_USER_LIMIT_USD_MONTHLY, CAN_UPDATE_USER_QUOTAS } from '@/utils/
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 import { UsersInitialState, initialState } from './users.state';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 import UsersContext from './users.context';
