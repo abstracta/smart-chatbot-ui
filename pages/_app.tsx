@@ -9,22 +9,34 @@ import { Inter } from 'next/font/google';
 
 import '@/styles/globals.css';
 import { trpc } from '../utils/trpc';
+import { ReactElement, ReactNode } from 'react';
+import { NextPage } from 'next';
+import nextI18NextConfig from '../next-i18next.config'
 
 const inter = Inter({ subsets: ['latin'] });
 
-function App({ Component, pageProps }: AppProps<{ session: Session }>) {
+export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode
+}
+
+type AppPropsWithLayout<P> = AppProps<P> & {
+  Component: NextPageWithLayout
+}
+
+function App({ Component, pageProps: { session, ...pageProps } }: AppPropsWithLayout<{ session: Session }>) {
   const queryClient = new QueryClient();
+  const getLayout = Component.getLayout ?? ((page) => page)
 
   return (
-    <SessionProvider session={pageProps.session}>
+    <SessionProvider session={session}>
       <div className={inter.className}>
         <Toaster />
         <QueryClientProvider client={queryClient}>
-          <Component {...pageProps} />
+          {getLayout(<Component {...pageProps} />)}
         </QueryClientProvider>
       </div>
     </SessionProvider>
   );
 }
 
-export default trpc.withTRPC(appWithTranslation(App));
+export default trpc.withTRPC(appWithTranslation(App, nextI18NextConfig));

@@ -114,11 +114,13 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
   }, [
+    t,
     systemDefaultModelId,
+    defaultSystemPrompt,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
-    settings
+    settings,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -187,6 +189,7 @@ const Home = ({
   }, [
     dispatch,
     defaultModelId,
+    defaultSystemPrompt,
     conversationsQuery.data,
     settings.defaultTemperature,
     t,

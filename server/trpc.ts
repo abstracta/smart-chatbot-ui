@@ -1,3 +1,4 @@
+import { UserRole } from '@/types/user';
 import type { Context } from './context';
 
 import { TRPCError, initTRPC } from '@trpc/server';
@@ -21,7 +22,19 @@ const secure = middleware(async ({ ctx, next }) => {
   });
 });
 
+const admin = middleware(async ({ ctx, next }) => {
+  if (!ctx.userHash || ctx.session?.user?.role !== UserRole.ADMIN) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({
+    ctx: {
+      userHash: ctx.userHash,
+    },
+  });
+});
+
 // Base router and procedure helpers
 export const router = t.router;
 export const publicProcedure = t.procedure;
 export const procedure = t.procedure.use(secure);
+export const adminProcedure = t.procedure.use(admin);
