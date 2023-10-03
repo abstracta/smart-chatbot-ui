@@ -2,7 +2,8 @@ import * as z from 'zod';
 
 export enum UserRole {
   ADMIN = "admin",
-  USER = "user"
+  USER = "user",
+  PUBLIC_PROMPT_EDITOR = "publicPromptEditor"
 }
 
 export const UserSchema = z.object({

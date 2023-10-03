@@ -16,11 +16,12 @@ const AdminLayout = ({
       ...initialState,
     } as AdminInitialState,
   });
-  const { state: { showNavBar }, dispatch } = contextValue;
+  const { state: { }, dispatch } = contextValue;
   const [settingsQuery, settingsActions] = useSettings();
 
   useEffect(() => {
-    dispatch({ field: 'showNavBar', value: localStorage.getItem('showNavBar') === 'true' });
+    const showNavBar = localStorage.getItem('showNavBar');
+    if (showNavBar != null) dispatch({ field: 'showNavBar', value: showNavBar === 'true' });
   }, [dispatch]);
 
   return (

@@ -3,8 +3,9 @@
   "Email": "Correo",
   "Role": "Rol",
   "Monthly budget (USD)": "Presupuesto mensual (USD)",
-  "Admin": "Administrador",
-  "User": "Usuario",
+  "admin": "Administrador",
+  "user": "Usuario",
+  "publicPromptEditor": "Editor de prompts públicas",
   "Show": "Mostrar",
   "Users": "Usuarios"
 }

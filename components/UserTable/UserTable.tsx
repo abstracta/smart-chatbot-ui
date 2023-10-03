@@ -66,7 +66,7 @@ export const UserTable: FC<Props> = ({ data, updateUser }) => {
       cell: ({ getValue, row, column, table }) => {
         const value = getValue();
         return (
-          <div title={value && value.charAt(0).toUpperCase() + value.slice(1)}>
+          <div title={t(value as string) as string}>
             <Select
               onSelect={(role: UserRole) => {
                 table.options.meta?.updateRow(row.index, column.id, { ...row.original, role })
@@ -74,7 +74,7 @@ export const UserTable: FC<Props> = ({ data, updateUser }) => {
               value={value}
               options={Object.values(UserRole).map((role) => {
                 return {
-                  label: t(role.charAt(0).toUpperCase() + role.slice(1)) as string,
+                  label: t(role) as string,
                   value: role
                 }
               })}
