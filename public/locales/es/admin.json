@@ -7,5 +7,14 @@
   "user": "Usuario",
   "publicPromptEditor": "Editor de prompts públicas",
   "Show": "Mostrar",
-  "Users": "Usuarios"
+  "Users": "Usuarios",
+  "Usage report": "Reporte de uso",
+  "Models": "Modelos",
+  "From": "Desde",
+  "To": "Hasta",
+  "Clear": "Restablecer",
+  "Total tokens": "Total de tokens",
+  "Total USD": "Total de USD",
+  "Default": "Por defecto",
+  "Export CSV": "Exportar CSV"
 }

@@ -1,7 +1,7 @@
 import { useContext, useState } from 'react';
 import AdminContext from '@/pages/admin/admin.context';
 import SidebarBase from '../Sidebar/Sidebar';
-import { IconArrowBackUp, IconSettings, IconUsers } from '@tabler/icons-react';
+import { IconArrowBackUp, IconReportAnalytics, IconSettings, IconUsers } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SidebarButton } from '../Sidebar/SidebarButton';
@@ -31,10 +31,19 @@ export const AdminSideNav = () => {
       side="left"
       toggleOpen={handleToggleNavBar}
     >
-      <div className="flex flex-col flex-grow overflow-auto">
+      <div className="flex flex-col flex-grow overflow-auto gap-y-2">
         <a className="text-lg p-4 mb-4">{t('Admin dashboard')}</a>
         <Link className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90
-            ${router.pathname == "/admin" || router.pathname == "/admin/users" ? "bg-[#343541]/90" : ""}`}
+            ${router.pathname == "/admin" || router.pathname == "/admin/reports" ? "bg-[#343541]/90" : ""}`}
+          href="/admin/reports"
+        >
+          <IconReportAnalytics size={18} />
+          <div className="relative max-h-5 flex-1 overflow-hidden text-ellipsis whitespace-nowrap break-all text-left text-[12.5px] leading-3">
+            {t('Usage report')}
+          </div>
+        </Link>
+        <Link className={`flex w-full cursor-pointer items-center gap-3 rounded-lg p-3 text-sm transition-colors duration-200 hover:bg-[#343541]/90
+            ${router.pathname == "/admin/users" ? "bg-[#343541]/90" : ""}`}
           href="/admin/users"
         >
           <IconUsers size={18} />

@@ -2,13 +2,14 @@ import { useCallback, useEffect } from 'react';
 import { trpc } from '@/utils/trpc';
 import { User } from '@/types/user';
 import { updateOrInsertItem } from '@/utils/app/arrays';
+import { UseQueryResult } from '@tanstack/react-query';
 
 type UserActions = {
   update: (user: User) => Promise<User>;
 };
 
 export default function useUsers(): [
-  User[],
+  UseQueryResult<User[]>,
   UserActions,
 ] {
   const trpcContext = trpc.useContext();
@@ -47,7 +48,7 @@ export default function useUsers(): [
   );
 
   return [
-    usersQuery.data || [],
+    usersQuery,
     {
       update,
     },

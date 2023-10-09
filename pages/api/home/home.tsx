@@ -171,7 +171,7 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (!selectedConversation) {
+      if (!selectedConversation && models.length) {
         dispatch({
           field: 'selectedConversation',
           value: conversation ?? {

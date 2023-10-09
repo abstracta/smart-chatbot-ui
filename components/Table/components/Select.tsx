@@ -19,7 +19,7 @@ export const Select: FC<Props> = ({
 
   return (
     <select
-      className="bg-transparent p-2"
+      className="bg-transparent p-1"
       placeholder={placeholder || ''}
       value={value}
       onChange={(e) => onSelect(e.target.value)}

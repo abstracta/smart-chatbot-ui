@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Settings } from '@/types/settings';
 import { DefinedUseQueryResult } from '@tanstack/react-query';

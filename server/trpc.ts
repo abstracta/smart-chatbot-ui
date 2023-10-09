@@ -1,5 +1,6 @@
 import { UserRole } from '@/types/user';
 import type { Context } from './context';
+import superjson from 'superjson';
 
 import { TRPCError, initTRPC } from '@trpc/server';
 
@@ -7,7 +8,9 @@ import { TRPCError, initTRPC } from '@trpc/server';
 // since it's not very descriptive.
 // For instance, the use of a t variable
 // is common in i18n libraries.
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+  transformer: superjson,
+});
 
 export const middleware = t.middleware;
 
