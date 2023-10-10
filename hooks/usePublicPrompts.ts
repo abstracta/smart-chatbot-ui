@@ -12,6 +12,7 @@ type PublicPromptsAction = {
   update: (newState: Prompt) => Promise<Prompt>;
   add: (prompt: Prompt) => Promise<Prompt>;
   remove: (prompt: Prompt) => Promise<Prompt[]>;
+  increaseUsage: (prompt: Prompt) => Promise<Prompt>;
 };
 
 export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
@@ -60,6 +61,30 @@ export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
       trpcContext.publicPrompts.list.invalidate();
     },
   });
+  const promptsIncreaseUsage = trpc.publicPrompts.increaseUsageCount.useMutation({
+    onMutate: async ({ id }) => {
+      const promptsQuery = trpcContext.publicPrompts.list;
+      await promptsQuery.cancel();
+      const previousPrompts = promptsQuery.getData();
+      promptsQuery.setData(undefined,
+        (oldQueryData: Prompt[] | undefined) => {
+          const prompt = oldQueryData?.find(p => p.id == id);
+          if (prompt) {
+            return updateOrInsertItem(oldQueryData, prompt, (a, b) => a.id == b.id)
+              .sort((a, b) => a.name > b.name ? 1 : -1)
+          }
+          return oldQueryData;
+        }
+      );
+      return { previousPrompts };
+    },
+    onError: (err, input, context) => {
+      trpcContext.publicPrompts.list.setData(undefined, context?.previousPrompts);
+    },
+    onSettled: () => {
+      trpcContext.publicPrompts.list.invalidate();
+    },
+  });
   const promptRemove = trpc.publicPrompts.remove.useMutation({
     onMutate: async ({ id }) => {
       const promptsQuery = trpcContext.publicPrompts.list;
@@ -96,6 +121,14 @@ export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
     [dispatch, promptsUpdate],
   );
 
+  const increaseUsage = useCallback(
+    async (prompt: Prompt) => {
+      await promptsIncreaseUsage.mutateAsync(prompt);
+      return prompt;
+    },
+    [dispatch, promptsUpdate],
+  );
+
   const remove = useCallback(
     async (prompt: Prompt) => {
       await promptRemove.mutateAsync({ id: prompt.id });
@@ -110,6 +143,7 @@ export default function usePublicPrompts(): [Prompt[], PublicPromptsAction] {
       add,
       update,
       remove,
+      increaseUsage,
     },
   ];
 }

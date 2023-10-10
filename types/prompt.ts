@@ -15,3 +15,11 @@ export const PromptSchema = z.object({
 export const PromptSchemaArray = z.array(PromptSchema);
 
 export type Prompt = z.infer<typeof PromptSchema>;
+
+export const PublicPromptSchema = PromptSchema.extend({
+  usageCount: z.number().default(0)
+})
+
+export const PublicPromptSchemaArray = z.array(PublicPromptSchema);
+
+export type PublicPrompt = z.infer<typeof PublicPromptSchema>;

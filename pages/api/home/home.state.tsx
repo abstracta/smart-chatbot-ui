@@ -4,7 +4,7 @@ import { Conversation, Message } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
 import { FolderInterface } from '@/types/folder';
 import { OpenAIModel, OpenAIModelID } from '@/types/openai';
-import { Prompt } from '@/types/prompt';
+import { Prompt, PublicPrompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 
 export interface HomeInitialState {
@@ -21,7 +21,7 @@ export interface HomeInitialState {
   selectedConversation: Conversation | undefined;
   currentMessage: Message | undefined;
   prompts: Prompt[];
-  publicPrompts: Prompt[];
+  publicPrompts: PublicPrompt[];
   showChatbar: boolean;
   showPromptbar: boolean;
   currentFolder: FolderInterface | undefined;

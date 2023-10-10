@@ -1,6 +1,6 @@
 import { Conversation } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
-import { Prompt } from '@/types/prompt';
+import { Prompt, PublicPrompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 import { MONGODB_DB } from '../app/const';
 import { Collection, Db, MongoClient } from 'mongodb';
@@ -28,9 +28,15 @@ export interface ConversationCollectionItem {
   userId: string;
   conversation: Conversation;
 }
+
 export interface PromptsCollectionItem {
   userId: string;
   prompt: Prompt;
+}
+
+export interface PublicPromptsCollectionItem {
+  userId: string;
+  prompt: PublicPrompt;
 }
 
 export interface FoldersCollectionItem {
@@ -228,11 +234,11 @@ export class UserDb {
 }
 
 export class PublicPromptsDb {
-  private _publicPrompts: Collection<PromptsCollectionItem>;
+  private _publicPrompts: Collection<PublicPromptsCollectionItem>;
   private _publicFolders: Collection<PublicFoldersCollectionItem>;
 
   constructor(_db: Db) {
-    this._publicPrompts = _db.collection<PromptsCollectionItem>('publicPrompts');
+    this._publicPrompts = _db.collection<PublicPromptsCollectionItem>('publicPrompts');
     this._publicFolders = _db.collection<PublicFoldersCollectionItem>('publicFolders');
   }
 
@@ -277,11 +283,18 @@ export class PublicPromptsDb {
     return item?.prompt;
   }
 
-  async savePrompt(prompt: Prompt) {
+  async savePrompt(prompt: PublicPrompt) {
     return this._publicPrompts.updateOne(
       { 'prompt.id': prompt.id },
       { $set: { prompt, userId: prompt.userId } },
       { upsert: true },
+    );
+  }
+
+  async increasePromptUsageCount(promptId: string) {
+    return this._publicPrompts.updateOne(
+      { 'prompt.id': promptId },
+      { $inc: { 'prompt.usageCount': 1 } },
     );
   }
 

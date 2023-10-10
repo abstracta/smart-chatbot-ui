@@ -29,6 +29,7 @@ import { VariableModal } from './VariableModal';
 
 import classNames from 'classnames';
 import { ChatInputUsedBudget } from './ChatInputUsedBudget';
+import usePublicPrompts from '@/hooks/usePublicPrompts';
 
 interface Props {
   onSend: (
@@ -130,6 +131,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     state: { selectedPlugins, chatMode },
     dispatch: chatDispatch,
   } = useContext(ChatContext);
+
+  const publicPromptActions = usePublicPrompts()[1];
 
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -295,6 +298,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
         return updatedContent;
       });
       updatePromptListVisibility(prompt.content);
+      if (publicPrompts.find(p => p.id === prompt.id)) publicPromptActions.increaseUsage(prompt);
     }
   };
 
@@ -305,6 +309,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     });
 
     setContent(newContent);
+    const prompt = [...filteredPrompts, ...filteredPublicPrompts][activePromptIndex];
+    if (publicPrompts.find(p => p.id === prompt.id)) publicPromptActions.increaseUsage(prompt);
 
     if (textareaRef && textareaRef.current) {
       textareaRef.current.focus();
