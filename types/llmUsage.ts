@@ -39,11 +39,11 @@ export type UserLlmUsage = z.infer<typeof UserLlmUsageSchema>;
 export type AggregationLlmUsageStatsPerUser = {
   userId: User['_id'],
   userName: User['name'],
-  totalTokens: UserLlmUsage['tokens']['total'],
+  totalTokens: UserLlmUsage['tokens']['total'] | undefined,
   totalUSD: UserLlmUsage['totalPriceUSD'],
   usage: {
     modelId: UserLlmUsage['modelId'],
-    totalTokens: UserLlmUsage['tokens']['total']
+    totalTokens: UserLlmUsage['tokens']['total'] | undefined
     totalUSD: UserLlmUsage['totalPriceUSD']
   }[]
 }

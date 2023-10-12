@@ -6,7 +6,9 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  Row,
   RowData,
+  SortingFn,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
@@ -16,6 +18,12 @@ import { PagingControls } from './components/PagingControls'
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     updateRow: (rowIndex: number, columnId: string, value: TData) => void
+  }
+}
+
+declare module '@tanstack/table-core' {
+  interface SortingFns {
+    numberIgnoreUndefined: SortingFn<unknown>
   }
 }
 
@@ -42,7 +50,7 @@ interface Props<T> {
   initialSorting?: ColumnSort[];
 }
 
-export const Table = <T,>({ columns, data, initialSorting, updateRow }: Props<T>) => {
+export const Table = <T,>({ columns, data, initialSorting, updateRow, }: Props<T>) => {
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting || [])
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper()
 
@@ -67,6 +75,22 @@ export const Table = <T,>({ columns, data, initialSorting, updateRow }: Props<T>
         skipAutoResetPageIndex()
         if (updateRow) await updateRow(value);
       },
+    },
+    sortingFns: {
+      // Requires column.sortUndefined = false
+      numberIgnoreUndefined: (a: Row<T>, b: Row<T>, column: string): number => {
+        const aValue = a.getValue<number | undefined>(column);
+        const bValue = b.getValue<number | undefined>(column);
+        const colSort = sorting.find(s => s.id == column);
+        if (aValue === undefined && bValue === undefined)
+          return 0;
+        if (aValue === undefined)
+          return colSort?.desc ? -1 : 1;
+        if (bValue === undefined)
+          return colSort?.desc ? 1 : -1;
+
+        return aValue - bValue;
+      }
     },
     debugTable: true,
   })

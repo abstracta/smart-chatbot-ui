@@ -85,7 +85,7 @@ const Reports: NextPageWithLayout<Props> = ({
           data.userName,
           ...(models.reduce((prev, curr) => {
             const modelUsage = data.usage.find(u => u.modelId == curr.id);
-            prev.push(modelUsage?.totalTokens.toString() || "");
+            prev.push(modelUsage?.totalTokens?.toString() || "");
             prev.push(modelUsage?.totalUSD?.toString() || "");
             return prev;
           }, [] as string[])),

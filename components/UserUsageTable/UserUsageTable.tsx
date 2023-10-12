@@ -48,6 +48,8 @@ export const UserUsageTable: FC<Props> = ({
                   },
                   header: t('Tokens') as string,
                   size: 50,
+                  sortUndefined: false,
+                  sortingFn: "numberIgnoreUndefined"
                 }),
                 columnHelper.accessor(row => row.usage.find(u => u.modelId == m.id)?.totalUSD, {
                   id: `$totalUSD-${m.id}`,
@@ -60,6 +62,8 @@ export const UserUsageTable: FC<Props> = ({
                   },
                   header: t('USD') as string,
                   size: 50,
+                  sortUndefined: false,
+                  sortingFn: "numberIgnoreUndefined"
                 }),
               ]
             })
@@ -81,7 +85,9 @@ export const UserUsageTable: FC<Props> = ({
               return value;
             },
             header: t("Total tokens") as string,
-            size: 50
+            size: 50,
+            sortUndefined: false,
+            sortingFn: "numberIgnoreUndefined"
           }),
           columnHelper.accessor("totalUSD", {
             id: "totalUSD",
@@ -94,6 +100,8 @@ export const UserUsageTable: FC<Props> = ({
             },
             header: t("Total USD") as string,
             size: 50,
+            sortUndefined: false,
+            sortingFn: "numberIgnoreUndefined"
           })
         ]
       })
