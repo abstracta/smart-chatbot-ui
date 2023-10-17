@@ -12,10 +12,10 @@ import { Readability } from '@mozilla/readability';
 import endent from 'endent';
 import jsdom, { JSDOM } from 'jsdom';
 import path from 'node:path';
-import { getOpenAIApi } from '@/utils/server/openai';
-import { OpenAIError } from '@/utils/server';
 import { getErrorResponseBody } from '@/utils/server/error';
 import { saveLlmUsage, verifyUserLlmUsage } from '@/utils/server/llmUsage';
+import { getLlmApiAggregator } from '@/utils/server/llm';
+import { LlmTemperature } from '@/types/llm';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
   // Vercel Hack
@@ -31,15 +31,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
 
   let encoding: Tiktoken | null = null;
   try {
-    const { messages, key, model, googleAPIKey, googleCSEId } =
+    const { messages, key, modelId, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
     try {
-      await verifyUserLlmUsage(userId, model.id);
+      await verifyUserLlmUsage(userId, modelId);
     } catch (e: any) {
       return res.status(429).json({ error: e.message });
     }
 
-    encoding = await getTiktokenEncoding(model.id);
+    encoding = getTiktokenEncoding(modelId);
 
     const userMessage = messages[messages.length - 1];
     const query = encodeURIComponent(userMessage.content.trim());
@@ -148,40 +148,23 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     Response:
     `;
 
-    const answerMessage: Message = { role: 'user', content: answerPrompt };
-    const openai = getOpenAIApi(model.azureDeploymentId);
-    let answerRes;
-    try {
-      answerRes = await openai.createChatCompletion({
-        model: model.id,
-        messages: [
-          {
-            role: 'system',
-            content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
-          },
-          answerMessage,
-        ],
-        max_tokens: 1000,
-        temperature: 1,
-        stream: false,
-      })
-    } catch (error: any) {
-      if (error.response) {
-        const { message, type, param, code } = error.response.data.error;
-        throw new OpenAIError(message, type, param, code)
-      } else throw error
-    }
+    const answerMessage: Message[] = [
+      {
+        role: 'system',
+        content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
+      },
+      { role: 'user', content: answerPrompt }
+    ];
+    const llmApi = (await getLlmApiAggregator()).getApiForModel(modelId);
+    const { message, usage } = await llmApi.chatCompletion(modelId, answerMessage, { temperature: LlmTemperature.NEUTRAL })
 
-    const { choices: choices2, usage } = await answerRes.data;
-    const answer = choices2[0].message!.content;
-
-    await saveLlmUsage(userId, model.id, "google", {
-      prompt: usage?.prompt_tokens ?? 0,
-      completion: usage?.completion_tokens ?? 0,
-      total: usage?.total_tokens ?? 0
+    await saveLlmUsage(userId, modelId, "google", {
+      prompt: usage?.prompt ?? 0,
+      completion: usage?.completion ?? 0,
+      total: usage?.total ?? 0
     })
 
-    res.status(200).json({ answer });
+    res.status(200).json({ answer: message.content });
   } catch (error) {
     console.error(error);
     const errorRes = getErrorResponseBody(error);

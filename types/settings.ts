@@ -1,11 +1,11 @@
 import * as z from 'zod';
-import { OpenAIModelID } from './openai';
+import { LlmID, LlmTemperature } from './llm';
 
 export const SettingsSchema = z.object({
   userId: z.string(),
   theme: z.enum(['light', 'dark']),
-  defaultTemperature: z.number(),
-  defaultModelId: z.nativeEnum(OpenAIModelID).optional(),
+  defaultTemperature: z.nativeEnum(LlmTemperature),
+  defaultModelId: z.nativeEnum(LlmID).optional(),
   defaultSystemPrompt: z.string().optional()
 });
 

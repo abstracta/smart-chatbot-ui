@@ -1,10 +1,10 @@
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { Settings } from '@/types/settings';
 
 import { DEFAULT_SYSTEM_PROMPT } from './const';
+import { LlmID, LlmList, LlmTemperature } from '@/types/llm';
 export interface CleaningFallback {
-  temperature: number;
+  temperature: LlmTemperature;
 }
 
 export const cleanSelectedConversation = (
@@ -17,7 +17,7 @@ export const cleanSelectedConversation = (
   if (!updatedConversation.model) {
     updatedConversation = {
       ...updatedConversation,
-      model: updatedConversation.model || OpenAIModels[OpenAIModelID.GPT_3_5],
+      model: updatedConversation.model || LlmList[LlmID.GPT_3_5],
     };
   }
 
@@ -59,7 +59,7 @@ export const cleanConversationHistory = (
   return history.reduce((acc: any[], conversation) => {
     try {
       if (!conversation.model) {
-        conversation.model = OpenAIModels[OpenAIModelID.GPT_3_5];
+        conversation.model = LlmList[LlmID.GPT_3_5];
       }
 
       if (!conversation.prompt) {

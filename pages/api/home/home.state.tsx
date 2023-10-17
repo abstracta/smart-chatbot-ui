@@ -3,7 +3,7 @@ import { MutableRefObject } from 'react';
 import { Conversation, Message } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
 import { FolderInterface } from '@/types/folder';
-import { OpenAIModel, OpenAIModelID } from '@/types/openai';
+import { Llm, LlmID, LlmTemperature } from '@/types/llm';
 import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 
@@ -14,7 +14,7 @@ export interface HomeInitialState {
   settings: Settings;
   messageIsStreaming: boolean;
   modelError: Error | null;
-  models: OpenAIModel[];
+  models: Llm[];
   folders: FolderInterface[];
   publicFolders: FolderInterface[];
   conversations: Conversation[];
@@ -27,8 +27,8 @@ export interface HomeInitialState {
   currentFolder: FolderInterface | undefined;
   messageError: boolean;
   searchTerm: string;
-  systemDefaultModelId: OpenAIModelID;
-  defaultModelId: OpenAIModelID | undefined;
+  systemDefaultModelId: LlmID;
+  defaultModelId: LlmID | undefined;
   defaultSystemPrompt: string;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
@@ -46,7 +46,7 @@ export const initialState: Partial<HomeInitialState> = {
   settings: {
     userId: '',
     theme: 'dark',
-    defaultTemperature: 1.0,
+    defaultTemperature: LlmTemperature.NEUTRAL,
     defaultModelId: undefined,
     defaultSystemPrompt: '',
   },

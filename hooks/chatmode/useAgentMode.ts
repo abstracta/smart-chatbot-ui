@@ -52,7 +52,7 @@ export function useAgentMode(
               apiService.planningConv(
                 {
                   taskId,
-                  model: params.body.model,
+                  modelId: params.body.modelId,
                   messages: params.body.messages,
                   pluginResults: toolActionResults,
                   enabledToolNames: params.plugins.map((p) => p.nameForModel),
@@ -67,7 +67,7 @@ export function useAgentMode(
               apiService.planning(
                 {
                   taskId,
-                  model: params.body.model,
+                  modelId: params.body.modelId,
                   messages: params.body.messages,
                   pluginResults: toolActionResults,
                   enabledToolNames: params.plugins.map((p) => p.nameForModel),
@@ -98,7 +98,7 @@ export function useAgentMode(
           }
           const actinoResult = await apiService.runPlugin({
             taskId,
-            model: params.body.model,
+            modelId: params.body.modelId,
             input: result.pluginInput,
             action: result,
           });

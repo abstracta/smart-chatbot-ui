@@ -17,9 +17,9 @@ import Spinner from '@/components/Spinner';
 import { IconAlertCircle, IconDotsVertical, IconReload } from '@tabler/icons-react';
 import { InputDate } from '@/components/Input/InputDate';
 import Dropdown from '@/components/Buttons/Dropdown/';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { DropdownItem } from '@/components/Buttons/Dropdown/DropItem';
 import { downloadFile } from '@/utils/app/download';
+import { LlmID, LlmList } from '@/types/llm';
 
 
 interface Props {
@@ -59,11 +59,11 @@ const Reports: NextPageWithLayout<Props> = ({
   }
 
   const models = useMemo(() => {
-    const showModelIds: OpenAIModelID[] = [
-      OpenAIModelID.GPT_3_5_AZ, OpenAIModelID.GPT_3_5_16K_AZ,
-      OpenAIModelID.GPT_4, OpenAIModelID.GPT_4_32K, OpenAIModelID.TEXT_EMBEDDING_ADA_002
+    const showModelIds: LlmID[] = [
+      LlmID.GPT_3_5_AZ, LlmID.GPT_3_5_16K_AZ,
+      LlmID.GPT_4, LlmID.GPT_4_32K, LlmID.TEXT_EMBEDDING_ADA_002
     ]
-    return Object.values(OpenAIModels).filter(m => showModelIds.includes(m.id))
+    return Object.values(LlmList).filter(m => showModelIds.includes(m.id))
   }, []);
 
   const exportCSV = () => {

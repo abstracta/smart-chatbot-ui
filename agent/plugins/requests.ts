@@ -13,7 +13,6 @@ import {
 import { Action, Plugin } from '@/types/agent';
 
 import { TaskExecutionContext } from './executor';
-import { getOpenAIApiEmbeddings } from '@/utils/server/openai';
 
 export interface Headers {
   [key: string]: string;
@@ -97,18 +96,17 @@ export class RequestsGetWebpageTool implements Plugin, RequestTool {
     const html = await res.text();
     const text = extractTextFromHtml(html);
     const encoding = await context.getEncoding();
-    const openai = getOpenAIApiEmbeddings();
     const promises = chunkTextByTokenSize(encoding, text, 200)
       .slice(0, 10)
       .map((chunk) =>
-        createEmbedding(chunk, openai, context.userId).then((embedding) => {
+        createEmbedding(chunk, context.llmApiAggregator, context.userId).then((embedding) => {
           return { chunk, embedding };
         }),
       );
     encoding.free();
     const thoughtEmbedding = await createEmbedding(
       action.thought,
-      openai,
+      context.llmApiAggregator,
       context.userId
     );
     const webEmbeddings = await Promise.all(promises);

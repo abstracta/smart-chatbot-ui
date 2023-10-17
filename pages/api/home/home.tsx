@@ -12,7 +12,6 @@ import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_E
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -22,6 +21,7 @@ import { HomeInitialState, initialState } from './home.state';
 import { v4 as uuidv4 } from 'uuid';
 import { authOptions } from '../auth/[...nextauth].page';
 import { getServerSession } from 'next-auth/next';
+import { LlmID } from '@/types/llm';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
@@ -30,7 +30,7 @@ interface Props {
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
-  systemDefaultModelId: OpenAIModelID;
+  systemDefaultModelId: LlmID;
 }
 
 const Home = ({

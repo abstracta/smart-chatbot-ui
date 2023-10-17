@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/utils/app/const';
-import { OpenAIStream } from '@/utils/server';
 import { saveLlmUsage, verifyUserLlmUsage } from '@/utils/server/llmUsage';
 import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 import { createMessagesToSend } from '@/utils/server/message';
@@ -15,6 +14,7 @@ import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 
 import path from 'node:path';
 import loggerFn from 'pino';
+import { getLlmApiAggregator } from '@/utils/server/llm';
 
 const logger = loggerFn({ name: 'chat' });
 
@@ -34,22 +34,27 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const userId = await getUserHash(req, res);
-  const { model, messages, key, prompt, temperature } = ChatBodySchema.parse(
+  const { modelId, messages, key, prompt, temperature } = ChatBodySchema.parse(
     req.body,
   );
   try {
-    await verifyUserLlmUsage(userId, model.id);
+    await verifyUserLlmUsage(userId, modelId);
   } catch (e: any) {
     return res.status(429).json({ error: e.message });
   }
+  const llmApiAggregator = await getLlmApiAggregator();
+  const model = await llmApiAggregator.getModel(modelId);
+  if (!model) {
+    return res.status(404).json({ error: "Model not found" });
+  }
 
-  const encoding = await getTiktokenEncoding(model.id);
+  const encoding = getTiktokenEncoding(modelId);
   try {
     let systemPromptToSend = prompt;
     if (!systemPromptToSend) {
       systemPromptToSend = DEFAULT_SYSTEM_PROMPT;
     }
-    let { messages: messagesToSend, maxToken, tokenCount } = createMessagesToSend(
+    let { messages: messagesToSend, maxToken } = createMessagesToSend(
       encoding,
       model,
       systemPromptToSend,
@@ -59,44 +64,29 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (messagesToSend.length === 0) {
       throw new Error('message is too long');
     }
-    const stream = await OpenAIStream(
-      model,
-      systemPromptToSend,
-      temperature,
-      key,
-      messagesToSend,
-      maxToken,
+    const llmApi = llmApiAggregator.getApiForModel(modelId);
+    const { usage, message } = await llmApi.chatCompletion(modelId, messagesToSend,
+      {
+        temperature,
+        maxTokens: maxToken,
+        callbacks: [
+          ...(llmApi.getCanStream() ? [{
+            handleLLMNewToken(token: string) {
+              res.write(token);
+            },
+          }] : [])
+        ]
+      }
     );
-    res.status(200);
-    res.writeHead(200, {
-      Connection: 'keep-alive',
-      'Content-Encoding': 'none',
-      'Transfer-Encoding': 'chunked',
-      'Cache-Control': 'no-cache',
-      'Content-Type': 'text/event-stream',
-    });
-    const decoder = new TextDecoder();
-    const reader = stream.getReader();
-    let closed = false;
-    let responseText = "";
-    while (!closed) {
-      await reader.read().then(({ done, value }) => {
-        if (done) {
-          closed = true;
-          res.end();
-        } else {
-          const text = decoder.decode(value);
-          responseText += text;
-          res.write(text);
-        }
-      });
-    }
-    const completionTokenCount = encoding.encode(responseText).length;
+    if (!llmApi.getCanStream()) res.write(message.content);
+    res.end();
+
     await saveLlmUsage(userId, model.id, "chat", {
-      prompt: tokenCount,
-      completion: completionTokenCount,
-      total: tokenCount + completionTokenCount
+      prompt: usage?.prompt ?? 0,
+      completion: usage?.completion ?? 0,
+      total: usage?.total ?? 0
     })
+
   } catch (error) {
     console.error(error);
     const errorRes = getErrorResponseBody(error);

@@ -45,7 +45,7 @@ export const useMesseageSender = () => {
       };
     }
     const chatBody: ChatBody = {
-      model: updatedConversation.model,
+      modelId: updatedConversation.model.id,
       messages: updatedConversation.messages,
       key: apiKey,
       prompt: conversation.prompt,

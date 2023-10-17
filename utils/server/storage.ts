@@ -4,9 +4,10 @@ import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 import { MONGODB_DB } from '../app/const';
 import { Collection, Db, MongoClient } from 'mongodb';
-import { User, UserSchema } from '@/types/user';
-import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate, AggregationLlmUsageStatsPerUser } from '@/types/llmUsage';
-import { OpenAIModelID } from '@/types/openai';
+import { AggregationLlmUsageStatsPerUser } from '@/types/llmUsage';
+import { User } from '@/types/user';
+import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
+import { LlmID, LlmTemperature } from '@/types/llm';
 
 let _db: Db | null = null;
 export async function getDb(): Promise<Db> {
@@ -181,7 +182,7 @@ export class UserDb {
     return {
       userId: this._userId,
       theme: 'dark',
-      defaultTemperature: 1.0,
+      defaultTemperature: LlmTemperature.NEUTRAL,
     };
   }
 
@@ -403,7 +404,7 @@ export class LlmsDb {
     this._llmPriceRate = _db.collection<LlmPriceRate>('llmPriceRate');
   }
 
-  async getModelPriceRate(id: OpenAIModelID): Promise<LlmPriceRate | null> {
+  async getModelPriceRate(id: LlmID): Promise<LlmPriceRate | null> {
     return await this._llmPriceRate.findOne({ modelId: id });
   }
 }

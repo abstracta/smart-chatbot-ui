@@ -11,10 +11,10 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { TemperatureSlider } from '../Chat/Temperature';
 import { Dialog } from '../Dialog/Dialog';
-import { OpenAIModelID, OpenAIModelType } from '@/types/openai';
 import { Select } from '../Input/Select';
 import useSettings from '@/hooks/useSettings';
 import { SystemPrompt } from '../Home/SystemPrompt';
+import { LlmID, LlmType } from '@/types/llm';
 
 interface Props {
   open: boolean;
@@ -42,7 +42,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   };
 
   const handleModelSelect = (value: string) => {
-    dispatch({ field: "defaultModelId", value: value ? value as OpenAIModelID : undefined });
+    dispatch({ field: "defaultModelId", value: value ? value as LlmID : undefined });
   };
 
   // Render the dialog.
@@ -69,12 +69,12 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
       <div className="flex flex-col mb-2 ">
         <label className="text-sm font-bold mb-2 text-black dark:text-neutral-200">
-          {t('Default Model')}
+          {t('Default model')}
         </label>
         <Select placeholder={t('Select a model') || ""}
           options={[
             { value: "", label: `${t("System default")} (${models.find(m => m.id == systemDefaultModelId)?.name})` },
-            ...models.filter(m => m.type == OpenAIModelType.CHAT).map((m) => {
+            ...models.filter(m => m.type == LlmType.CHAT).map((m) => {
               return {
                 value: m.id,
                 label: m.name
@@ -88,7 +88,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
 
       <div className="flex flex-col mb-2 ">
         <div className="text-sm font-bold mt-2 mb-2 text-black dark:text-neutral-200">
-          {t('Temperature')}
+          {t('Default temperature')}
         </div>
 
         <TemperatureSlider

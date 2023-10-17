@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
 import { Settings } from '@/types/settings';
 import { DefinedUseQueryResult } from '@tanstack/react-query';
+import { LlmTemperature } from '@/types/llm';
 
 type SettingsAction = {
   update: (newState: Settings) => Promise<Settings>;
@@ -16,7 +17,7 @@ export default function useSettings(): [
     initialData: {
       userId: '',
       theme: 'dark',
-      defaultTemperature: 1.0,
+      defaultTemperature: LlmTemperature.NEUTRAL,
       defaultModelId: undefined,
       defaultSystemPrompt: '',
     }

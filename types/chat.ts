@@ -1,4 +1,5 @@
 import { Plugin } from './agent';
+import { LlmID, LlmTemperature } from './llm';
 import { OpenAIModelSchema } from './openai';
 
 import * as z from 'zod';
@@ -15,11 +16,11 @@ export const MessageSchema = z.object({
 export type Message = z.infer<typeof MessageSchema>;
 
 export const ChatBodySchema = z.object({
-  model: OpenAIModelSchema,
+  modelId: z.nativeEnum(LlmID),
   messages: z.array(MessageSchema),
   key: z.string(),
   prompt: z.string(),
-  temperature: z.number(),
+  temperature: z.nativeEnum(LlmTemperature),
   googleAPIKey: z.string().optional(),
   googleCSEId: z.string().optional(),
 });
@@ -44,7 +45,7 @@ export const ConversationSchema = z.object({
   messages: z.array(MessageSchema),
   model: OpenAIModelSchema,
   prompt: z.string(),
-  temperature: z.number(),
+  temperature: z.nativeEnum(LlmTemperature),
   folderId: z.string().nullable(),
 });
 

@@ -4,9 +4,10 @@ import { Message } from '@/types/chat';
 
 import { Tiktoken } from 'tiktoken';
 import chalk from 'chalk';
-import { ConsoleCallbackHandler } from 'langchain/callbacks';
-import { LLMResult } from 'langchain/dist/schema';
-import { ChatCompletionRequestMessage } from 'openai';
+import { BaseCallbackHandler } from 'langchain/callbacks';
+import { LLMResult } from 'langchain/schema';
+import { Serialized } from 'langchain/dist/load/serializable';
+import { Llm } from '@/types/llm';
 
 const strip = (str: string, c: string) => {
   const m = str.match(new RegExp(`^${c}(.*)${c}$`));
@@ -20,13 +21,16 @@ export const stripQuotes = (str: string) => {
   return strip(strip(str, '"'), "'");
 };
 
-export class DebugCallbackHandler extends ConsoleCallbackHandler {
+export class DebugCallbackHandler extends BaseCallbackHandler {
+  name: string;
   alwaysVerbose: boolean = true;
   llmStartTime: number = 0;
+  constructor() {
+    super()
+    this.name = "Debug"
+  }
   async handleLLMStart(
-    llm: {
-      name: string;
-    },
+    llm: Serialized,
     prompts: string[],
     runId: string,
   ): Promise<void> {
@@ -51,13 +55,13 @@ export class DebugCallbackHandler extends ConsoleCallbackHandler {
 
 export const createAgentHistory = (
   encoding: Tiktoken,
-  model: string,
+  model: Llm,
   maxSize: number,
   messages: Message[],
 ): Message[] => {
   let result: Message[] = [];
   for (const msg of messages.reverse()) {
-    const serialized = serializeMessages(model, [...result, msg]);
+    const serialized = serializeMessages(model.id, [...result, msg]);
     const length = encoding.encode(serialized, 'all').length;
     if (length > maxSize) {
       break;
@@ -69,7 +73,7 @@ export const createAgentHistory = (
 
 export const messagesToOpenAIMessages = (
   messages: Message[],
-): ChatCompletionRequestMessage[] => {
+): Message[] => {
   return messages.map((msg) => {
     return {
       role: msg.role,

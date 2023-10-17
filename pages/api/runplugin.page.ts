@@ -23,17 +23,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
     const {
       taskId,
-      model,
+      modelId,
       action: toolAction,
     } = (await req.body) as RunPluginRequest;
     try {
-      await verifyUserLlmUsage(userId, model.id);
+      await verifyUserLlmUsage(userId, modelId);
     } catch (e: any) {
       return res.status(429).json({ error: e.message });
     }
 
     const verbose = process.env.DEBUG_AGENT_LLM_LOGGING === 'true';
-    const context = await createContext(taskId, req, res, model, verbose);
+    const context = await createContext(taskId, req, res, modelId, verbose);
     const toolResult = await executeTool(context, toolAction);
     const result: PluginResult = {
       action: toolAction,

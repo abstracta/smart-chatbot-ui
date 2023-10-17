@@ -1,9 +1,9 @@
 import { LlmUsageMode, TokenUsageCount, NewUserLlmUsage } from "@/types/llmUsage";
-import { OpenAIModelID } from "@/types/openai";
 import { UserDb, LlmsDb, getDb } from "./storage";
 import { DEFAULT_USER_LIMIT_USD_MONTHLY } from "../app/const";
+import { LlmID } from "@/types/llm";
 
-export async function verifyUserLlmUsage(userId: string, modelId: OpenAIModelID) {
+export async function verifyUserLlmUsage(userId: string, modelId: LlmID) {
     const remainingBudget = await getMonthlyUsedBudgetPercent(userId);
     if (remainingBudget === 100) throw new Error("Uh-oh! You've reached the monthly API limit. Please reach out to the admin team for assistance.");
 }
@@ -20,7 +20,7 @@ export async function getMonthlyUsedBudgetPercent(userId: string): Promise<numbe
     return Math.min(100, usedBudgetUSD / userBudgetLimit * 100);
 }
 
-export async function saveLlmUsage(userId: string, modelId: OpenAIModelID, mode: LlmUsageMode, tokens: TokenUsageCount) {
+export async function saveLlmUsage(userId: string, modelId: LlmID, mode: LlmUsageMode, tokens: TokenUsageCount) {
     const userDb = await UserDb.fromUserHash(userId);
     const llmDb = new LlmsDb(await getDb());
     const modelUsage: NewUserLlmUsage = {

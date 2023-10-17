@@ -32,6 +32,7 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
+import { LlmTemperature } from '@/types/llm';
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -63,7 +64,7 @@ export const Chat = memo(() => {
   const [showScrollDownButton, setShowScrollDownButton] =
     useState<boolean>(false);
   const [systemPrompt, setSystemPrompt] = useState<string>(defaultSystemPrompt);
-  const [temperature, setTemperature] = useState<number>(
+  const [temperature, setTemperature] = useState<LlmTemperature>(
     settings.defaultTemperature,
   );
 
@@ -86,7 +87,7 @@ export const Chat = memo(() => {
       if (
         conversation.messages.length === 0 &&
         (conversation.prompt !== systemPrompt ||
-        conversation.temperature !== temperature)
+          conversation.temperature !== temperature)
       ) {
         conversation.prompt = systemPrompt;
         conversation.temperature = temperature;
@@ -308,7 +309,7 @@ export const Chat = memo(() => {
 
                   {selectedConversation?.messages.map((message, index) => (
                     <MemoizedChatMessage
-                      key={index}
+                      key={selectedConversation.id + index}
                       message={message}
                       messageIndex={index}
                     />
@@ -332,7 +333,7 @@ export const Chat = memo(() => {
               onRegenerate={(chatMode, plugins) => {
                 const latestIndex = selectedConversation?.messages.findLastIndex(m => m.role == "user");
                 if (latestIndex != undefined)
-                  handleSend(selectedConversation!.messages[latestIndex], 
+                  handleSend(selectedConversation!.messages[latestIndex],
                     selectedConversation!.messages.length - latestIndex, chatMode, plugins);
               }}
             />

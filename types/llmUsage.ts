@@ -1,11 +1,9 @@
 import * as z from 'zod';
-import { OpenAIModelID } from './openai';
 import { User } from './user';
-
-export const OpenAIModelIdEnumSchema = z.nativeEnum(OpenAIModelID);
+import { LlmID } from './llm';
 
 export const LlmPriceRate = z.object({
-  modelId: OpenAIModelIdEnumSchema,
+  modelId: z.nativeEnum(LlmID),
   promptPriceUSDPer1000: z.number(),
   completionPriceUSDPer1000: z.number()
 });
