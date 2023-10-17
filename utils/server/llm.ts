@@ -3,7 +3,11 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ChatBedrock } from "langchain/chat_models/bedrock";
 import { BaseMessage } from "langchain/schema";
-import { AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST, OPENAI_API_TYPE, AWS_BEDROCK_MODELS } from "../app/const";
+import {
+  AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST,
+  OPENAI_API_TYPE, AWS_BEDROCK_MODELS, OPENAI_INSTANCE_NAME,
+  AWS_BEDROCK_REGION
+} from "../app/const";
 import { OpenAIModel } from "@/types/openai";
 import { LlmList } from '@/types/llm';
 import { CallbackHandlerMethods } from "langchain/callbacks";
@@ -52,7 +56,8 @@ abstract class LlmApi {
 
   abstract listModels(): Llm[]
 
-  abstract chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions): Promise<ChatCompletionResponse>
+  abstract chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
+    : Promise<ChatCompletionResponse>
 
   abstract createEmbeddings(modelId: LlmID, text: string): Promise<CreateEmbeddingsResponse>
 
@@ -100,7 +105,7 @@ class OpenAiApi extends LlmApi {
 
   constructor() {
     super({
-      [LlmTemperature.PRECISE]: 0.1,
+      [LlmTemperature.PRECISE]: 0,
       [LlmTemperature.NEUTRAL]: 1,
       [LlmTemperature.CREATIVE]: 1.5,
     });
@@ -142,7 +147,8 @@ class OpenAiApi extends LlmApi {
     return this.models ? Object.values(this.models) : [];
   }
 
-  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions): Promise<ChatCompletionResponse> {
+  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
+    : Promise<ChatCompletionResponse> {
     const model = new ChatOpenAI({
       ...this.baseOptions,
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
@@ -202,15 +208,16 @@ class AzureOpenAiApi extends LlmApi {
 
   constructor() {
     super({
-      [LlmTemperature.PRECISE]: 0.1,
+      [LlmTemperature.PRECISE]: 0,
       [LlmTemperature.NEUTRAL]: 1,
       [LlmTemperature.CREATIVE]: 1.5,
     });
     this.models = AZURE_OPENAI_DEPLOYMENTS || {} as Record<LlmID, OpenAIModel>;
     this.baseOptions = {
-      azureOpenAIApiKey: process.env.OPENAI_API_KEY, // In Node.js defaults to process.env.AZURE_OPENAI_API_KEY
-      azureOpenAIApiVersion: OPENAI_API_VERSION, // In Node.js defaults to process.env.AZURE_OPENAI_API_VERSION
-      azureOpenAIBasePath: OPENAI_API_HOST, // In Node.js defaults to process.env.AZURE_OPENAI_API_INSTANCE_NAME
+      azureOpenAIApiKey: process.env.OPENAI_API_KEY,
+      azureOpenAIApiVersion: OPENAI_API_VERSION,
+      ...(OPENAI_INSTANCE_NAME ? { azureOpenAIApiInstanceName: OPENAI_INSTANCE_NAME } : {}),
+      ...(OPENAI_API_HOST ? { azureOpenAIBasePath: OPENAI_API_HOST } : {})
     }
   }
 
@@ -224,7 +231,8 @@ class AzureOpenAiApi extends LlmApi {
     return this.models[modelId].azureDeploymentId || "";
   }
 
-  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions): Promise<ChatCompletionResponse> {
+  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
+    : Promise<ChatCompletionResponse> {
     const model = new ChatOpenAI({
       ...this.baseOptions,
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
@@ -303,7 +311,9 @@ class AwsBedrockApi extends LlmApi {
       [LlmTemperature.CREATIVE]: 1,
     }, false);
     this.models = {} as Record<LlmID, OpenAIModel>;
-    this.bedrockClient = new Bedrock();
+    this.bedrockClient = new Bedrock({
+      ...(AWS_BEDROCK_REGION ? { region: AWS_BEDROCK_REGION } : {})
+    });
   }
 
   async init(): Promise<void> {
@@ -334,8 +344,10 @@ class AwsBedrockApi extends LlmApi {
     return this.models ? Object.values(this.models) : [];
   }
 
-  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions): Promise<ChatCompletionResponse> {
+  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
+    : Promise<ChatCompletionResponse> {
     const model = new ChatBedrock({
+      region: AWS_BEDROCK_REGION,
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
       model: modelId,
       maxTokens: options?.maxTokens,
@@ -389,8 +401,14 @@ export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
     const provider = defaultProvider();
     await provider();
     apiList.push(new AwsBedrockApi())
-  } catch (e) { }
+  } catch (e) {
+    console.error("Aws credentials error:", e);
+  }
   const apiCatalog = await new LlmApiAggregator(apiList);
-  await apiCatalog.init();
+  try {
+    await apiCatalog.init();
+  } catch (e) {
+    console.error("Error initializing llm apis", e);
+  }
   return apiCatalog;
 }

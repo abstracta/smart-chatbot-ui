@@ -18,8 +18,9 @@ export const DEFAULT_MODEL_EMBEDDINGS: LlmID = (process.env.DEFAULT_MODEL_EMBEDD
     process.env.DEFAULT_MODEL_EMBEDDINGS as LlmID,
   ) && process.env.DEFAULT_MODEL_EMBEDDINGS as LlmID) || fallbackEmbeddingsModelID;
 
-export const OPENAI_API_HOST =
-  process.env.OPENAI_API_HOST || 'https://api.openai.com';
+export const OPENAI_INSTANCE_NAME = process.env.OPENAI_INSTANCE_NAME || undefined;
+
+export const OPENAI_API_HOST = process.env.OPENAI_API_HOST || undefined;
 
 export const OPENAI_API_TYPE = process.env.OPENAI_API_TYPE || 'openai';
 
@@ -42,6 +43,8 @@ export const DEFAULT_USER_LIMIT_USD_MONTHLY: number = process.env.DEFAULT_USER_L
 export const CAN_UPDATE_USER_QUOTAS: boolean = process.env.CAN_UPDATE_USER_QUOTAS === "true" || false;
 
 export const AWS_BEDROCK_MODELS: LlmID[] | undefined = process.env.AWS_BEDROCK_MODELS ? parseModelIdList(process.env.AWS_BEDROCK_MODELS) : undefined;
+
+export const AWS_BEDROCK_REGION: string | undefined = process.env.AWS_BEDROCK_REGION || undefined;
 
 function parseModelIdList(value: string): LlmID[] {
   return value.trim()

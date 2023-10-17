@@ -121,6 +121,7 @@ When deploying the application, the following environment variables can be set:
 | OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
 | OPENAI_API_TYPE                   | `openai`                       | The API type, options are `openai` or `azure`                                                                                             |
 | OPENAI_API_VERSION                | `2023-05-15`                   | Only applicable for Azure OpenAI                                                                                                          |
+| OPENAI_INSTANCE_NAME              |                                | Azure OpenAI instance name                                                                                                                |
 | OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
 | DEFAULT_MODEL                     | `gpt-3.5-turbo`                | The default model to use on new conversations, for Azure use `gpt-35-turbo`                                                               |
 | DEFAULT_MODEL_EMBEDDINGS          | `text-embedding-ada-002`       | The default model to use for embeddings                                                                                                   |
@@ -149,6 +150,7 @@ When deploying the application, the following environment variables can be set:
 | DEFAULT_USER_LIMIT_USD_MONTHLY    |                                | Requires API pricing to be configured. Set a default monthly limit on api consumption per user. Leave unset for unrestricted access       |
 | CAN_UPDATE_USER_QUOTAS            | `false`                        | Allow admin users to modify per-user monthly quotas                                                                                       |
 | AWS_BEDROCK_MODELS                |                                | Filter AWS Bedrock foundational models. It allows you to provide the model id(s) in a comma-separated format to select multiple models. If left empty, all supported models will be used. |
+| AWS_BEDROCK_REGION                |                                | AWS Bedrock region                                                                                                                        |
 
 If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
 If you don't have an OpenAI API key, you can get one [here](https://platform.openai.com/account/api-keys).

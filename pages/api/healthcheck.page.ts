@@ -21,7 +21,7 @@ const llmApisCheck = async () => {
     return models.length > 0
   }
   catch (e) {
-    console.error("OpenAI health check failed.", e);
+    console.error("LlmApis health check failed.", e);
     return false;
   }
 }
