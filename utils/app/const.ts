@@ -1,11 +1,11 @@
 import { LlmID } from "@/types/llm";
-import { OpenAIModel } from "@/types/openai";
+import { AzureOpenAIModel } from "@/types/openai";
 import { fallbackEmbeddingsModelID } from '@/types/llm';
 import { fallbackModelID } from '@/types/llm';
 import { LlmList } from '@/types/llm';
 
 export const DEFAULT_SYSTEM_PROMPT =
-  process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT ||
+  process.env.DEFAULT_SYSTEM_PROMPT ||
   "You are ChatGPT, a large language model trained by OpenAI. Follow the user's instructions carefully. Respond using markdown.";
 
 export const DEFAULT_MODEL = (process.env.DEFAULT_MODEL &&
@@ -29,7 +29,7 @@ export const OPENAI_API_VERSION =
 
 export const OPENAI_ORGANIZATION = process.env.OPENAI_ORGANIZATION || '';
 
-export const AZURE_OPENAI_DEPLOYMENTS: Record<LlmID, OpenAIModel> | undefined = process.env.AZURE_OPENAI_DEPLOYMENTS
+export const AZURE_OPENAI_DEPLOYMENTS: Record<LlmID, AzureOpenAIModel> | undefined = process.env.AZURE_OPENAI_DEPLOYMENTS
   ? parseAzureDeployments(process.env.AZURE_OPENAI_DEPLOYMENTS) : undefined;
 
 export const MONGODB_DB = process.env.MONGODB_DB || '';
@@ -46,6 +46,8 @@ export const AWS_BEDROCK_MODELS: LlmID[] | undefined = process.env.AWS_BEDROCK_M
 
 export const AWS_BEDROCK_REGION: string | undefined = process.env.AWS_BEDROCK_REGION || undefined;
 
+export const OLLAMA_URL: string | undefined = process.env.OLLAMA_URL || undefined;
+
 function parseModelIdList(value: string): LlmID[] {
   return value.trim()
     .split(",")
@@ -53,14 +55,14 @@ function parseModelIdList(value: string): LlmID[] {
     .filter(Boolean) as LlmID[];
 }
 
-function parseAzureDeployments(envVar: string): Record<LlmID, OpenAIModel> {
+function parseAzureDeployments(envVar: string): Record<LlmID, AzureOpenAIModel> {
   return envVar.trim().split(",").reduce((prev, curr) => {
     const [modelId, azureDeploymentId] = curr.split(":");
     if ((Object.values(LlmID) as string[]).includes(modelId)) {
-      const model = LlmList[modelId as LlmID] as OpenAIModel;
+      const model = LlmList[modelId as LlmID] as AzureOpenAIModel;
       model.azureDeploymentId = azureDeploymentId;
       prev[modelId as LlmID] = model;
     }
     return prev;
-  }, {} as Record<LlmID, OpenAIModel>);
+  }, {} as Record<LlmID, AzureOpenAIModel>);
 }

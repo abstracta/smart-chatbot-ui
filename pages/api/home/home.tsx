@@ -31,6 +31,7 @@ interface Props {
   promptSharingEnabled: boolean;
   supportEmail: string;
   systemDefaultModelId: LlmID;
+  systemDefaultSystemPrompt: string;
 }
 
 const Home = ({
@@ -41,6 +42,7 @@ const Home = ({
   supportEmail,
   promptSharingEnabled,
   systemDefaultModelId,
+  systemDefaultSystemPrompt,
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -59,6 +61,7 @@ const Home = ({
       isAzureOpenAI,
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
+      defaultSystemPrompt: systemDefaultSystemPrompt,
     } as HomeInitialState,
   });
 
@@ -101,7 +104,7 @@ const Home = ({
     dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
     dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
 
-    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
+    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || systemDefaultSystemPrompt });
 
     serverSideApiKeyIsSet &&
       dispatch({
@@ -116,7 +119,7 @@ const Home = ({
   }, [
     t,
     systemDefaultModelId,
-    defaultSystemPrompt,
+    systemDefaultSystemPrompt,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
@@ -164,6 +167,7 @@ const Home = ({
       const cleanedConversationHistory: Conversation[] =
         cleanConversationHistory(history, {
           temperature: settings.defaultTemperature,
+          defaultSystemPrompt
         });
       dispatch({ field: 'conversations', value: cleanedConversationHistory });
 
@@ -293,6 +297,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,
       systemDefaultModelId: DEFAULT_MODEL,
+      systemDefaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
     },
   };
 };

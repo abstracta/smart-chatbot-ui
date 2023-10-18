@@ -2,13 +2,15 @@ import { Llm, LlmID, LlmTemperature } from "@/types/llm";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ChatBedrock } from "langchain/chat_models/bedrock";
+import { ChatOllama } from "langchain/chat_models/ollama";
+import { OllamaEmbeddings } from "langchain/embeddings/ollama";
 import { BaseMessage } from "langchain/schema";
 import {
   AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST,
   OPENAI_API_TYPE, AWS_BEDROCK_MODELS, OPENAI_INSTANCE_NAME,
-  AWS_BEDROCK_REGION
+  AWS_BEDROCK_REGION, OLLAMA_URL
 } from "../app/const";
-import { OpenAIModel } from "@/types/openai";
+import { AzureOpenAIModel } from "@/types/openai";
 import { LlmList } from '@/types/llm';
 import { CallbackHandlerMethods } from "langchain/callbacks";
 import { getTiktokenEncoding } from "./tiktoken";
@@ -100,16 +102,16 @@ export class LlmApiAggregator {
 }
 
 class OpenAiApi extends LlmApi {
-  private models: Record<LlmID, OpenAIModel>;
+  private models: Record<LlmID, Llm>;
   private baseOptions: any;
 
   constructor() {
     super({
       [LlmTemperature.PRECISE]: 0,
-      [LlmTemperature.NEUTRAL]: 1,
+      [LlmTemperature.NEUTRAL]: .8,
       [LlmTemperature.CREATIVE]: 1.5,
     });
-    this.models = {} as Record<LlmID, OpenAIModel>;
+    this.models = {} as Record<LlmID, Llm>;
     this.baseOptions = {
       openAIApiKey: process.env.OPENAI_API_KEY
     }
@@ -140,7 +142,7 @@ class OpenAiApi extends LlmApi {
     this.models = models.reduce((prev, curr) => {
       if (prev[curr.id] == undefined) prev[curr.id] = curr;
       return prev;
-    }, {} as Record<LlmID, OpenAIModel>);;
+    }, {} as Record<LlmID, Llm>);;
   }
 
   listModels(): Llm[] {
@@ -203,16 +205,16 @@ class OpenAiApi extends LlmApi {
 }
 
 class AzureOpenAiApi extends LlmApi {
-  private models: Record<LlmID, OpenAIModel>;
+  private models: Record<LlmID, AzureOpenAIModel>;
   private baseOptions: any;
 
   constructor() {
     super({
       [LlmTemperature.PRECISE]: 0,
-      [LlmTemperature.NEUTRAL]: 1,
+      [LlmTemperature.NEUTRAL]: .8,
       [LlmTemperature.CREATIVE]: 1.5,
     });
-    this.models = AZURE_OPENAI_DEPLOYMENTS || {} as Record<LlmID, OpenAIModel>;
+    this.models = AZURE_OPENAI_DEPLOYMENTS || {} as Record<LlmID, AzureOpenAIModel>;
     this.baseOptions = {
       azureOpenAIApiKey: process.env.OPENAI_API_KEY,
       azureOpenAIApiVersion: OPENAI_API_VERSION,
@@ -301,7 +303,7 @@ class AzureOpenAiApi extends LlmApi {
 }
 
 class AwsBedrockApi extends LlmApi {
-  private models: Record<LlmID, OpenAIModel>;
+  private models: Record<LlmID, Llm>;
   private bedrockClient: Bedrock;
 
   constructor() {
@@ -310,7 +312,7 @@ class AwsBedrockApi extends LlmApi {
       [LlmTemperature.NEUTRAL]: .5,
       [LlmTemperature.CREATIVE]: 1,
     }, false);
-    this.models = {} as Record<LlmID, OpenAIModel>;
+    this.models = {} as Record<LlmID, Llm>;
     this.bedrockClient = new Bedrock({
       ...(AWS_BEDROCK_REGION ? { region: AWS_BEDROCK_REGION } : {})
     });
@@ -320,7 +322,7 @@ class AwsBedrockApi extends LlmApi {
     this.models = (await this._getModels()).reduce((prev, curr) => {
       if (prev[curr.id] == undefined) prev[curr.id] = curr;
       return prev;
-    }, {} as Record<LlmID, OpenAIModel>);
+    }, {} as Record<LlmID, Llm>);
   }
 
   private async _getModels(): Promise<Llm[]> {
@@ -391,6 +393,100 @@ class AwsBedrockApi extends LlmApi {
   }
 }
 
+
+class OLlamaApi extends LlmApi {
+  private models: Record<LlmID, Llm>;
+  private baseOptions: any;
+
+  constructor() {
+    super({
+      [LlmTemperature.PRECISE]: 0,
+      [LlmTemperature.NEUTRAL]: .8,
+      [LlmTemperature.CREATIVE]: 1.5,
+    });
+    this.models = {} as Record<LlmID, Llm>;
+    this.baseOptions = {
+      baseUrl: OLLAMA_URL
+    }
+  }
+
+  async init(): Promise<void> {
+    this.models = (await this._getModels()).reduce((prev, curr) => {
+      if (prev[curr.id] == undefined) prev[curr.id] = curr;
+      return prev;
+    }, {} as Record<LlmID, Llm>);
+  }
+
+  private async _getModels(): Promise<Llm[]> {
+    const res = await fetch(`${OLLAMA_URL}/api/tags`);
+    const json = await res.json();
+    const models: Llm[] = json.models?.map((model: any) => {
+      return Object.values(LlmList).find(m => m.id == model.name);
+    }).filter(Boolean) || []
+    return models;
+  }
+
+  listModels(): Llm[] {
+    return this.models ? Object.values(this.models) : [];
+  }
+
+  async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions): Promise<ChatCompletionResponse> {
+    const model = new ChatOllama({
+      ...this.baseOptions,
+      temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
+      model: modelId,
+    });
+    // TODO: use different tokenizer
+    const encoding = getTiktokenEncoding(modelId);
+    const serialized = serializeMessages(modelId, messages);
+    let promptTokens = encoding.encode(serialized, 'all').length;
+    let completionTokens = 0;
+    try {
+      const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
+        callbacks: [
+          {
+            handleLLMEnd: (output, runId, parentRunId?, tags?) => {
+              completionTokens = output.generations.flat()
+                .map(g => encoding.encode(g.text).length)
+                .reduce((prev, curr) => prev + curr, 0);
+            },
+          },
+          ...(options?.callbacks ? options.callbacks : []),
+        ]
+      });
+      return {
+        message: modelRes,
+        usage: {
+          prompt: promptTokens,
+          completion: completionTokens,
+          total: promptTokens + completionTokens,
+        }
+      };
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  }
+
+  async createEmbeddings(modelId: LlmID, text: string): Promise<CreateEmbeddingsResponse> {
+    const model = new OllamaEmbeddings({
+      ...this.baseOptions,
+      model: modelId
+    });
+    const encoding = getTiktokenEncoding(modelId);
+    let promptTokens = encoding.encode(text, 'all').length;
+    const res = await model.embedQuery(text);
+    return {
+      content: res,
+      usage: {
+        prompt: promptTokens,
+        total: promptTokens
+      }
+    };
+  }
+
+}
+
 export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
   const apiList: LlmApi[] = [];
   if (OPENAI_API_TYPE === "openai")
@@ -403,6 +499,9 @@ export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
     apiList.push(new AwsBedrockApi())
   } catch (e) {
     console.error("Aws credentials error:", e);
+  }
+  if (OLLAMA_URL) {
+    apiList.push(new OLlamaApi());
   }
   const apiCatalog = await new LlmApiAggregator(apiList);
   try {

@@ -14,10 +14,11 @@ export enum LlmID {
   GPT_4 = 'gpt-4',
   GPT_4_32K = 'gpt-4-32k',
   TEXT_EMBEDDING_ADA_002 = 'text-embedding-ada-002',
-  LLAMA2_7B = 'llama2:7b',
   CLAUDE_INSTANT_AWS = 'anthropic.claude-instant-v1',
   CLAUDE_1_AWS = 'anthropic.claude-v1',
   CLAUDE_2_AWS = 'anthropic.claude-v2',
+  LLAMA2_7B = 'llama2:7b',
+  MISTRAL_7B = 'mistral:latest',
 }
 
 export enum LlmType {
@@ -86,13 +87,6 @@ export const LlmList: Record<LlmID, Llm> = {
     tokenLimit: 8000,
     type: LlmType.EMDEDDING
   },
-  [LlmID.LLAMA2_7B]: {
-    id: LlmID.LLAMA2_7B,
-    name: 'LLAMA2-7B_4K',
-    maxLength: 12000,
-    tokenLimit: 4000,
-    type: LlmType.CHAT
-  },
   [LlmID.CLAUDE_INSTANT_AWS]: {
     id: LlmID.CLAUDE_INSTANT_AWS,
     name: 'CLAUDE-INSTANT-100K',
@@ -112,6 +106,20 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'CLAUDE-2-100K',
     maxLength: 300000,
     tokenLimit: 100000,
+    type: LlmType.CHAT
+  },
+  [LlmID.LLAMA2_7B]: {
+    id: LlmID.LLAMA2_7B,
+    name: 'LLAMA2-7B_4K',
+    maxLength: 12000,
+    tokenLimit: 4000,
+    type: LlmType.CHAT
+  },
+  [LlmID.MISTRAL_7B]: {
+    id: LlmID.MISTRAL_7B,
+    name: 'MISTRAL-7B_8K',
+    maxLength: 24000,
+    tokenLimit: 8000,
     type: LlmType.CHAT
   },
 };

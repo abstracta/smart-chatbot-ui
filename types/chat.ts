@@ -1,6 +1,6 @@
 import { Plugin } from './agent';
 import { LlmID, LlmTemperature } from './llm';
-import { OpenAIModelSchema } from './openai';
+import { AzureOpenAIModelSchema } from './openai';
 
 import * as z from 'zod';
 
@@ -43,7 +43,7 @@ export const ConversationSchema = z.object({
   id: z.string(),
   name: z.string(),
   messages: z.array(MessageSchema),
-  model: OpenAIModelSchema,
+  model: AzureOpenAIModelSchema,
   prompt: z.string(),
   temperature: z.nativeEnum(LlmTemperature),
   folderId: z.string().nullable(),

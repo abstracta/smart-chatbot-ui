@@ -7,12 +7,12 @@ import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import Table from '../Table'
 import { AggregationLlmUsageStatsPerUser } from '@/types/llmUsage'
-import { OpenAIModel } from '@/types/openai'
+import { Llm } from '@/types/llm'
 
 
 interface Props {
   data: AggregationLlmUsageStatsPerUser[];
-  models: OpenAIModel[]
+  models: Llm[]
 }
 
 export const UserUsageTable: FC<Props> = ({
