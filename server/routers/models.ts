@@ -12,7 +12,12 @@ export const models = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const llmApi = await getLlmApiAggregator();
-      return await llmApi.listModels();
+      try {
+        const llmApi = await getLlmApiAggregator();
+        return await llmApi.listModels();
+      }
+      catch (e) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
     }),
 });

@@ -69,13 +69,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       {
         temperature,
         maxTokens: maxToken,
-        callbacks: [
-          ...(llmApi.getCanStream() ? [{
-            handleLLMNewToken(token: string) {
+        callbacks: {
+          ...(llmApi.getCanStream() ? {
+            handleNewToken: (token: string) => {
               res.write(token);
             },
-          }] : [])
-        ]
+          } : {})
+        }
       }
     );
     if (!llmApi.getCanStream()) res.write(message.content);

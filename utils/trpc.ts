@@ -30,7 +30,7 @@ export const trpc = createTRPCNext<AppRouter>({
           queries: {
             retry: (failureCount, error) => {
               if (error instanceof TRPCClientError) {
-                if (error.data.code === "UNAUTHORIZED") {
+                if (error.data?.code === "UNAUTHORIZED") {
                   Router.push("/api/auth/signin");
                 }
               }

@@ -15,10 +15,10 @@ export enum LlmID {
   GPT_4_32K = 'gpt-4-32k',
   TEXT_EMBEDDING_ADA_002 = 'text-embedding-ada-002',
   CLAUDE_INSTANT_AWS = 'anthropic.claude-instant-v1',
-  CLAUDE_1_AWS = 'anthropic.claude-v1',
   CLAUDE_2_AWS = 'anthropic.claude-v2',
   LLAMA2_7B = 'llama2:7b',
-  MISTRAL_7B = 'mistral:latest',
+  CODELLAMA_7B = 'codellama:7b',
+  MISTRAL_7B = 'mistral:7b',
 }
 
 export enum LlmType {
@@ -94,13 +94,6 @@ export const LlmList: Record<LlmID, Llm> = {
     tokenLimit: 100000,
     type: LlmType.CHAT
   },
-  [LlmID.CLAUDE_1_AWS]: {
-    id: LlmID.CLAUDE_1_AWS,
-    name: 'CLAUDE-1-100K',
-    maxLength: 300000,
-    tokenLimit: 100000,
-    type: LlmType.CHAT
-  },
   [LlmID.CLAUDE_2_AWS]: {
     id: LlmID.CLAUDE_2_AWS,
     name: 'CLAUDE-2-100K',
@@ -111,6 +104,13 @@ export const LlmList: Record<LlmID, Llm> = {
   [LlmID.LLAMA2_7B]: {
     id: LlmID.LLAMA2_7B,
     name: 'LLAMA2-7B_4K',
+    maxLength: 12000,
+    tokenLimit: 4000,
+    type: LlmType.CHAT
+  },
+  [LlmID.CODELLAMA_7B]: {
+    id: LlmID.CODELLAMA_7B,
+    name: 'CODELLAMA-7B_4K',
     maxLength: 12000,
     tokenLimit: 4000,
     type: LlmType.CHAT

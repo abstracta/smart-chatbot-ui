@@ -33,7 +33,10 @@ export const createMessagesToSend = (
     messagesToSend = [message, ...messagesToSend];
   }
   const maxToken = model.tokenLimit - contentLength;
-  return { messages: messagesToSend, maxToken, tokenCount: contentLength };
+  return {
+    messages: [systemPromptMessage, ...messagesToSend],
+    maxToken, tokenCount: contentLength
+  };
 };
 
 // Borrow from:

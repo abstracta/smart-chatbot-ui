@@ -30,7 +30,7 @@ describe('createMessagesToSend', () => {
       messages,
     );
 
-    expect(result.messages[0]).toEqual({ role: 'user', content: 'World' });
+    expect(result.messages[1]).toEqual({ role: 'user', content: 'World' });
     expect(result.maxToken).toEqual(1066);
   });
 })

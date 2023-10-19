@@ -12,7 +12,6 @@ import {
 } from "../app/const";
 import { AzureOpenAIModel } from "@/types/openai";
 import { LlmList } from '@/types/llm';
-import { CallbackHandlerMethods } from "langchain/callbacks";
 import { getTiktokenEncoding } from "./tiktoken";
 import { mapMessageToLangchainMessage, serializeMessages } from "./message";
 import { Message } from "@/types/chat";
@@ -31,10 +30,14 @@ export interface ChatCompletionResponse {
   message: BaseMessage,
 }
 
+interface CallbackHandlers {
+  handleNewToken?: (token: string) => void;
+}
+
 export interface ChatCompletionOptions {
   temperature?: LlmTemperature;
   maxTokens?: number;
-  callbacks?: CallbackHandlerMethods[]
+  callbacks?: CallbackHandlers
 }
 
 export interface CreateEmbeddingsResponse {
@@ -162,27 +165,37 @@ class OpenAiApi extends LlmApi {
     const serialized = serializeMessages(modelId, messages);
     let promptTokens = encoding.encode(serialized, 'all').length;
     let completionTokens = 0;
-    const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
-      callbacks: [
-        {
-          handleLLMEnd: (output, runId, parentRunId?, tags?) => {
-            completionTokens = output.generations.flat()
-              .map(g => encoding.encode(g.text).length)
-              .reduce((prev, curr) => prev + curr, 0);
+    try {
+      const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
+        callbacks: [
+          {
+            handleLLMEnd: (output, runId, parentRunId?, tags?) => {
+              completionTokens = output.generations.flat()
+                .map(g => encoding.encode(g.text).length)
+                .reduce((prev, curr) => prev + curr, 0);
+            },
+            handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
+              options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(token);
+            },
           },
-        },
-        ...(options?.callbacks ? options.callbacks : []),
-      ]
-    });
+        ]
+      });
 
-    return {
-      message: modelRes,
-      usage: {
-        prompt: promptTokens,
-        completion: completionTokens,
-        total: promptTokens + completionTokens,
+      return {
+        message: modelRes,
+        usage: {
+          prompt: promptTokens,
+          completion: completionTokens,
+          total: promptTokens + completionTokens,
+        }
       }
-    };
+    } catch (e: any) {
+      if (e?.constructor.name === "RateLimitError") {
+        console.error(e);
+        throw new OpenAiError(e.message, e.code, e.type, e.param);
+      }
+      throw e;
+    }
   }
 
   async createEmbeddings(modelId: LlmID, text: string): Promise<CreateEmbeddingsResponse> {
@@ -192,14 +205,22 @@ class OpenAiApi extends LlmApi {
     });
     const encoding = getTiktokenEncoding(modelId);
     let promptTokens = encoding.encode(text, 'all').length;
-    const res = await model.embedQuery(text);
-    return {
-      content: res,
-      usage: {
-        prompt: promptTokens,
-        total: promptTokens
+    try {
+      const res = await model.embedQuery(text);
+      return {
+        content: res,
+        usage: {
+          prompt: promptTokens,
+          total: promptTokens
+        }
+      };
+    } catch (e: any) {
+      if (e?.constructor.name === "RateLimitError") {
+        console.error(e);
+        throw new OpenAiError(e.message, e.code, e.type, e.param);
       }
-    };
+      throw e;
+    }
   }
 
 }
@@ -255,8 +276,10 @@ class AzureOpenAiApi extends LlmApi {
                 .map(g => encoding.encode(g.text).length)
                 .reduce((prev, curr) => prev + curr, 0);
             },
+            handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
+              options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(token);
+            },
           },
-          ...(options?.callbacks ? options.callbacks : []),
         ]
       });
       return {
@@ -268,9 +291,10 @@ class AzureOpenAiApi extends LlmApi {
         }
       };
     } catch (e: any) {
-      console.error(e);
-      if (e?.constructor.name === "RateLimitError")
+      if (e?.constructor.name === "RateLimitError") {
+        console.error(e);
         throw new OpenAiError(e.message, e.code, e.type, e.param);
+      }
       throw e;
     }
 
@@ -293,9 +317,10 @@ class AzureOpenAiApi extends LlmApi {
         }
       };
     } catch (e: any) {
-      console.error(e);
-      if (e?.constructor.name === "RateLimitError")
+      if (e?.constructor.name === "RateLimitError") {
+        console.error(e);
         throw new OpenAiError(e.message, e.code, e.type, e.param);
+      }
       throw e;
     }
   }
@@ -366,9 +391,11 @@ class AwsBedrockApi extends LlmApi {
               completionTokens = output.generations.flat()
                 .map(g => encoding.encode(g.text).length)
                 .reduce((prev, curr) => prev + curr, 0);
-            }
+            },
+            handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
+              options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(token);
+            },
           },
-          ...(options?.callbacks ? options.callbacks : []),
         ],
       });
       return {
@@ -380,8 +407,8 @@ class AwsBedrockApi extends LlmApi {
         }
       };
     } catch (e: any) {
-      console.error(e);
       if (typeof e.message == "string" && (e.message as string).includes("Error 429")) {
+        console.error(e);
         throw new ApiError("", ErrorResponseCode.LLM_RATE_LIMIT_REACHED);
       }
       throw e;
@@ -441,31 +468,28 @@ class OLlamaApi extends LlmApi {
     const serialized = serializeMessages(modelId, messages);
     let promptTokens = encoding.encode(serialized, 'all').length;
     let completionTokens = 0;
-    try {
-      const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
-        callbacks: [
-          {
-            handleLLMEnd: (output, runId, parentRunId?, tags?) => {
-              completionTokens = output.generations.flat()
-                .map(g => encoding.encode(g.text).length)
-                .reduce((prev, curr) => prev + curr, 0);
-            },
+    const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
+      callbacks: [
+        {
+          handleLLMEnd: (output, runId, parentRunId?, tags?) => {
+            completionTokens = output.generations.flat()
+              .map(g => encoding.encode(g.text).length)
+              .reduce((prev, curr) => prev + curr, 0);
           },
-          ...(options?.callbacks ? options.callbacks : []),
-        ]
-      });
-      return {
-        message: modelRes,
-        usage: {
-          prompt: promptTokens,
-          completion: completionTokens,
-          total: promptTokens + completionTokens,
-        }
-      };
-    } catch (e) {
-      console.error(e);
-      throw e;
-    }
+          handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
+            options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(token);
+          },
+        },
+      ]
+    });
+    return {
+      message: modelRes,
+      usage: {
+        prompt: promptTokens,
+        completion: completionTokens,
+        total: promptTokens + completionTokens,
+      }
+    };
   }
 
   async createEmbeddings(modelId: LlmID, text: string): Promise<CreateEmbeddingsResponse> {
@@ -508,6 +532,7 @@ export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
     await apiCatalog.init();
   } catch (e) {
     console.error("Error initializing llm apis", e);
+    throw e;
   }
   return apiCatalog;
 }

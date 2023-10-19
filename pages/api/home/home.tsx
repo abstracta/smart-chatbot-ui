@@ -78,9 +78,7 @@ const Home = ({
   }, [modelsQuery.data, dispatch]);
 
   useEffect(() => {
-    if (modelsQuery.error) {
-      dispatch({ field: 'modelError', value: modelsQuery.error });
-    }
+    dispatch({ field: 'modelError', value: modelsQuery.error || null });
   }, [dispatch, modelsQuery.error]);
 
   // FETCH MODELS ----------------------------------------------
@@ -175,14 +173,14 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (!selectedConversation && models.length) {
+      if (!selectedConversation && modelsQuery.isFetched) {
         dispatch({
           field: 'selectedConversation',
           value: conversation ?? {
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: models.find(m => m.id == defaultModelId),
+            model: modelsQuery.data?.find(m => m.id == defaultModelId) || defaultModelId,
             prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
@@ -197,7 +195,8 @@ const Home = ({
     conversationsQuery.data,
     settings.defaultTemperature,
     t,
-    models,
+    modelsQuery.data,
+    modelsQuery.isFetched,
     selectedConversation
   ]);
 
