@@ -35,7 +35,7 @@ export const fallbackEmbeddingsModelID = OpenAIModelID.TEXT_EMBEDDING_ADA_002;
 export const OpenAIModels: Record<OpenAIModelID, OpenAIModel> = {
   [OpenAIModelID.GPT_3_5]: {
     id: OpenAIModelID.GPT_3_5,
-    name: 'GPT-3.5',
+    name: 'GPT-3.5-4K',
     maxLength: 12000,
     tokenLimit: 4000,
     type: OpenAIModelType.CHAT
@@ -49,7 +49,7 @@ export const OpenAIModels: Record<OpenAIModelID, OpenAIModel> = {
   },
   [OpenAIModelID.GPT_3_5_AZ]: {
     id: OpenAIModelID.GPT_3_5_AZ,
-    name: 'GPT-3.5',
+    name: 'GPT-3.5-4K',
     maxLength: 12000,
     tokenLimit: 4000,
     type: OpenAIModelType.CHAT
@@ -63,7 +63,7 @@ export const OpenAIModels: Record<OpenAIModelID, OpenAIModel> = {
   },
   [OpenAIModelID.GPT_4]: {
     id: OpenAIModelID.GPT_4,
-    name: 'GPT-4',
+    name: 'GPT-4-8K',
     maxLength: 24000,
     tokenLimit: 8000,
     type: OpenAIModelType.CHAT

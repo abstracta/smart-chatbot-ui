@@ -7,5 +7,6 @@
   "Enter a prompt or leave empty to use system default": "Ingrese un mensaje o deje vacio para usar el predeterminado del sistema",
   "Theme": "Tema",
   "Temperature": "Temperatura",
-  "Save": "Guardar"
+  "Save": "Guardar",
+  "Settings": "Ajustes"
 }

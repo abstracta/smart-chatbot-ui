@@ -1,34 +1,53 @@
-import { useCallback, useContext } from 'react';
+import { useCallback } from 'react';
 import { trpc } from '@/utils/trpc';
-import HomeContext from '@/pages/api/home/home.context';
 import { Settings } from '@/types/settings';
+import { DefinedUseQueryResult } from '@tanstack/react-query';
 
 type SettingsAction = {
   update: (newState: Settings) => Promise<Settings>;
 };
 
-export default function useConversations(): [
-  Settings,
+export default function useSettings(): [
+  DefinedUseQueryResult<Settings>,
   SettingsAction,
 ] {
-  const {
-    state: { settings },
-    dispatch: homeDispatch,
-  } = useContext(HomeContext);
+  const trpcContext = trpc.useContext();
+  const settingsQuery = trpc.settings.get.useQuery(undefined, {
+    initialData: {
+      userId: '',
+      theme: 'dark',
+      defaultTemperature: 1.0,
+      defaultModelId: undefined,
+      defaultSystemPrompt: '',
+    }
+  });
 
-  const updateMutation = trpc.settings.settingsUpdate.useMutation();
+  const updateMutation = trpc.settings.settingsUpdate.useMutation({
+    onMutate: async (settings: Settings) => {
+      const listQuery = trpcContext.settings.get;
+      await listQuery.cancel();
+      const previousData = listQuery.getData();
+      listQuery.setData(undefined, settings);
+      return { previousData };
+    },
+    onError: (err, input, context) => {
+      trpcContext.settings.get.setData(undefined, context?.previousData);
+    },
+    onSettled: () => {
+      trpcContext.settings.get.invalidate();
+    },
+  });
 
   const update = useCallback(
     async (settings: Settings) => {
       await updateMutation.mutateAsync(settings);
-      homeDispatch({ field: 'settings', value: settings });
       return settings;
     },
-    [settings, homeDispatch],
+    [updateMutation],
   );
 
   return [
-    settings,
+    settingsQuery,
     {
       update,
     },

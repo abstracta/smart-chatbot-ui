@@ -20,7 +20,7 @@ import HomeContext from './home.context';
 import { HomeInitialState, initialState } from './home.state';
 
 import { v4 as uuidv4 } from 'uuid';
-import { authOptions } from '../auth/[...nextauth]';
+import { authOptions } from '../auth/[...nextauth].page';
 import { getServerSession } from 'next-auth/next';
 
 interface Props {
@@ -114,11 +114,13 @@ const Home = ({
         value: serverSidePluginKeysSet,
       });
   }, [
+    t,
     systemDefaultModelId,
+    defaultSystemPrompt,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
-    settings
+    settings,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -169,7 +171,7 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (!selectedConversation) {
+      if (!selectedConversation && models.length) {
         dispatch({
           field: 'selectedConversation',
           value: conversation ?? {
@@ -187,6 +189,7 @@ const Home = ({
   }, [
     dispatch,
     defaultModelId,
+    defaultSystemPrompt,
     conversationsQuery.data,
     settings.defaultTemperature,
     t,

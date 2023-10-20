@@ -14,7 +14,7 @@ const Spinner = ({ size = '1em', className = '' }: Props) => {
       viewBox="0 0 24 24"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`animate-spin ${className}`}
+      className={`animate-spin stroke-black dark:stroke-white ${className}`}
       height={size}
       width={size}
       xmlns="http://www.w3.org/2000/svg"

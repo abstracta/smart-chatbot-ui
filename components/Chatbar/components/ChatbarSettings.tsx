@@ -1,4 +1,5 @@
 import {
+  IconAdjustments,
   IconSettings,
 } from '@tabler/icons-react';
 import { useContext, useState } from 'react';
@@ -14,6 +15,9 @@ import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
 import { ChatModeKeys } from './ChatModeKeys';
 import { ClearConversations } from './ClearConversations';
+import { SidebarButtonLink } from '@/components/Sidebar/SidebarButtonLink';
+import { useSession } from 'next-auth/react';
+import { UserRole } from '@/types/user';
 
 export const ChatbarSettings = () => {
   const { t } = useTranslation('sidebar');
@@ -28,6 +32,9 @@ export const ChatbarSettings = () => {
       folders
     },
   } = useContext(HomeContext);
+
+  const session = useSession();
+  const isAdmin = session.data?.user?.role === UserRole.ADMIN;
 
   const {
     handleClearConversations,
@@ -51,6 +58,12 @@ export const ChatbarSettings = () => {
       ) : null}
 
       {!serverSidePluginKeysSet ? <ChatModeKeys /> : null}
+
+      {isAdmin && <SidebarButtonLink
+        text={t('Go to Admin')}
+        icon={<IconAdjustments size={18} />}
+        href="/admin"
+      />}
 
       <SettingDialog
         open={isSettingDialogOpen}

@@ -11,8 +11,7 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { PromptFolders } from './components/PromptFolders';
 import { Prompts } from './components/Prompts';
-
-import Sidebar from '../Sidebar';
+import Sidebar from '../Home/Sidebar';
 import PromptbarContext from './PromptBar.context';
 import { PromptbarInitialState, initialState } from './Promptbar.state';
 import usePublicFolders from '@/hooks/usePublicFolders';
@@ -118,7 +117,7 @@ const Promptbar = () => {
       const results = fusePrompts.search((searchTerm))
       promptDispatch({
         field: 'filteredPrompts',
-        value: results.map(r=>r.item),
+        value: results.map(r => r.item),
       });
       if (promptSharingEnabled) {
         const fusePublicPrompts = new Fuse(publicPrompts, {
@@ -128,7 +127,7 @@ const Promptbar = () => {
         const results = fusePublicPrompts.search((searchTerm))
         promptDispatch({
           field: 'filteredPublicPrompts',
-          value: results.map(r=>r.item),
+          value: results.map(r => r.item),
         });
       }
     } else {

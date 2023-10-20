@@ -147,6 +147,7 @@ When deploying the application, the following environment variables can be set:
 | SUPPORT_EMAIL                     |                                | Specify the support email address to show users in case of errors or issues are encountered while using the application.                  |
 | PROMPT_SHARING_ENABLED            | `false`                        | Enable prompt sharing between users. Only admin users are allowed to modify public folders. Add admins by setting db collection field `users.role` to `admin` for each individual user.   |
 | DEFAULT_USER_LIMIT_USD_MONTHLY    |                                | Requires API pricing to be configured. Set a default monthly limit on api consumption per user. Leave unset for unrestricted access       |
+| CAN_UPDATE_USER_QUOTAS            | `false`                        | Allow admin users to modify per-user monthly quotas                                                                                       |
 
 If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
 If you don't have an OpenAI API key, you can get one [here](https://platform.openai.com/account/api-keys).

@@ -36,7 +36,7 @@ export const PromptFolders = () => {
   } = useContext(PromptbarContext);
 
   const session = useSession()
-  const isAdminUser: boolean = session.data?.user?.role === UserRole.ADMIN;
+  const isPromptAdmin: boolean = session.data?.user?.role === UserRole.ADMIN || session.data?.user?.role === UserRole.PUBLIC_PROMPT_EDITOR;
 
   const handleDrop = (e: any, folder: FolderInterface) => {
     if (e.dataTransfer) {
@@ -70,7 +70,7 @@ export const PromptFolders = () => {
                     .filter((p) => p.folderId)
                     .map((prompt, index) => {
                       if (prompt.folderId === folder.id) {
-                        const canEditPrompt = isAdminUser || prompt.userId === session.data?.user?._id;
+                        const canEditPrompt = isPromptAdmin || prompt.userId === session.data?.user?._id;
                         return (
                           <div key={prompt.id} className="ml-5 gap-2 border-l pl-2">
                             <PromptComponent
@@ -113,8 +113,8 @@ export const PromptFolders = () => {
               type: "prompt"
             }}
             folderComponent={PromptFolders(filteredPublicPrompts, publicFolders, handleUpdatePublicPrompt, handleDeletePublicPrompt, null,
-              undefined, isAdminUser ? handleEditPublicFolder : undefined, isAdminUser ? handleDeletePublicFolder : undefined, undefined, false, false)}
-            handleAddItem={isAdminUser ? handleCreatePublicFolder : undefined}
+              undefined, isPromptAdmin ? handleEditPublicFolder : undefined, isPromptAdmin ? handleDeletePublicFolder : undefined, undefined, false, false)}
+            handleAddItem={isPromptAdmin ? handleCreatePublicFolder : undefined}
           />
           <Folder
             key="folder-my-prompts"

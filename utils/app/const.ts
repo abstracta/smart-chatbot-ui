@@ -35,6 +35,8 @@ export const PROMPT_SHARING_ENABLED: boolean = process.env.PROMPT_SHARING_ENABLE
 
 export const DEFAULT_USER_LIMIT_USD_MONTHLY: number = process.env.DEFAULT_USER_LIMIT_USD_MONTHLY != undefined ? Number.parseFloat(process.env.DEFAULT_USER_LIMIT_USD_MONTHLY) : -1;
 
+export const CAN_UPDATE_USER_QUOTAS: boolean = process.env.CAN_UPDATE_USER_QUOTAS === "true" || false;
+
 function parseAzureDeployments(envVar: string): Record<OpenAIModelID, OpenAIModel> {
   return envVar.trim().split(",").reduce((prev, curr) => {
     const [modelId, azureDeploymentId] = curr.split(":");
