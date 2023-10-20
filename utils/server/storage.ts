@@ -4,8 +4,8 @@ import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 import { MONGODB_DB } from '../app/const';
 import { Collection, Db, MongoClient } from 'mongodb';
-import { User } from '@/types/user';
-import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
+import { User, UserSchema } from '@/types/user';
+import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate, AggregationLlmUsageStatsPerUser } from '@/types/llmUsage';
 import { OpenAIModelID } from '@/types/openai';
 
 let _db: Db | null = null;
@@ -295,9 +295,11 @@ export class PublicPromptsDb {
 
 export class UserInfoDb {
   private _users: Collection<User>;
+  private _llmUsage: Collection<UserLlmUsage>;
 
   constructor(_db: Db) {
     this._users = _db.collection<User>('users');
+    this._llmUsage = _db.collection<UserLlmUsage>('userLlmUsage');
   }
 
   async getUser(id: string): Promise<User | null> {
@@ -332,6 +334,66 @@ export class UserInfoDb {
     return await this._users.deleteOne({ _id: id });
   }
 
+  async queryLlmUsageStatsPerUser(start: Date, end: Date): Promise<AggregationLlmUsageStatsPerUser[]> {
+    const res = await this._llmUsage.aggregate()
+      .match({
+        date: {
+          $gte: start,
+          $lt: end,
+        },
+      })
+      .lookup({
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "user_info"
+      })
+      .unwind("$user_info")
+      .group({
+        _id: {
+          userId: "$userId",
+          modelId: "$modelId"
+        },
+        totalTokens: {
+          $sum: "$tokens.total"
+        },
+        totalUSD: {
+          $sum: "$totalPriceUSD"
+        },
+        userName: {
+          $first: "$user_info.name"
+        }
+      })
+      .group({
+        _id: "$_id.userId",
+        userName: {
+          $first: "$userName"
+        },
+        totalTokens: {
+          $sum: "$totalTokens"
+        },
+        totalUSD: {
+          $sum: "$totalUSD"
+        },
+        usage: {
+          $push: {
+            modelId: "$_id.modelId",
+            totalTokens: "$totalTokens",
+            totalUSD: "$totalUSD"
+          }
+        }
+      })
+      .project<AggregationLlmUsageStatsPerUser>({
+        _id: 0,
+        userId: "$_id",
+        userName: 1,
+        totalTokens: 1,
+        totalUSD: 1,
+        usage: 1
+      })
+      .toArray();
+    return res;
+  }
 }
 
 export class LlmsDb {

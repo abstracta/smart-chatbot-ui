@@ -26,16 +26,16 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
   const {
     state: { models, systemDefaultModelId },
   } = useContext(HomeContext);
-  const [settings, settingsActions] = useSettings();
+  const [settingsQuery, settingsActions] = useSettings();
   const { state, dispatch } = useCreateReducer<Settings>({
-    initialState: settings,
+    initialState: settingsQuery.data,
   });
 
   useEffect(() => {
     if (open) {
-      dispatch({ type: 'replace_all', value: settings });
+      dispatch({ type: 'replace_all', value: settingsQuery.data });
     }
-  }, [dispatch, open, settings]);
+  }, [dispatch, open, settingsQuery.data]);
 
   const handleSave = async () => {
     await settingsActions.update(state);

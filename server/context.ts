@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 
 import { getUserHash, AuthError } from '@/utils/server/auth';
 
-import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 
 import { TRPCError, inferAsyncReturnType } from '@trpc/server';
 import { CreateNextContextOptions } from '@trpc/server/adapters/next';
@@ -17,7 +17,7 @@ export async function createContext(opts: CreateNextContextOptions) {
     }
     catch (e) {
       if (e instanceof AuthError) {
-        authError();
+        throw new TRPCError({ code: 'UNAUTHORIZED' });
       }
       throw e;
     }
@@ -31,14 +31,10 @@ export async function createContext(opts: CreateNextContextOptions) {
 }
 export type Context = inferAsyncReturnType<typeof createContext>;
 
-export async function validateAdminAccess(ctx: Context) {
-  if (!isAdminUser(ctx)) authError();
-}
-
 export function isAdminUser(ctx: Context): boolean {
   return ctx.session?.user?.role === UserRole.ADMIN;
 }
 
-export async function authError() {
-  throw new TRPCError({ code: 'UNAUTHORIZED' });
+export function isPublicPromptEditor(ctx: Context): boolean {
+  return ctx.session?.user?.role === UserRole.PUBLIC_PROMPT_EDITOR;
 }

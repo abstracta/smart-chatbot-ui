@@ -11,7 +11,7 @@ import { getErrorResponseBody } from '@/utils/server/error';
 
 import { ChatBodySchema } from '@/types/chat';
 
-import { authOptions } from '@/pages/api/auth/[...nextauth]';
+import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 
 import path from 'node:path';
 import loggerFn from 'pino';

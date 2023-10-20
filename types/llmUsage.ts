@@ -1,5 +1,6 @@
 import * as z from 'zod';
 import { OpenAIModelID } from './openai';
+import { User } from './user';
 
 export const OpenAIModelIdEnumSchema = z.nativeEnum(OpenAIModelID);
 
@@ -34,3 +35,15 @@ export const UserLlmUsageSchema = z.object({
 export const NewUserLlmUsageSchema = UserLlmUsageSchema.omit({ userId: true, _id: true })
 export type NewUserLlmUsage = z.infer<typeof NewUserLlmUsageSchema>;
 export type UserLlmUsage = z.infer<typeof UserLlmUsageSchema>;
+
+export type AggregationLlmUsageStatsPerUser = {
+  userId: User['_id'],
+  userName: User['name'],
+  totalTokens: UserLlmUsage['tokens']['total'] | undefined,
+  totalUSD: UserLlmUsage['totalPriceUSD'],
+  usage: {
+    modelId: UserLlmUsage['modelId'],
+    totalTokens: UserLlmUsage['tokens']['total'] | undefined
+    totalUSD: UserLlmUsage['totalPriceUSD']
+  }[]
+}

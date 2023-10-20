@@ -7,6 +7,7 @@ import { prompts } from './prompts';
 import { publicPrompts } from './publicPrompts';
 import { settings } from './settings';
 import { llmUsage } from './llmUsage';
+import { users } from './users';
 
 export const appRouter = router({
   models,
@@ -16,7 +17,8 @@ export const appRouter = router({
   folders,
   publicFolders,
   conversations,
-  llmUsage
+  llmUsage,
+  users
 });
 
 // export type definition of API
