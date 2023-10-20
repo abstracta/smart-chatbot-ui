@@ -14,6 +14,26 @@ const t = initTRPC.context<Context>().create({
 
 export const middleware = t.middleware;
 
+const loggerMiddleware = middleware(async (opts) => {
+  const start = Date.now();
+  const result = await opts.next();
+  const durationMs = Date.now() - start;
+  const meta = {
+    path: opts.path,
+    type: opts.type, durationMs,
+    userId: opts.ctx.userHash,
+    input: opts.rawInput
+  };
+
+  if (meta.type === "mutation" && (meta.path.startsWith("publicPrompt") ||
+    meta.path.startsWith("publicFolder"))) {
+    result.ok ? console.log('OK request timing:', meta)
+      : console.error('Non-OK request timing', meta);
+  }
+
+  return result;
+});
+
 const secure = middleware(async ({ ctx, next }) => {
   if (!ctx.userHash) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -38,6 +58,6 @@ const admin = middleware(async ({ ctx, next }) => {
 
 // Base router and procedure helpers
 export const router = t.router;
-export const publicProcedure = t.procedure;
-export const procedure = t.procedure.use(secure);
-export const adminProcedure = t.procedure.use(admin);
+export const publicProcedure = t.procedure.use(loggerMiddleware);
+export const procedure = t.procedure.use(secure).use(loggerMiddleware);
+export const adminProcedure = t.procedure.use(admin).use(loggerMiddleware);
