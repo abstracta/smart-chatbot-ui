@@ -260,7 +260,6 @@ class AzureOpenAiApi extends LlmApi {
       streaming: true,
       azureOpenAIApiDeploymentName: this.getDeploymentName(modelId),
       maxTokens: options?.maxTokens,
-      maxRetries: 1,
     });
     const encoding = getTiktokenEncoding(modelId);
     const serialized = serializeMessages(modelId, messages);

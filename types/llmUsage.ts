@@ -2,14 +2,14 @@ import * as z from 'zod';
 import { User } from './user';
 import { LlmID } from './llm';
 
-export const LlmInfo = z.object({
+export const LlmInfoSchema = z.object({
   _id: z.nativeEnum(LlmID),
   promptPriceUSDPer1000: z.number(),
   completionPriceUSDPer1000: z.number(),
   monthlyUsageLimitUSD: z.number(),
 });
 
-export type LlmInfo = z.infer<typeof LlmInfo>;
+export type LlmInfo = z.infer<typeof LlmInfoSchema>;
 
 export const TokenUsageCountSchema = z.object({
   prompt: z.number(),

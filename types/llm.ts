@@ -19,6 +19,7 @@ export enum LlmID {
   LLAMA2_7B = 'llama2:7b',
   CODELLAMA_7B = 'codellama:7b',
   MISTRAL_7B = 'mistral:7b',
+  VICUNA_7B = 'vicuna:7b',
 }
 
 export enum LlmType {
@@ -40,42 +41,42 @@ export type Llm = z.infer<typeof LlmSchema>;
 export const LlmList: Record<LlmID, Llm> = {
   [LlmID.GPT_3_5]: {
     id: LlmID.GPT_3_5,
-    name: 'GPT-3.5',
+    name: 'GPT-3.5_4K',
     maxLength: 12000,
     tokenLimit: 4000,
     type: LlmType.CHAT
   },
   [LlmID.GPT_3_5_16K]: {
     id: LlmID.GPT_3_5_16K,
-    name: 'GPT-3.5-16K',
+    name: 'GPT-3.5_16K',
     maxLength: 48000,
     tokenLimit: 16000,
     type: LlmType.CHAT
   },
   [LlmID.GPT_3_5_AZ]: {
     id: LlmID.GPT_3_5_AZ,
-    name: 'GPT-3.5',
+    name: 'GPT-3.5_4K',
     maxLength: 12000,
     tokenLimit: 4000,
     type: LlmType.CHAT
   },
   [LlmID.GPT_3_5_16K_AZ]: {
     id: LlmID.GPT_3_5_16K_AZ,
-    name: 'GPT-3.5-16K',
+    name: 'GPT-3.5_16K',
     maxLength: 48000,
     tokenLimit: 16000,
     type: LlmType.CHAT
   },
   [LlmID.GPT_4]: {
     id: LlmID.GPT_4,
-    name: 'GPT-4',
+    name: 'GPT-4_8K',
     maxLength: 24000,
     tokenLimit: 8000,
     type: LlmType.CHAT
   },
   [LlmID.GPT_4_32K]: {
     id: LlmID.GPT_4_32K,
-    name: 'GPT-4-32K',
+    name: 'GPT-4_32K',
     maxLength: 96000,
     tokenLimit: 32000,
     type: LlmType.CHAT
@@ -89,14 +90,14 @@ export const LlmList: Record<LlmID, Llm> = {
   },
   [LlmID.CLAUDE_INSTANT_AWS]: {
     id: LlmID.CLAUDE_INSTANT_AWS,
-    name: 'CLAUDE-INSTANT-100K',
+    name: 'CLAUDE-INSTANT_100K',
     maxLength: 300000,
     tokenLimit: 100000,
     type: LlmType.CHAT
   },
   [LlmID.CLAUDE_2_AWS]: {
     id: LlmID.CLAUDE_2_AWS,
-    name: 'CLAUDE-2-100K',
+    name: 'CLAUDE-2_100K',
     maxLength: 300000,
     tokenLimit: 100000,
     type: LlmType.CHAT
@@ -120,6 +121,13 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'MISTRAL-7B_8K',
     maxLength: 24000,
     tokenLimit: 8000,
+    type: LlmType.CHAT
+  },
+  [LlmID.VICUNA_7B]: {
+    id: LlmID.VICUNA_7B,
+    name: 'VICUNA-7B_2K',
+    maxLength: 6000,
+    tokenLimit: 2000,
     type: LlmType.CHAT
   },
 };
