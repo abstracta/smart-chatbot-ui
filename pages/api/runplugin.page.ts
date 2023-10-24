@@ -26,11 +26,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       modelId,
       action: toolAction,
     } = (await req.body) as RunPluginRequest;
-    try {
-      await verifyUserLlmUsage(userId, modelId);
-    } catch (e: any) {
-      return res.status(429).json({ error: e.message });
-    }
+
+    await verifyUserLlmUsage(userId, modelId);
 
     const verbose = process.env.DEBUG_AGENT_LLM_LOGGING === 'true';
     const context = await createContext(taskId, req, res, modelId, verbose);

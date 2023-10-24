@@ -33,11 +33,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
   try {
     const { messages, key, modelId, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
-    try {
-      await verifyUserLlmUsage(userId, modelId);
-    } catch (e: any) {
-      return res.status(429).json({ error: e.message });
-    }
+      
+    await verifyUserLlmUsage(userId, modelId);
 
     encoding = getTiktokenEncoding(modelId);
 

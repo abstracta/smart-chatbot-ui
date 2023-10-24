@@ -30,12 +30,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       pluginResults: toolActionResults,
     } = req.body as PlanningRequest;
 
-    try {
-      await verifyUserLlmUsage(userId, modelId);
-    } catch (e: any) {
-      return res.status(429).json({ error: e.message });
-    }
-    
+    await verifyUserLlmUsage(userId, modelId);
+
     let { taskId } = req.body;
     if (!taskId) {
       taskId = v4();

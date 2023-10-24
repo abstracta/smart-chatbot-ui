@@ -191,8 +191,7 @@ class OpenAiApi extends LlmApi {
       }
     } catch (e: any) {
       if (e?.constructor.name === "RateLimitError") {
-        console.error(e);
-        throw new OpenAiError(e.message, e.code, e.type, e.param);
+        throw new OpenAiError(e);
       }
       throw e;
     }
@@ -216,8 +215,7 @@ class OpenAiApi extends LlmApi {
       };
     } catch (e: any) {
       if (e?.constructor.name === "RateLimitError") {
-        console.error(e);
-        throw new OpenAiError(e.message, e.code, e.type, e.param);
+        throw new OpenAiError(e);
       }
       throw e;
     }
@@ -262,6 +260,7 @@ class AzureOpenAiApi extends LlmApi {
       streaming: true,
       azureOpenAIApiDeploymentName: this.getDeploymentName(modelId),
       maxTokens: options?.maxTokens,
+      maxRetries: 1,
     });
     const encoding = getTiktokenEncoding(modelId);
     const serialized = serializeMessages(modelId, messages);
@@ -292,8 +291,7 @@ class AzureOpenAiApi extends LlmApi {
       };
     } catch (e: any) {
       if (e?.constructor.name === "RateLimitError") {
-        console.error(e);
-        throw new OpenAiError(e.message, e.code, e.type, e.param);
+        throw new OpenAiError(e);
       }
       throw e;
     }
@@ -318,8 +316,7 @@ class AzureOpenAiApi extends LlmApi {
       };
     } catch (e: any) {
       if (e?.constructor.name === "RateLimitError") {
-        console.error(e);
-        throw new OpenAiError(e.message, e.code, e.type, e.param);
+        throw new OpenAiError(e);
       }
       throw e;
     }
@@ -408,8 +405,7 @@ class AwsBedrockApi extends LlmApi {
       };
     } catch (e: any) {
       if (typeof e.message == "string" && (e.message as string).includes("Error 429")) {
-        console.error(e);
-        throw new ApiError("", ErrorResponseCode.LLM_RATE_LIMIT_REACHED);
+        throw new ApiError({ code: ErrorResponseCode.LLM_RATE_LIMIT_REACHED });
       }
       throw e;
     }

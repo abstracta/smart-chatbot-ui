@@ -5,9 +5,9 @@ export class OpenAiError extends ApiError {
   param?: string;
   statusCode?: string;
 
-  constructor(message: string, code?: string, type?: string, param?: string) {
-    super(message);
-    this.name = 'LlmApiError';
+  constructor({ message, type, param, code }: { message?: string, code?: string, type?: string, param?: string }) {
+    super({ message });
+    this.name = 'OpenAiError';
     this.type = type;
     this.param = param;
     this.statusCode = code;

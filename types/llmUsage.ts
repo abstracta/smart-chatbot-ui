@@ -2,13 +2,14 @@ import * as z from 'zod';
 import { User } from './user';
 import { LlmID } from './llm';
 
-export const LlmPriceRate = z.object({
-  modelId: z.nativeEnum(LlmID),
+export const LlmInfo = z.object({
+  _id: z.nativeEnum(LlmID),
   promptPriceUSDPer1000: z.number(),
-  completionPriceUSDPer1000: z.number()
+  completionPriceUSDPer1000: z.number(),
+  monthlyUsageLimitUSD: z.number(),
 });
 
-export type LlmPriceRate = z.infer<typeof LlmPriceRate>;
+export type LlmInfo = z.infer<typeof LlmInfo>;
 
 export const TokenUsageCountSchema = z.object({
   prompt: z.number(),
@@ -44,4 +45,10 @@ export type AggregationLlmUsageStatsPerUser = {
     totalTokens: UserLlmUsage['tokens']['total'] | undefined
     totalUSD: UserLlmUsage['totalPriceUSD']
   }[]
+}
+
+export type AggregationLlmUsageStatsPerModel = {
+  modelId: LlmID,
+  totalTokens: UserLlmUsage['tokens']['total'] | undefined,
+  totalUSD: UserLlmUsage['totalPriceUSD'],
 }

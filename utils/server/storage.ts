@@ -4,9 +4,9 @@ import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 import { MONGODB_DB } from '../app/const';
 import { Collection, Db, MongoClient } from 'mongodb';
-import { AggregationLlmUsageStatsPerUser } from '@/types/llmUsage';
+import { AggregationLlmUsageStatsPerModel, AggregationLlmUsageStatsPerUser } from '@/types/llmUsage';
 import { User } from '@/types/user';
-import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
+import { UserLlmUsage, NewUserLlmUsage, LlmInfo } from '@/types/llmUsage';
 import { LlmID, LlmTemperature } from '@/types/llm';
 
 let _db: Db | null = null;
@@ -395,16 +395,45 @@ export class UserInfoDb {
       .toArray();
     return res;
   }
+
+
+  async queryLlmUsageStatsByModel(modelId: LlmID, start: Date, end: Date): Promise<AggregationLlmUsageStatsPerModel | undefined> {
+    const res = await this._llmUsage.aggregate()
+      .match({
+        date: {
+          $gte: start,
+          $lt: end,
+        },
+        modelId
+      })
+      .group({
+        _id: "$modelId",
+        totalTokens: {
+          $sum: "$tokens.total"
+        },
+        totalUSD: {
+          $sum: "$totalPriceUSD"
+        },
+      })
+      .project<AggregationLlmUsageStatsPerModel>({
+        _id: 0,
+        modelId: "$_id",
+        totalTokens: 1,
+        totalUSD: 1,
+      })
+      .toArray();
+    return res.length ? res[0] : undefined;
+  }
 }
 
 export class LlmsDb {
-  private _llmPriceRate: Collection<LlmPriceRate>;
+  private _llmConfig: Collection<LlmInfo>;
 
   constructor(_db: Db) {
-    this._llmPriceRate = _db.collection<LlmPriceRate>('llmPriceRate');
+    this._llmConfig = _db.collection<LlmInfo>('llmConfig');
   }
 
-  async getModelPriceRate(id: LlmID): Promise<LlmPriceRate | null> {
-    return await this._llmPriceRate.findOne({ modelId: id });
+  async getModelConfig(id: LlmID): Promise<LlmInfo | null> {
+    return await this._llmConfig.findOne({ _id: id });
   }
 }

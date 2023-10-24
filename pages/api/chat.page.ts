@@ -15,6 +15,7 @@ import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 import path from 'node:path';
 import loggerFn from 'pino';
 import { getLlmApiAggregator } from '@/utils/server/llm';
+import { Tiktoken } from 'tiktoken';
 
 const logger = loggerFn({ name: 'chat' });
 
@@ -37,19 +38,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const { modelId, messages, key, prompt, temperature } = ChatBodySchema.parse(
     req.body,
   );
+
+  let encoding: Tiktoken | null = null;
   try {
     await verifyUserLlmUsage(userId, modelId);
-  } catch (e: any) {
-    return res.status(429).json({ error: e.message });
-  }
-  const llmApiAggregator = await getLlmApiAggregator();
-  const model = await llmApiAggregator.getModel(modelId);
-  if (!model) {
-    return res.status(404).json({ error: "Model not found" });
-  }
 
-  const encoding = getTiktokenEncoding(modelId);
-  try {
+    const llmApiAggregator = await getLlmApiAggregator();
+    const model = await llmApiAggregator.getModel(modelId);
+    if (!model) {
+      return res.status(404).json({ error: "Model not found" });
+    }
+
+    encoding = getTiktokenEncoding(modelId);
     let systemPromptToSend = prompt;
     if (!systemPromptToSend) {
       systemPromptToSend = DEFAULT_SYSTEM_PROMPT;
@@ -92,7 +92,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const errorRes = getErrorResponseBody(error);
     res.status(500).json(errorRes);
   } finally {
-    encoding.free();
+    if (encoding !== null) {
+      encoding.free();
+    }
   }
 };
 

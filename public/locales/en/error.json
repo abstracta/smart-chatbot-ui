@@ -1,5 +1,7 @@
 {
     "llmRateLimitReached": "Whoops! High demand is causing our service to be temporarily unresponsive. Please be patient and retry in a moment. If the problem persists, please contact {{supportEmail}}.",
     "llmServiceOverloaded": "Whoops! High demand is causing our service to be temporarily unresponsive. Please be patient and retry in a moment. If the problem persists, please contact {{supportEmail}}.",
+    "userUsageLimitReached": "Uh-oh! You've reached the monthly API limit. Please reach out to the admin team for assistance, at {{supportEmail}}.",
+    "modelUsageLimitReached": "It seems like the current selected LLM model quota has been reached. Please try using another model or contact our support team for assistance, at {{supportEmail}}.",
     "errorDefault": "An unexpected error occurred. Please try again in a few moments. If the problem persists, please contact {{supportEmail}}."
 }
