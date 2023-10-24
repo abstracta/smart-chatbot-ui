@@ -1,6 +1,5 @@
 import { MutableRefObject, useContext } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 
 import useApiService from '@/services/useApiService';
@@ -23,7 +22,6 @@ export type ChatPluginParams = {
 };
 
 export function useDirectMode(
-  conversations: Conversation[],
   stopConversationRef: MutableRefObject<boolean>,
 ): ChatModeRunner {
   const { dispatch: homeDispatch } = useContext(HomeContext);
@@ -36,10 +34,6 @@ export function useDirectMode(
       return apiService.chat(params);
     },
     onMutate: async (variables) => {
-      // homeDispatch({
-      //   field: 'selectedConversation',
-      //   value: variables.conversation,
-      // });
       homeDispatch({ field: 'loading', value: true });
       homeDispatch({ field: 'messageIsStreaming', value: true });
     },
@@ -48,7 +42,6 @@ export function useDirectMode(
       let {
         conversation: updatedConversation,
         message,
-        selectedConversation,
       } = variables;
       if (!data) {
         homeDispatch({ field: 'loading', value: false });

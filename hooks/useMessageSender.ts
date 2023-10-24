@@ -1,5 +1,4 @@
 import { useContext } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { Plugin } from '@/types/agent';
 import { ChatBody, Conversation, Message } from '@/types/chat';
@@ -8,15 +7,13 @@ import { ChatMode } from '@/types/chatmode';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { useChatModeRunner } from './chatmode/useChatModeRunner';
-import useConversations from './useConversations';
 
 export const useMesseageSender = () => {
   const {
     state: { selectedConversation, apiKey },
   } = useContext(HomeContext);
 
-  const [conversations, _] = useConversations();
-  const chatModeSelector = useChatModeRunner(conversations);
+  const chatModeSelector = useChatModeRunner();
 
   return async (
     message: Message,

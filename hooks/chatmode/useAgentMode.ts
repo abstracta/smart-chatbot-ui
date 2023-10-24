@@ -13,7 +13,6 @@ import { Answer, PlanningResponse, PluginResult } from '@/types/agent';
 import {
   ChatModeRunner,
   ChatModeRunnerParams,
-  Conversation,
 } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -22,7 +21,6 @@ import useConversations from '../useConversations';
 import useApiError from '@/services/useApiError';
 
 export function useAgentMode(
-  conversations: Conversation[],
   stopConversationRef: MutableRefObject<boolean>,
   conversational: boolean,
 ): ChatModeRunner {
