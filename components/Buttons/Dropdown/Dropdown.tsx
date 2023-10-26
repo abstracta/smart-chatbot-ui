@@ -5,7 +5,8 @@ type Props = {
     buttonContent: ReactNode;
     items?: ReactNode[];
     align: 'left' | 'right';
-    disabled?: boolean
+    disabled?: boolean;
+    hideOnClick?: boolean,
 };
 
 const Dropdown: FC<Props> = ({
@@ -13,6 +14,7 @@ const Dropdown: FC<Props> = ({
     items,
     align,
     disabled,
+    hideOnClick = true,
 }) => {
     const componentRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -42,7 +44,7 @@ const Dropdown: FC<Props> = ({
 
     return (
         <div ref={componentRef} className='relative'>
-            <button ref={buttonRef} className="inline-flex items-center p-2 text-sm font-medium text-center 
+            <button ref={buttonRef} className="inline-flex leading-[22px] items-center p-2 text-sm font-medium text-center 
                 text-gray-900 bg-white rounded hover:bg-gray-100 dark:text-white dark:bg-[#343541] 
                 dark:hover:bg-white/10 border dark:border dark:border-white/20
                 disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-300
@@ -52,12 +54,12 @@ const Dropdown: FC<Props> = ({
                 {buttonContent}
             </button>
 
-            <div ref={menuRef} className={`${!show && 'hidden'} absolute z-10 bg-white divide-y divide-gray-100 
-                rounded-lg shadow w-44 dark:bg-[#343541] border dark:border-white/20 dark:divide-gray-600`}
+            <div ref={menuRef} className={`${!show ? 'hidden ' : ''}absolute z-10 bg-white divide-y divide-gray-100 
+                rounded shadow min-w-[150px] w-min dark:bg-[#343541] border dark:border-white/20 dark:divide-gray-600`}
                 style={{ transform: align == 'left' ? `translateX(calc(-100% + ${buttonWidth}px))` : `` }}>
                 <ul className="py-2 text-sm text-gray-700 dark:text-gray-200 cursor-pointer">
                     {items && items.map((item, index) =>
-                        <div key={index} onClick={() => setShow(false)}>{item}</div>)
+                        <div key={index} onClick={() => hideOnClick && setShow(false)}>{item}</div>)
                     }
                 </ul>
             </div>

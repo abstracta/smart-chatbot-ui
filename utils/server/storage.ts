@@ -335,13 +335,29 @@ export class UserInfoDb {
     return await this._users.deleteOne({ _id: id });
   }
 
-  async queryLlmUsageStatsPerUser(start: Date, end: Date): Promise<AggregationLlmUsageStatsPerUser[]> {
+  async getLlmUsageIds(start: Date, end: Date): Promise<LlmID[]> {
     const res = await this._llmUsage.aggregate()
       .match({
         date: {
           $gte: start,
           $lt: end,
         },
+      })
+      .group<{ _id: string }>({
+        _id: "$modelId",
+      })
+      .toArray();
+    return res.map(i => i._id as LlmID);
+  }
+
+  async queryLlmUsageStatsPerUser(start: Date, end: Date, modelIds?: LlmID[]): Promise<AggregationLlmUsageStatsPerUser[]> {
+    const res = await this._llmUsage.aggregate()
+      .match({
+        date: {
+          $gte: start,
+          $lt: end,
+        },
+        ...(modelIds ? { modelId: { $in: modelIds } } : {})
       })
       .lookup({
         from: "users",
