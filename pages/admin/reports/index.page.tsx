@@ -93,7 +93,7 @@ const Reports: NextPageWithLayout<Props> = ({
   const exportCSV = () => {
     const headers = [
       "Name",
-      ...(models.reduce((prev, curr) => {
+      ...(selectedModels.reduce((prev, curr) => {
         prev.push(`${curr.name} tokens`);
         prev.push(`${curr.name} USD`);
         return prev;
@@ -107,7 +107,7 @@ const Reports: NextPageWithLayout<Props> = ({
       ...(usageQuery.data ? usageQuery.data?.map((data) => {
         return [
           data.userName,
-          ...(models.reduce((prev, curr) => {
+          ...(selectedModels.reduce((prev, curr) => {
             const modelUsage = data.usage.find(u => u.modelId == curr.id);
             prev.push(modelUsage?.totalTokens?.toString() || "");
             prev.push(modelUsage?.totalUSD?.toString() || "");
