@@ -20,6 +20,7 @@ export enum LlmID {
   CODELLAMA_7B = 'codellama:7b',
   MISTRAL_7B = 'mistral:7b',
   VICUNA_7B = 'vicuna:7b',
+  VICUNA_7B_16K = 'vicuna:7b-16k',
 }
 
 export enum LlmType {
@@ -128,6 +129,13 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'VICUNA-7B_2K',
     maxLength: 6000,
     tokenLimit: 2000,
+    type: LlmType.CHAT
+  },
+  [LlmID.VICUNA_7B_16K]: {
+    id: LlmID.VICUNA_7B_16K,
+    name: 'VICUNA-7B_16K',
+    maxLength: 48000,
+    tokenLimit: 16000,
     type: LlmType.CHAT
   },
 };
