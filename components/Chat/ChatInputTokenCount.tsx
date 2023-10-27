@@ -16,14 +16,14 @@ const ChatInputTokenCount = memo(function (props: { content: string | undefined 
 
   useEffect(() => {
     let model: Tiktoken | null;
-    if (selectedConversation) {
+    if (selectedConversation?.model) {
       model = getTiktokenEncoding(selectedConversation?.model.id);
       tokenizer.current = model;
     }
     return () => {
       model?.free();
     };
-  }, [selectedConversation]);
+  }, [selectedConversation?.model]);
 
   const serialized = `${props.content || ''}`;
   const count = tokenizer.current?.encode(serialized, 'all').length;

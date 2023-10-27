@@ -15,8 +15,9 @@ export const getEndpoint = (plugin: ChatMode | null) => {
 export const watchRefToAbort = async <R>(
   ref: React.MutableRefObject<boolean>,
   fn: (controller: AbortController) => Promise<R>,
+  abortController?: AbortController,
 ): Promise<R> => {
-  const controller = new AbortController();
+  const controller = abortController || new AbortController();
   let interval: any | null = null;
   try {
     interval = setInterval(() => {
