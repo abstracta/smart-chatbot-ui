@@ -12,12 +12,15 @@ export const models = router({
       }),
     )
     .query(async ({ ctx, input }) => {
+      let models;
       try {
         const llmApi = await getLlmApiAggregator();
-        return await llmApi.listModels();
+        models = await llmApi.listModels();
       }
       catch (e) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       }
+      if (!models || models.length == 0) throw new TRPCError({ message: "No models found.", code: "NOT_FOUND" })
+      return models;
     }),
 });

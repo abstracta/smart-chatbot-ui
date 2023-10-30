@@ -100,7 +100,9 @@ const Home = ({
 
   useEffect(() => {
     dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
-    dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+    const defaultModelId = models.length > 0 ?
+      models.find(m => m.id == settings.defaultModelId || m.id == systemDefaultModelId) || models[0] : undefined;
+    dispatch({ field: 'defaultModelId', value: defaultModelId?.id });
 
     dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || systemDefaultSystemPrompt });
 
@@ -122,6 +124,7 @@ const Home = ({
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     settings,
+    models,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -173,14 +176,15 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (!selectedConversation && modelsQuery.isFetched) {
+      if (!selectedConversation && modelsQuery.isFetched && modelsQuery.data) {
         dispatch({
           field: 'selectedConversation',
           value: conversation ?? {
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: modelsQuery.data?.find(m => m.id == defaultModelId) || defaultModelId,
+            model: modelsQuery.data.find(m => m.id == defaultModelId) ||
+              modelsQuery.data.length > 0 && modelsQuery.data[0],
             prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
