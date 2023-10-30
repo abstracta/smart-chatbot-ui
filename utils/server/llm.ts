@@ -4,7 +4,6 @@ import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ChatBedrock } from "langchain/chat_models/bedrock";
 import { ChatOllama } from "langchain/chat_models/ollama";
 import { OllamaEmbeddings } from "langchain/embeddings/ollama";
-import { BaseMessage } from "langchain/schema";
 import {
   AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST,
   OPENAI_API_TYPE, AWS_BEDROCK_MODELS, OPENAI_INSTANCE_NAME,
@@ -27,7 +26,7 @@ export interface ChatCompletionResponse {
     completion: number,
     total: number
   },
-  message: BaseMessage,
+  message: Message,
 }
 
 interface CallbackHandlers {
@@ -182,7 +181,7 @@ class OpenAiApi extends LlmApi {
       });
 
       return {
-        message: modelRes,
+        message: { content: modelRes.content, role: "assistant" },
         usage: {
           prompt: promptTokens,
           completion: completionTokens,
@@ -281,7 +280,7 @@ class AzureOpenAiApi extends LlmApi {
         ]
       });
       return {
-        message: modelRes,
+        message: { content: modelRes.content, role: "assistant" },
         usage: {
           prompt: promptTokens,
           completion: completionTokens,
@@ -332,7 +331,7 @@ class AwsBedrockApi extends LlmApi {
       [LlmTemperature.PRECISE]: 0,
       [LlmTemperature.NEUTRAL]: .5,
       [LlmTemperature.CREATIVE]: 1,
-    }, false);
+    }, true);
     this.models = {} as Record<LlmID, Llm>;
     this.bedrockClient = new Bedrock({
       ...(AWS_BEDROCK_REGION ? { region: AWS_BEDROCK_REGION } : {})
@@ -380,7 +379,7 @@ class AwsBedrockApi extends LlmApi {
     let promptTokens = encoding.encode(serialized.normalize('NFKC'), 'all').length;
     let completionTokens = 0;
     try {
-      const modelRes = await model.call(mapMessageToLangchainMessage(messages), {
+      const modelRes = await model.stream(mapMessageToLangchainMessage(messages), {
         callbacks: [
           {
             handleLLMEnd: (output, runId, parentRunId?, tags?) => {
@@ -388,14 +387,16 @@ class AwsBedrockApi extends LlmApi {
                 .map(g => encoding.encode(g.text).length)
                 .reduce((prev, curr) => prev + curr, 0);
             },
-            handleLLMNewToken(token, idx, runId, parentRunId, tags, fields) {
-              options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(token);
-            },
           },
         ],
       });
+      let response = "";
+      for await (const chunk of modelRes) {
+        response += chunk.content;
+        options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(chunk.content);
+      }
       return {
-        message: modelRes,
+        message: { content: response, role: "assistant" },
         usage: {
           prompt: promptTokens,
           completion: completionTokens,
@@ -458,7 +459,7 @@ class OLlamaApi extends LlmApi {
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
       model: modelId,
     });
-    // TODO: use different tokenizer
+    // TODO: update tokenizer
     const encoding = getTiktokenEncoding(modelId);
     const serialized = serializeMessages(modelId, messages);
     let promptTokens = encoding.encode(serialized, 'all').length;
@@ -478,7 +479,7 @@ class OLlamaApi extends LlmApi {
       ]
     });
     return {
-      message: modelRes,
+      message: { content: modelRes.content, role: "assistant" },
       usage: {
         prompt: promptTokens,
         completion: completionTokens,
@@ -510,18 +511,19 @@ export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
   const apiList: LlmApi[] = [];
   if (OPENAI_API_TYPE === "openai")
     apiList.push(new OpenAiApi());
-  else
+  else if (OPENAI_API_TYPE === "azure")
     apiList.push(new AzureOpenAiApi());
   try {
     const provider = defaultProvider();
     await provider();
     apiList.push(new AwsBedrockApi())
   } catch (e) {
-    console.error("Aws credentials error:", e);
+    if (e instanceof Error && !(e.name === "CredentialsProviderError" &&
+      e.message === "Could not load credentials from any providers"))
+      console.error("Aws credentials error:", e);
   }
-  if (OLLAMA_URL) {
-    apiList.push(new OLlamaApi());
-  }
+  if (OLLAMA_URL) apiList.push(new OLlamaApi());
+
   const apiCatalog = await new LlmApiAggregator(apiList);
   try {
     await apiCatalog.init();
