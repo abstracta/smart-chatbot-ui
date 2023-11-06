@@ -42,6 +42,10 @@ export const DEFAULT_USER_LIMIT_USD_MONTHLY: number = process.env.DEFAULT_USER_L
 
 export const CAN_UPDATE_USER_QUOTAS: boolean = process.env.CAN_UPDATE_USER_QUOTAS === "true" || false;
 
+export const AWS_BEDROCK_ACCESS_KEY: string | undefined = process.env.AWS_BEDROCK_ACCESS_KEY || undefined;
+
+export const AWS_BEDROCK_SECRET_KEY: string | undefined = process.env.AWS_BEDROCK_SECRET_KEY || undefined;
+
 export const AWS_BEDROCK_MODELS: LlmID[] | undefined = process.env.AWS_BEDROCK_MODELS ? parseModelIdList(process.env.AWS_BEDROCK_MODELS) : undefined;
 
 export const AWS_BEDROCK_REGION: string | undefined = process.env.AWS_BEDROCK_REGION || undefined;

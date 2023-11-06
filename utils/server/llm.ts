@@ -7,7 +7,7 @@ import { OllamaEmbeddings } from "langchain/embeddings/ollama";
 import {
   AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST,
   OPENAI_API_TYPE, AWS_BEDROCK_MODELS, OPENAI_INSTANCE_NAME,
-  AWS_BEDROCK_REGION, OLLAMA_URL
+  AWS_BEDROCK_REGION, OLLAMA_URL, AWS_BEDROCK_ACCESS_KEY, AWS_BEDROCK_SECRET_KEY
 } from "../app/const";
 import { AzureOpenAIModel } from "@/types/openai";
 import { LlmList } from '@/types/llm';
@@ -334,6 +334,10 @@ class AwsBedrockApi extends LlmApi {
     }, true);
     this.models = {} as Record<LlmID, Llm>;
     this.bedrockClient = new Bedrock({
+      credentials: {
+        accessKeyId: AWS_BEDROCK_ACCESS_KEY || "",
+        secretAccessKey: AWS_BEDROCK_SECRET_KEY || "",
+      },
       ...(AWS_BEDROCK_REGION ? { region: AWS_BEDROCK_REGION } : {})
     });
   }
@@ -513,15 +517,8 @@ export async function getLlmApiAggregator(): Promise<LlmApiAggregator> {
     apiList.push(new OpenAiApi());
   else if (OPENAI_API_TYPE === "azure")
     apiList.push(new AzureOpenAiApi());
-  try {
-    const provider = defaultProvider();
-    await provider();
+  if (AWS_BEDROCK_ACCESS_KEY && AWS_BEDROCK_SECRET_KEY)
     apiList.push(new AwsBedrockApi())
-  } catch (e) {
-    if (e instanceof Error && !(e.name === "CredentialsProviderError" &&
-      e.message === "Could not load credentials from any providers"))
-      console.error("Aws credentials error:", e);
-  }
   if (OLLAMA_URL) apiList.push(new OLlamaApi());
 
   const apiCatalog = await new LlmApiAggregator(apiList);
