@@ -1,4 +1,4 @@
-import { Conversation } from '@/types/chat';
+import { Conversation, ConversationListing } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
 import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
@@ -8,6 +8,7 @@ import { AggregationLlmUsageStatsPerModel, AggregationLlmUsageStatsPerUser } fro
 import { User } from '@/types/user';
 import { UserLlmUsage, NewUserLlmUsage, LlmInfo } from '@/types/llmUsage';
 import { LlmID, LlmTemperature } from '@/types/llm';
+import { flatten } from 'mongo-dot-notation';
 
 let _db: Db | null = null;
 export async function getDb(): Promise<Db> {
@@ -47,6 +48,21 @@ export interface SettingsCollectionItem {
   settings: Settings;
 }
 
+function dotNotate(obj: any, target?: any, prefix?: string): Record<string, any> {
+  target = target || {},
+    prefix = prefix || "";
+
+  Object.keys(obj).forEach(function (key) {
+    if (typeof (obj[key]) === "object" && obj[key] != null) {
+      dotNotate(obj[key], target, prefix + key + ".");
+    } else {
+      return target[prefix + key] = obj[key];
+    }
+  });
+
+  return target;
+}
+
 export class UserDb {
   private _conversations: Collection<ConversationCollectionItem>;
   private _folders: Collection<FoldersCollectionItem>;
@@ -76,24 +92,35 @@ export class UserDb {
     return (await this._users.findOne({ _id: this._userId }))!;
   }
 
-  async getConversations(): Promise<Conversation[]> {
-    return (
+  async getConversations(): Promise<ConversationListing[]> {
+    const conversations = (
       await this._conversations
-        .find({ userId: this._userId })
+        .find({ userId: this._userId }, {
+          projection: {
+            "conversation.id": 1, "conversation.name": 1, "conversation.folderId": 1
+          }
+        })
         .sort({ _id: -1 })
         .toArray()
     ).map((item) => item.conversation);
+    return conversations;
   }
 
-  async saveConversation(conversation: Conversation) {
+  async getConversation(id: string): Promise<Conversation | null> {
+    const conversation = await this._conversations
+      .findOne({ userId: this._userId, "conversation.id": id })
+    return conversation ? conversation.conversation : null;
+  }
+
+  async saveConversation(conversation: Conversation | ConversationListing) {
     return this._conversations.updateOne(
       { userId: this._userId, 'conversation.id': conversation.id },
-      { $set: { conversation } },
+      { $set: { ...(flatten({ conversation }) as any).$set } },
       { upsert: true },
     );
   }
 
-  async saveConversations(conversations: Conversation[]) {
+  async saveConversations(conversations: (Conversation | ConversationListing)[]) {
     for (const conversation of conversations) {
       await this.saveConversation(conversation);
     }

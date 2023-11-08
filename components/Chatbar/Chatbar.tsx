@@ -7,7 +7,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useFolders from '@/hooks/useFolders';
 
 
-import { Conversation } from '@/types/chat';
+import { Conversation, ConversationListing } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -32,7 +32,7 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { showChatbar, chatModeKeys: pluginKeys, settings },
+    state: { showChatbar, chatModeKeys: pluginKeys },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const [conversations, conversationsAction] = useConversations();
@@ -98,8 +98,8 @@ export const Chatbar = () => {
     await foldersAction.clear();
   };
 
-  const handleDeleteConversation = async (conversation: Conversation) => {
-    await conversationsAction.remove(conversation);
+  const handleDeleteConversation = async (conversationId: Conversation["id"]) => {
+    await conversationsAction.remove(conversationId);
     chatDispatch({ field: 'searchTerm', value: '' });
   };
 
@@ -129,7 +129,7 @@ export const Chatbar = () => {
       const results = fuse.search((searchTerm))
       chatDispatch({
         field: 'filteredConversations',
-        value: results.map(r=>r.item),
+        value: results.map(r => r.item),
       });
     } else {
       chatDispatch({
@@ -150,7 +150,7 @@ export const Chatbar = () => {
         handleApiKeyChange,
       }}
     >
-      <Sidebar<Conversation>
+      <Sidebar<ConversationListing>
         side={'left'}
         isOpen={showChatbar}
         addItemButtonTitle={t('New chat')}

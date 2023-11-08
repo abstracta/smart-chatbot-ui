@@ -8,9 +8,20 @@ export const RoleSchema = z.union([z.literal('system'), z.literal('assistant'), 
 
 export type Role = z.infer<typeof RoleSchema>;
 
+export const MessageAttachmentSchema = z.object({
+  _id: z.string(),
+  name: z.string(),
+  contentType: z.string(),
+  content: z.string(),
+  size: z.number(),
+})
+
+export type MessageAttachment = z.infer<typeof MessageAttachmentSchema>;
+
 export const MessageSchema = z.object({
   role: RoleSchema,
   content: z.string(),
+  attachments: z.array(MessageAttachmentSchema).optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -50,5 +61,12 @@ export const ConversationSchema = z.object({
 });
 
 export const ConversationSchemaArray = z.array(ConversationSchema);
-
 export type Conversation = z.infer<typeof ConversationSchema>;
+
+export const ConversationSchemaListing = ConversationSchema.pick({
+  id: true,
+  name: true,
+  folderId: true
+})
+export type ConversationListing = z.infer<typeof ConversationSchemaListing>;
+export const ConversationSchemaListingArray = z.array(ConversationSchemaListing);

@@ -10,7 +10,7 @@ import { ChatbarInitialState } from './Chatbar.state';
 export interface ChatbarContextProps {
   state: ChatbarInitialState;
   dispatch: Dispatch<ActionType<ChatbarInitialState>>;
-  handleDeleteConversation: (conversation: Conversation) => void;
+  handleDeleteConversation: (conversationId: Conversation["id"]) => void;
   handleClearConversations: () => void;
   handlePluginKeyChange: (pluginKey: ChatModeKey) => void;
   handleClearPluginKey: (pluginKey: ChatModeKey) => void;

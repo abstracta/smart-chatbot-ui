@@ -9,23 +9,19 @@ import {
   IconUser,
 } from '@tabler/icons-react';
 import { FC, memo, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
-
 import { useTranslation } from 'next-i18next';
-
 import useConversations from '@/hooks/useConversations';
 import useMesseageSender from '@/hooks/useMessageSender';
-
 import { Message } from '@/types/chat';
-
 import HomeContext from '@/pages/api/home/home.context';
-
 import { CodeBlock } from '../Markdown/CodeBlock';
 import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 import ChatContext from './Chat.context';
-
 import rehypeMathjax from 'rehype-mathjax';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import { downloadFile } from '@/utils/app/download';
+import FileAttachment from './FileAttachment';
 
 export interface Props {
   message: Message;
@@ -51,14 +47,16 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
   const [messagedCopied, setMessageCopied] = useState(false);
   const [shouldTruncate, setShouldTruncate] = useState<boolean>(false);
   const [expanded, setExpanded] = useState(false);
+  const [editAttachments, setEditAttachments] = useState<string[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messageParagraphRef = useRef<HTMLParagraphElement>(null);
-  
+
   const toggleEditing = () => {
+    setEditAttachments(message.attachments?.map(a => a._id).filter(id => id) as string[] || [])
     setIsEditing(!isEditing);
   };
-  
+
   const toggleExpand = () => {
     setExpanded(!expanded);
   };
@@ -72,7 +70,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
   };
 
   const handleEditMessage = async () => {
-    if (message.content != messageContent) {
+    if (message.content != messageContent || message.attachments?.length != editAttachments.length) {
       if (selectedConversation) {
         const updatedMessages = selectedConversation.messages
           .map((m, i) => {
@@ -91,13 +89,18 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
           field: 'selectedConversation',
           value: selectedConversation,
         });
+        const attachments = message.attachments?.filter(a => editAttachments.includes(a._id));
         homeDispatch({
           field: 'currentMessage',
-          value: { ...message, content: messageContent },
+          value: {
+            ...message,
+            content: messageContent,
+            attachments
+          },
         });
         await conversationsAction.update(updatedConversation);
 
-        const newMessage = { ...message, content: messageContent };
+        const newMessage = { ...message, content: messageContent, attachments };
         sendMessage(newMessage, deleteCount, chatMode, selectedPlugins);
       }
     }
@@ -213,7 +216,18 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                       overflowY: 'auto',
                     }}
                   />
-
+                  <div className='flex gap-2 mt-2'>
+                    {message.attachments?.filter(a => editAttachments.includes(a._id))
+                      .map((a) => {
+                        return <FileAttachment key={a._id}
+                          className='px-3 py-2'
+                          attachment={a}
+                          removable={true}
+                          onRemove={() => {
+                            setEditAttachments([...editAttachments.filter(i => i != a._id)])
+                          }} />
+                      })}
+                  </div>
                   <div className="mt-10 flex justify-center space-x-4">
                     <button
                       className="h-[40px] rounded-md bg-blue-500 px-4 py-1 text-sm font-medium text-white enabled:hover:bg-blue-600 disabled:opacity-50"
@@ -237,14 +251,28 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                 <div className="prose whitespace-pre-wrap dark:prose-invert flex-1">
                   <p className={`${shouldTruncate && !expanded ? `line-clamp-[25]` : 'line-clamp-none'}`}
                     ref={messageParagraphRef}>
-                    {message.content}</p>
-                  {shouldTruncate && (
-                    <button
-                      className='flex w-fit items-center gap-2 text-sm py-1 rounded border border-neutral-200 bg-white px-4 text-black hover:opacity-70 dark:border-neutral-600 dark:bg-[#343541] dark:text-white'
-                      onClick={toggleExpand}>
-                      {expanded ? <>{t('Collapse')} <IconCaretUp /> </> : <>{t('Expand')} <IconCaretDown /></>}
-                    </button>
-                  )}
+                    {message.content}
+                  </p>
+                  <div>
+                    {shouldTruncate && (
+                      <button
+                        className='flex w-fit items-center gap-2 text-sm py-1 rounded border border-neutral-200 bg-white px-4 text-black hover:opacity-70 dark:border-neutral-600 dark:bg-[#343541] dark:text-white'
+                        onClick={toggleExpand}>
+                        {expanded ? <>{t('Collapse')} <IconCaretUp /> </> : <>{t('Expand')} <IconCaretDown /></>}
+                      </button>
+                    )}
+                  </div>
+                  <div className='flex gap-2'>
+                    {message.attachments?.map(a => {
+                      return <FileAttachment key={a._id}
+                        className='px-3 py-2'
+                        attachment={a}
+                        downloadable={true}
+                        onDownload={() => {
+                          downloadFile(new Blob([a.content], { type: a.contentType }), a.name);
+                        }} />
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -333,7 +361,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 });
 ChatMessage.displayName = 'ChatMessage';

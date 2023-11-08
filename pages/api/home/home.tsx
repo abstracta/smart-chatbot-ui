@@ -7,11 +7,10 @@ import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { cleanConversationHistory } from '@/utils/app/clean';
 import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
-import { Conversation } from '@/types/chat';
+import { Conversation, ConversationListing } from '@/types/chat';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -22,6 +21,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { authOptions } from '../auth/[...nextauth].page';
 import { getServerSession } from 'next-auth/next';
 import { LlmID } from '@/types/llm';
+import useSettings from '@/hooks/useSettings';
+import Spinner from '@/components/Spinner';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
@@ -45,12 +46,6 @@ const Home = ({
   systemDefaultSystemPrompt,
 }: Props) => {
   const { t } = useTranslation('chat');
-  const settingsQuery = trpc.settings.get.useQuery();
-  const promptsQuery = trpc.prompts.list.useQuery();
-  const foldersQuery = trpc.folders.list.useQuery();
-  const conversationsQuery = trpc.conversations.list.useQuery();
-  const publicPromptsQuery = trpc.publicPrompts.list.useQuery();
-  const publicFoldersQuery = trpc.publicFolders.list.useQuery();
 
   const stopConversationRef = useRef<boolean>(false);
   const contextValue = useCreateReducer<HomeInitialState>({
@@ -66,9 +61,17 @@ const Home = ({
   });
 
   const {
-    state: { apiKey, settings, conversations, selectedConversation, prompts, models, defaultModelId, defaultSystemPrompt },
+    state: { settings, selectedConversation, selectedConversationId, models, defaultModelId, defaultSystemPrompt },
     dispatch,
   } = contextValue;
+
+  const settingsQuery = useSettings()[0];
+  const promptsQuery = trpc.prompts.list.useQuery();
+  const foldersQuery = trpc.folders.list.useQuery();
+  const conversationsQuery = trpc.conversations.list.useQuery();
+  const selectedConversationQuery = trpc.conversations.get.useQuery({ id: selectedConversationId || "" });
+  const publicPromptsQuery = trpc.publicPrompts.list.useQuery();
+  const publicFoldersQuery = trpc.publicFolders.list.useQuery();
 
   const modelsQuery = trpc.models.list.useQuery(undefined, { staleTime: 60000 });
 
@@ -83,11 +86,10 @@ const Home = ({
 
   // FETCH MODELS ----------------------------------------------
 
-  const handleSelectConversation = async (conversation: Conversation) => {
-    dispatch({
-      field: 'selectedConversation',
-      value: conversation,
-    });
+  const handleSelectConversation = async (conversationId: Conversation["id"]) => {
+    if (conversationId !== selectedConversationId) {
+      dispatch({ field: 'selectedConversationId', value: conversationId });
+    }
   };
 
   // EFFECTS  --------------------------------------------
@@ -164,32 +166,30 @@ const Home = ({
 
   useEffect(() => {
     if (conversationsQuery.data) {
-      let history = conversationsQuery.data;
-      const cleanedConversationHistory: Conversation[] =
-        cleanConversationHistory(history, {
-          temperature: settings.defaultTemperature,
-          defaultSystemPrompt
-        });
-      dispatch({ field: 'conversations', value: cleanedConversationHistory });
-
-      const conversation: Conversation | undefined =
-        cleanedConversationHistory.length > 0
-          ? cleanedConversationHistory[0]
+      dispatch({ field: 'conversations', value: conversationsQuery.data });
+      const conversation: ConversationListing | undefined =
+        conversationsQuery.data.length > 0
+          ? conversationsQuery.data[0]
           : undefined;
-      if (!selectedConversation && modelsQuery.isFetched && modelsQuery.data) {
-        dispatch({
-          field: 'selectedConversation',
-          value: conversation ?? {
-            id: uuidv4(),
-            name: t('New Conversation'),
-            messages: [],
-            model: modelsQuery.data.find(m => m.id == defaultModelId) ||
-              modelsQuery.data.length > 0 && modelsQuery.data[0],
-            prompt: defaultSystemPrompt,
-            temperature: settings.defaultTemperature,
-            folderId: null,
-          }
-        });
+
+      if (!selectedConversationId && modelsQuery.isFetched && modelsQuery.data) {
+        if (conversation) {
+          dispatch({ field: "selectedConversationId", value: conversation.id })
+        } else {
+          dispatch({
+            field: 'selectedConversation',
+            value: conversation ?? {
+              id: uuidv4(),
+              name: t('New Conversation'),
+              messages: [],
+              model: modelsQuery.data.find(m => m.id == defaultModelId) ||
+                modelsQuery.data.length > 0 && modelsQuery.data[0],
+              prompt: defaultSystemPrompt,
+              temperature: settings.defaultTemperature,
+              folderId: null,
+            }
+          });
+        }
       }
     }
   }, [
@@ -201,27 +201,33 @@ const Home = ({
     t,
     modelsQuery.data,
     modelsQuery.isFetched,
-    selectedConversation
+    selectedConversationId
   ]);
 
   useEffect(() => {
-    const apiKey = localStorage.getItem('apiKey');
-
-    if (serverSideApiKeyIsSet) {
-      dispatch({ field: 'apiKey', value: '' });
-
-      localStorage.removeItem('apiKey');
-    } else if (apiKey) {
-      dispatch({ field: 'apiKey', value: apiKey });
+    if (selectedConversationQuery.data) {
+      dispatch({ field: "selectedConversation", value: selectedConversationQuery.data });
     }
+  }, [selectedConversationQuery.data, dispatch])
 
-    const chatModeKeys = localStorage.getItem('chatModeKeys');
-    if (serverSidePluginKeysSet) {
-      dispatch({ field: 'chatModeKeys', value: [] });
-      localStorage.removeItem('chatModeKeys');
-    } else if (chatModeKeys) {
-      dispatch({ field: 'chatModeKeys', value: chatModeKeys });
-    }
+  useEffect(() => {
+    // const apiKey = localStorage.getItem('apiKey');
+
+    // if (serverSideApiKeyIsSet) {
+    //   dispatch({ field: 'apiKey', value: '' });
+
+    //   localStorage.removeItem('apiKey');
+    // } else if (apiKey) {
+    //   dispatch({ field: 'apiKey', value: apiKey });
+    // }
+
+    // const chatModeKeys = localStorage.getItem('chatModeKeys');
+    // if (serverSidePluginKeysSet) {
+    //   dispatch({ field: 'chatModeKeys', value: [] });
+    //   localStorage.removeItem('chatModeKeys');
+    // } else if (chatModeKeys) {
+    //   dispatch({ field: 'chatModeKeys', value: chatModeKeys });
+    // }
 
     if (window.innerWidth < 640) {
       dispatch({ field: 'showChatbar', value: false });
@@ -260,9 +266,12 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {selectedConversation && (
-        <HomeMain selectedConversation={selectedConversation} />
+      {settingsQuery.data && (
+        <HomeMain />
       )}
+      {settingsQuery.isLoading && (<div className="absolute w-full h-full flex flex-1 self-stretch items-center justify-center bg-white dark:bg-[#343541]" >
+        <Spinner size="25px" className="m-auto" />
+      </div>)}
     </HomeContext.Provider>
   );
 };

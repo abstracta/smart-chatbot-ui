@@ -24,9 +24,16 @@ export const TemperatureSlider: FC<Props> = ({
             <li className={`w-full border-b border-gray-200 sm:border-b-0 sm:border-r border-neutral-200 text-neutral-900 
               dark:border-neutral-600 dark:text-neutral-100 ${temp == temperature ? "bg-slate-900/20 dark:bg-gray-900/30" :
                 "bg-white dark:bg-[#343541]"}
-              cursor-pointer transition-bg dark:hover:dark:bg-gray-900/30`}
+              cursor-pointer transition-bg dark:hover:dark:bg-gray-900/30 focus:outline-black dark:focus:outline-white`}
               key={index}
-              onClick={() => onChangeTemperature(temp)}>
+              onClick={() => onChangeTemperature(temp)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key == ' ') {
+                  e.preventDefault();
+                  onChangeTemperature(temp);
+                }
+              }}
+              tabIndex={0}>
               <div className="flex items-center justify-center px-4 py-1 cursor-pointer">
                 <label htmlFor="vue-checkbox-list" className="py-2 ml-2 text-sm font-medium text-gray-900 
                 dark:text-gray-300 cursor-pointer">

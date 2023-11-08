@@ -1,23 +1,19 @@
-import { useContext, useRef } from 'react';
+import { useContext } from 'react';
 
 import useConversations from '@/hooks/useConversations';
-
-import { Conversation } from '@/types/chat';
-
 import HomeContext from '@/pages/api/home/home.context';
-
 import { Chat } from '../Chat/Chat';
 import { Chatbar } from '../Chatbar/Chatbar';
 import { Navbar } from '../Mobile/Navbar';
 import Promptbar from '../Promptbar';
+import Spinner from '../Spinner';
 
 type HomeMainProps = {
-  selectedConversation: Conversation;
 };
 
-export const HomeMain = ({ selectedConversation }: HomeMainProps) => {
+export const HomeMain = ({ }: HomeMainProps) => {
   const {
-    state: { settings },
+    state: { settings, selectedConversation },
   } = useContext(HomeContext);
 
   const [_, conversationsAction] = useConversations();
@@ -26,17 +22,21 @@ export const HomeMain = ({ selectedConversation }: HomeMainProps) => {
       className={`flex h-screen w-screen flex-col text-sm text-white dark:text-white ${settings.theme}`}
     >
       <div className="fixed top-0 w-full sm:hidden">
-        <Navbar
+        {selectedConversation && <Navbar
           selectedConversation={selectedConversation}
           onNewConversation={() => conversationsAction.add()}
-        />
+        />}
       </div>
 
       <div className="flex h-full w-full pt-[48px] sm:pt-0">
         <Chatbar />
 
-        <div className="flex flex-1">
+        <div className="flex flex-1 relative">
           <Chat />
+          {!selectedConversation && (<div className="absolute w-full h-full flex flex-1 self-stretch 
+            items-center justify-center bg-white dark:bg-[#343541] animate-fadeIn" >
+            <Spinner size="25px" className="m-auto" />
+          </div>)}
         </div>
 
         <Promptbar />

@@ -4,6 +4,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -33,6 +35,7 @@ import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 import { LlmTemperature } from '@/types/llm';
+import useIsomorphicLayoutEffect from '@/hooks/useIsomorphicLayoutEffect';
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -143,21 +146,14 @@ export const Chat = memo(() => {
     }
   };
 
-  const scrollDown = () => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView(true);
-    }
-  };
-
   useEffect(() => {
     setSystemPrompt(defaultSystemPrompt);
     setTemperature(settings.defaultTemperature);
   }, [selectedConversation, settings.defaultTemperature, defaultSystemPrompt]);
 
-  const throttledScrollDown = throttle(scrollDown, 250);
-  useEffect(() => {
-    throttledScrollDown();
-  }, [selectedConversation, throttledScrollDown]);
+  useIsomorphicLayoutEffect(() => {
+    messagesEndRef.current?.scrollIntoView(true);
+  }, [selectedConversation]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

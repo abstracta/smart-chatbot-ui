@@ -1,6 +1,6 @@
 import { MutableRefObject } from 'react';
 
-import { Conversation, Message } from '@/types/chat';
+import { Conversation, ConversationListing, Message } from '@/types/chat';
 import { ChatModeKey } from '@/types/chatmode';
 import { FolderInterface } from '@/types/folder';
 import { Llm, LlmID, LlmTemperature } from '@/types/llm';
@@ -17,7 +17,8 @@ export interface HomeInitialState {
   models: Llm[];
   folders: FolderInterface[];
   publicFolders: FolderInterface[];
-  conversations: Conversation[];
+  conversations: ConversationListing[];
+  selectedConversationId: Conversation["id"] | undefined;
   selectedConversation: Conversation | undefined;
   currentMessage: Message | undefined;
   prompts: Prompt[];
@@ -56,7 +57,6 @@ export const initialState: Partial<HomeInitialState> = {
   folders: [],
   publicFolders: [],
   conversations: [],
-  selectedConversation: undefined,
   currentMessage: undefined,
   prompts: [],
   publicPrompts: [],
@@ -68,7 +68,7 @@ export const initialState: Partial<HomeInitialState> = {
   systemDefaultModelId: undefined,
   defaultModelId: undefined,
   defaultSystemPrompt: '',
-  serverSideApiKeyIsSet: false,
+  serverSideApiKeyIsSet: true,
   serverSidePluginKeysSet: false,
   consumptionLimitEnabled: false,
   isAzureOpenAI: false,
