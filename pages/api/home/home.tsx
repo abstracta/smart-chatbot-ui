@@ -70,7 +70,7 @@ const Home = ({
     dispatch,
   } = contextValue;
 
-  const modelsQuery = trpc.models.list.useQuery({ key: apiKey });
+  const modelsQuery = trpc.models.list.useQuery(undefined, { staleTime: 60000 });
 
   useEffect(() => {
     if (modelsQuery.data)
