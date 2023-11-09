@@ -25,8 +25,7 @@ import useSettings from '@/hooks/useSettings';
 import Spinner from '@/components/Spinner';
 
 interface Props {
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
+  isEnabledGoogleSearch: boolean;
   consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
@@ -36,8 +35,7 @@ interface Props {
 }
 
 const Home = ({
-  serverSideApiKeyIsSet,
-  serverSidePluginKeysSet,
+  isEnabledGoogleSearch,
   consumptionLimitEnabled,
   isAzureOpenAI,
   supportEmail,
@@ -57,6 +55,7 @@ const Home = ({
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
       defaultSystemPrompt: systemDefaultSystemPrompt,
+      isEnabledGoogleSearch,
     } as HomeInitialState,
   });
 
@@ -105,26 +104,12 @@ const Home = ({
     const defaultModelId = models.length > 0 ?
       models.find(m => m.id == settings.defaultModelId || m.id == systemDefaultModelId) || models[0] : undefined;
     dispatch({ field: 'defaultModelId', value: defaultModelId?.id });
-
     dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || systemDefaultSystemPrompt });
-
-    serverSideApiKeyIsSet &&
-      dispatch({
-        field: 'serverSideApiKeyIsSet',
-        value: serverSideApiKeyIsSet,
-      });
-    serverSidePluginKeysSet &&
-      dispatch({
-        field: 'serverSidePluginKeysSet',
-        value: serverSidePluginKeysSet,
-      });
   }, [
     t,
     systemDefaultModelId,
     systemDefaultSystemPrompt,
     dispatch,
-    serverSideApiKeyIsSet,
-    serverSidePluginKeysSet,
     settings,
     models,
   ]);
@@ -211,24 +196,6 @@ const Home = ({
   }, [selectedConversationQuery.data, dispatch])
 
   useEffect(() => {
-    // const apiKey = localStorage.getItem('apiKey');
-
-    // if (serverSideApiKeyIsSet) {
-    //   dispatch({ field: 'apiKey', value: '' });
-
-    //   localStorage.removeItem('apiKey');
-    // } else if (apiKey) {
-    //   dispatch({ field: 'apiKey', value: apiKey });
-    // }
-
-    // const chatModeKeys = localStorage.getItem('chatModeKeys');
-    // if (serverSidePluginKeysSet) {
-    //   dispatch({ field: 'chatModeKeys', value: [] });
-    //   localStorage.removeItem('chatModeKeys');
-    // } else if (chatModeKeys) {
-    //   dispatch({ field: 'chatModeKeys', value: chatModeKeys });
-    // }
-
     if (window.innerWidth < 640) {
       dispatch({ field: 'showChatbar', value: false });
       dispatch({ field: 'showPromptbar', value: false });
@@ -246,8 +213,6 @@ const Home = ({
   }, [
     systemDefaultModelId,
     dispatch,
-    serverSideApiKeyIsSet,
-    serverSidePluginKeysSet,
   ]);
 
   return (
@@ -278,14 +243,8 @@ const Home = ({
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
-  let serverSidePluginKeysSet = false;
-
   const googleApiKey = process.env.GOOGLE_API_KEY;
   const googleCSEId = process.env.GOOGLE_CSE_ID;
-
-  if (googleApiKey && googleCSEId) {
-    serverSidePluginKeysSet = true;
-  }
 
   const session = await getServerSession(req, res, authOptions)
   const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
@@ -293,9 +252,8 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
 
   return {
     props: {
-      serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       isAzureOpenAI: OPENAI_API_TYPE === "azure",
-      serverSidePluginKeysSet,
+      isEnabledGoogleSearch: !!(googleApiKey && googleCSEId),
       supportEmail: SUPPORT_EMAIL,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',

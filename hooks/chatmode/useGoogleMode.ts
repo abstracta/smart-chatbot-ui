@@ -18,7 +18,7 @@ import useApiError from '@/services/useApiError';
 
 export function useGoogleMode(): ChatModeRunner {
   const {
-    state: { chatModeKeys },
+    state: {  },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const apiService = useApiService();
@@ -30,12 +30,6 @@ export function useGoogleMode(): ChatModeRunner {
       return apiService.googleSearch(params);
     },
     onMutate: async (variables) => {
-      variables.body.googleAPIKey = chatModeKeys
-        .find((key) => key.chatModeId === 'google-search')
-        ?.requiredKeys.find((key) => key.key === 'GOOGLE_API_KEY')?.value;
-      variables.body.googleCSEId = chatModeKeys
-        .find((key) => key.chatModeId === 'google-search')
-        ?.requiredKeys.find((key) => key.key === 'GOOGLE_CSE_ID')?.value;
       homeDispatch({
         field: 'selectedConversation',
         value: variables.conversation,

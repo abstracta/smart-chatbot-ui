@@ -29,7 +29,6 @@ export type Message = z.infer<typeof MessageSchema>;
 export const ChatBodySchema = z.object({
   modelId: z.nativeEnum(LlmID),
   messages: z.array(MessageSchema),
-  key: z.string(),
   prompt: z.string(),
   temperature: z.nativeEnum(LlmTemperature),
   googleAPIKey: z.string().optional(),

@@ -10,10 +10,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { SettingDialog } from '@/components/Settings/SettingDialog';
 
-import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
-import { ChatModeKeys } from './ChatModeKeys';
 import { ClearConversations } from './ClearConversations';
 import { SidebarButtonLink } from '@/components/Sidebar/SidebarButtonLink';
 import { useSession } from 'next-auth/react';

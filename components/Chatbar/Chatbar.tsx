@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,7 +8,6 @@ import useFolders from '@/hooks/useFolders';
 
 
 import { Conversation, ConversationListing } from '@/types/chat';
-import { ChatModeKey } from '@/types/chatmode';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -32,7 +31,7 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { showChatbar, chatModeKeys: pluginKeys },
+    state: { showChatbar },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const [conversations, conversationsAction] = useConversations();
@@ -41,57 +40,6 @@ export const Chatbar = () => {
     state: { searchTerm, filteredConversations },
     dispatch: chatDispatch,
   } = chatBarContextValue;
-
-  const handleApiKeyChange = useCallback(
-    (apiKey: string) => {
-      homeDispatch({ field: 'apiKey', value: apiKey });
-
-      localStorage.setItem('apiKey', apiKey);
-    },
-    [homeDispatch],
-  );
-
-  const handlePluginKeyChange = (pluginKey: ChatModeKey) => {
-    if (pluginKeys.some((key) => key.chatModeId === pluginKey.chatModeId)) {
-      const updatedPluginKeys = pluginKeys.map((key) => {
-        if (key.chatModeId === pluginKey.chatModeId) {
-          return pluginKey;
-        }
-
-        return key;
-      });
-
-      homeDispatch({ field: 'chatModeKeys', value: updatedPluginKeys });
-
-      localStorage.setItem('chatModeKeys', JSON.stringify(updatedPluginKeys));
-    } else {
-      homeDispatch({
-        field: 'chatModeKeys',
-        value: [...pluginKeys, pluginKey],
-      });
-
-      localStorage.setItem(
-        'chatModeKeys',
-        JSON.stringify([...pluginKeys, pluginKey]),
-      );
-    }
-  };
-
-  const handleClearPluginKey = (pluginKey: ChatModeKey) => {
-    const updatedPluginKeys = pluginKeys.filter(
-      (key) => key.chatModeId !== pluginKey.chatModeId,
-    );
-
-    if (updatedPluginKeys.length === 0) {
-      homeDispatch({ field: 'chatModeKeys', value: [] });
-      localStorage.removeItem('pluginKeys');
-      return;
-    }
-
-    homeDispatch({ field: 'chatModeKeys', value: updatedPluginKeys });
-
-    localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
-  };
 
   const handleClearConversations = async () => {
     await conversationsAction.clear();
@@ -145,9 +93,6 @@ export const Chatbar = () => {
         ...chatBarContextValue,
         handleDeleteConversation,
         handleClearConversations,
-        handlePluginKeyChange,
-        handleClearPluginKey,
-        handleApiKeyChange,
       }}
     >
       <Sidebar<ConversationListing>

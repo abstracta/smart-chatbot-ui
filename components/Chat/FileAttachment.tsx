@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 
 import { IconDownload, IconFile, IconX } from '@tabler/icons-react';
 import { MessageAttachment } from '@/types/chat';

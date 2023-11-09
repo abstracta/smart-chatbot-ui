@@ -1,5 +1,4 @@
 import { Conversation } from './chat';
-import { ChatModeKey } from './chatmode';
 import { FolderInterface } from './folder';
 import { Prompt } from './prompt';
 
@@ -16,6 +15,4 @@ export interface LocalStorage {
   // added showChatbar and showPromptbar (3/26/23)
   showChatbar: boolean;
   showPromptbar: boolean;
-  // added plugin keys (4/3/23)
-  pluginKeys: ChatModeKey[];
 }

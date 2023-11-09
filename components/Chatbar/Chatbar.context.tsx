@@ -3,7 +3,6 @@ import { Dispatch, createContext } from 'react';
 import { ActionType } from '@/hooks/useCreateReducer';
 
 import { Conversation } from '@/types/chat';
-import { ChatModeKey } from '@/types/chatmode';
 
 import { ChatbarInitialState } from './Chatbar.state';
 
@@ -12,9 +11,6 @@ export interface ChatbarContextProps {
   dispatch: Dispatch<ActionType<ChatbarInitialState>>;
   handleDeleteConversation: (conversationId: Conversation["id"]) => void;
   handleClearConversations: () => void;
-  handlePluginKeyChange: (pluginKey: ChatModeKey) => void;
-  handleClearPluginKey: (pluginKey: ChatModeKey) => void;
-  handleApiKeyChange: (apiKey: string) => void;
 }
 
 const ChatbarContext = createContext<ChatbarContextProps>(undefined!);

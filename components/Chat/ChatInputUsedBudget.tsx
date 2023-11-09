@@ -1,5 +1,5 @@
 import { memo, useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 
 import HomeContext from '@/pages/api/home/home.context';
 import { trpc } from '@/utils/trpc';

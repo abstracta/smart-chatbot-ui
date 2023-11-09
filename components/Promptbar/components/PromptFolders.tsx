@@ -10,7 +10,7 @@ import { PromptComponent } from '@/components/Promptbar/components/Prompt';
 
 import PromptbarContext from '../PromptBar.context';
 import { useSession } from 'next-auth/react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 import { UserRole } from '@/types/user';
 
 export const PromptFolders = () => {

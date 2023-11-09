@@ -1,15 +1,12 @@
 import { MutableRefObject } from 'react';
 
 import { Conversation, ConversationListing, Message } from '@/types/chat';
-import { ChatModeKey } from '@/types/chatmode';
 import { FolderInterface } from '@/types/folder';
 import { Llm, LlmID, LlmTemperature } from '@/types/llm';
 import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 
 export interface HomeInitialState {
-  apiKey: string;
-  chatModeKeys: ChatModeKey[];
   loading: boolean;
   settings: Settings;
   messageIsStreaming: boolean;
@@ -31,19 +28,16 @@ export interface HomeInitialState {
   systemDefaultModelId: LlmID;
   defaultModelId: LlmID | undefined;
   defaultSystemPrompt: string;
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
   consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   supportEmail: string;
   promptSharingEnabled: boolean;
+  isEnabledGoogleSearch: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
-  apiKey: '',
   loading: false,
-  chatModeKeys: [],
   settings: {
     userId: '',
     theme: 'dark',
@@ -68,10 +62,9 @@ export const initialState: Partial<HomeInitialState> = {
   systemDefaultModelId: undefined,
   defaultModelId: undefined,
   defaultSystemPrompt: '',
-  serverSideApiKeyIsSet: true,
-  serverSidePluginKeysSet: false,
   consumptionLimitEnabled: false,
   isAzureOpenAI: false,
   supportEmail: '',
   promptSharingEnabled: false,
+  isEnabledGoogleSearch: false,
 };
