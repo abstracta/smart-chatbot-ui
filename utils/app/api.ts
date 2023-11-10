@@ -38,7 +38,7 @@ export const watchRefToAbort = async <R>(
   }
 };
 
-export function readFileToText(file: File): Promise<string> {
+export function readFileAsText(file: File): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
 
@@ -52,23 +52,5 @@ export function readFileToText(file: File): Promise<string> {
     };
 
     reader.readAsText(file, "utf-8");
-  });
-}
-
-export function encodeFileToBase64(file: File): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      const base64Data = base64String.split(',')[1]; // Extract the Base64 data from the Data URL
-      resolve(base64Data);
-    };
-
-    reader.onerror = (error) => {
-      reject(error);
-    };
-
-    reader.readAsDataURL(file);
   });
 }

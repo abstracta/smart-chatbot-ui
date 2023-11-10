@@ -18,7 +18,7 @@ export async function getDb(): Promise<Db> {
   if (_db !== null) {
     return _db;
   }
-  const client = new MongoClient(process.env.MONGODB_URI, { monitorCommands: true });
+  const client = new MongoClient(process.env.MONGODB_URI, { monitorCommands: true, ignoreUndefined: true });
   client.on('commandFailed', (event) => console.error(JSON.stringify(event)));
   await client.connect();
   let db = client.db(MONGODB_DB);
@@ -46,21 +46,6 @@ export interface PublicFoldersCollectionItem {
 
 export interface SettingsCollectionItem {
   settings: Settings;
-}
-
-function dotNotate(obj: any, target?: any, prefix?: string): Record<string, any> {
-  target = target || {},
-    prefix = prefix || "";
-
-  Object.keys(obj).forEach(function (key) {
-    if (typeof (obj[key]) === "object" && obj[key] != null) {
-      dotNotate(obj[key], target, prefix + key + ".");
-    } else {
-      return target[prefix + key] = obj[key];
-    }
-  });
-
-  return target;
 }
 
 export class UserDb {

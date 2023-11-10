@@ -1,5 +1,5 @@
 import { Llm, LlmID, LlmTemperature } from "@/types/llm";
-import { ChatOpenAI } from "langchain/chat_models/openai";
+import { AzureOpenAIInput, ChatOpenAI, OpenAIChatInput } from "langchain/chat_models/openai";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
 import { ChatBedrock } from "langchain/chat_models/bedrock";
 import { ChatOllama } from "langchain/chat_models/ollama";
@@ -16,9 +16,12 @@ import { mapMessageToLangchainMessage, serializeMessages } from "./message";
 import { Message } from "@/types/chat";
 import { Configuration, Model, OpenAIApi } from "openai";
 import { Bedrock } from "@aws-sdk/client-bedrock";
-import { defaultProvider } from '@aws-sdk/credential-provider-node'
 import { OpenAiError } from ".";
 import { ApiError, ErrorResponseCode } from "@/types/error";
+import { BaseBedrockInput } from "langchain/dist/util/bedrock";
+import { OllamaInput } from "langchain/dist/util/ollama";
+import { BaseLanguageModelParams } from "langchain/dist/base_language";
+import { BaseChatModelParams } from "langchain/dist/chat_models/base";
 
 export interface ChatCompletionResponse {
   usage?: {
@@ -105,7 +108,7 @@ export class LlmApiAggregator {
 
 class OpenAiApi extends LlmApi {
   private models: Record<LlmID, Llm>;
-  private baseOptions: any;
+  private baseOptions: Partial<OpenAIChatInput> & BaseChatModelParams;
 
   constructor() {
     super({
@@ -224,7 +227,7 @@ class OpenAiApi extends LlmApi {
 
 class AzureOpenAiApi extends LlmApi {
   private models: Record<LlmID, AzureOpenAIModel>;
-  private baseOptions: any;
+  private baseOptions: Partial<OpenAIChatInput> & Partial<AzureOpenAIInput> & BaseChatModelParams;
 
   constructor() {
     super({
@@ -325,6 +328,7 @@ class AzureOpenAiApi extends LlmApi {
 class AwsBedrockApi extends LlmApi {
   private models: Record<LlmID, Llm>;
   private bedrockClient: Bedrock;
+  private baseOptions: Partial<BaseBedrockInput>;
 
   constructor() {
     super({
@@ -333,13 +337,17 @@ class AwsBedrockApi extends LlmApi {
       [LlmTemperature.CREATIVE]: 1,
     }, true);
     this.models = {} as Record<LlmID, Llm>;
-    this.bedrockClient = new Bedrock({
+    const bedrockOptions = {
       credentials: {
         accessKeyId: AWS_BEDROCK_ACCESS_KEY || "",
         secretAccessKey: AWS_BEDROCK_SECRET_KEY || "",
       },
       ...(AWS_BEDROCK_REGION ? { region: AWS_BEDROCK_REGION } : {})
-    });
+    };
+    this.bedrockClient = new Bedrock(bedrockOptions);
+    this.baseOptions = {
+      ...bedrockOptions
+    }
   }
 
   async init(): Promise<void> {
@@ -373,7 +381,7 @@ class AwsBedrockApi extends LlmApi {
   async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
     : Promise<ChatCompletionResponse> {
     const model = new ChatBedrock({
-      region: AWS_BEDROCK_REGION,
+      ...this.baseOptions,
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
       model: modelId,
       maxTokens: options?.maxTokens,
@@ -423,7 +431,7 @@ class AwsBedrockApi extends LlmApi {
 
 class OLlamaApi extends LlmApi {
   private models: Record<LlmID, Llm>;
-  private baseOptions: any;
+  private baseOptions: OllamaInput & BaseLanguageModelParams;
 
   constructor() {
     super({

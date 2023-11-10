@@ -101,9 +101,9 @@ const Home = ({
 
   useEffect(() => {
     dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
-    const defaultModelId = models.length > 0 ?
-      models.find(m => m.id == settings.defaultModelId || m.id == systemDefaultModelId) || models[0] : undefined;
-    dispatch({ field: 'defaultModelId', value: defaultModelId?.id });
+    const defaultModel = models.length > 0 ?
+      models.find(m => m.id === (settings.defaultModelId || systemDefaultModelId)) || models[0] : undefined;
+    dispatch({ field: 'defaultModelId', value: defaultModel?.id });
     dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || systemDefaultSystemPrompt });
   }, [
     t,

@@ -5,11 +5,10 @@ import { IconFileUpload } from '@tabler/icons-react';
 import ChatContext from './Chat.context';
 import toast from 'react-hot-toast';
 import { MessageAttachment } from '@/types/chat';
-import { readFileToText } from '@/utils/app/api';
+import { readFileAsText } from '@/utils/app/api';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatInitialState } from './Chat.state';
 import wcmatch from 'wildcard-match'
-import { ErrorResponseCode } from '@/types/error';
 
 const allowedTypes = ["text/*", "application/json", "application/yaml", "application/x-yaml",
   "application/xml", "application/xhtml+xml", "application/x-shellscript"]
@@ -55,22 +54,23 @@ const ChatInputFileSelector = ({ onSelect }: Props) => {
       return false;
     }
     try {
-      const newAttachments = await Promise.all([...files.map(async (f) => {
-        const { valid, error } = validateFile(f);
+      const newAttachments: MessageAttachment[] = [];
+      const newAttachmentTokens: ChatInitialState["attachmentsTokens"] = {};
+
+      for await (const file of files) {
+        const { valid, error } = validateFile(file);
         if (!valid) throw new Error(error)
-        return {
-          _id: uuidv4(),
-          name: f.name,
-          contentType: f.type,
-          content: await readFileToText(f),
-          size: f.size,
-        }
-      })]);
-      const newAttachmentTokens = newAttachments.reduce((prev, curr) => {
-        const tokens = tokenizer.current?.encode(curr.content, "all").length;
-        prev[curr._id] = (tokens || 0);
-        return prev;
-      }, {} as typeof attachmentsTokens)
+        const _id = uuidv4();
+        const content = await readFileAsText(file);
+        newAttachments.push({
+          _id,
+          name: file.name,
+          contentType: file.type,
+          content: btoa(content),
+          size: file.size,
+        })
+        newAttachmentTokens[_id] = (tokenizer.current?.encode(content, "all").length || 0);
+      }
 
       onSelect(newAttachments, newAttachmentTokens);
     } catch (e) {

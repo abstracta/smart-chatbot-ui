@@ -1,9 +1,6 @@
-import { FC, useContext, useEffect } from 'react';
+import { FC, useContext, useEffect, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
-
-import { useCreateReducer } from '@/hooks/useCreateReducer';
-
 
 import { Settings } from '@/types/settings';
 
@@ -16,6 +13,7 @@ import useSettings from '@/hooks/useSettings';
 import { SystemPrompt } from '../Home/SystemPrompt';
 import { LlmID, LlmType } from '@/types/llm';
 import Spinner from '../Spinner';
+import { initialState as homeInitialState } from '@/pages/api/home/home.state';
 
 interface Props {
   open: boolean;
@@ -28,22 +26,20 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
     state: { models, systemDefaultModelId },
   } = useContext(HomeContext);
   const [settingsQuery, settingsActions] = useSettings();
-  const { state, dispatch } = useCreateReducer<Settings>({
-    initialState: settingsQuery.data,
-  });
+  const [settings, setSettings] = useState<Settings>(homeInitialState.settings!);
 
   useEffect(() => {
     if (open) {
-      dispatch({ type: 'replace_all', value: settingsQuery.data });
+      setSettings(settingsQuery.data);
     }
-  }, [dispatch, open, settingsQuery.data]);
+  }, [setSettings, open, settingsQuery.data]);
 
   const handleSave = async () => {
-    await settingsActions.update(state);
+    await settingsActions.update(settings);
   };
 
   const handleModelSelect = (value: string) => {
-    dispatch({ field: "defaultModelId", value: value ? value as LlmID : undefined });
+    setSettings({ ...settings, defaultModelId: value ? value as LlmID : undefined });
   };
 
   // Render the dialog.
@@ -63,8 +59,8 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               { value: "dark", label: t('Dark mode') },
               { value: "light", label: t('Light mode') },
             ]}
-            onSelect={(value) => dispatch({ field: 'theme', value })}
-            selectedValue={state.theme}
+            onSelect={(value: "light" | "dark") => setSettings({ ...settings, theme: value })}
+            selectedValue={settings.theme}
           />
         </div>
 
@@ -83,7 +79,7 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
               }),
             ]}
             onSelect={handleModelSelect}
-            selectedValue={state.defaultModelId || ""}
+            selectedValue={settings.defaultModelId || ""}
           />
         </div>
 
@@ -93,9 +89,9 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           </div>
 
           <TemperatureSlider
-            temperature={state.defaultTemperature}
+            temperature={settings.defaultTemperature}
             onChangeTemperature={(temperature) =>
-              dispatch({ field: 'defaultTemperature', value: temperature })
+              setSettings({ ...settings, defaultTemperature: temperature })
             }
           />
         </div>
@@ -106,10 +102,10 @@ export const SettingDialog: FC<Props> = ({ open, onClose }) => {
           </div>
 
           <SystemPrompt
-            systemPrompt={state.defaultSystemPrompt || ""}
+            systemPrompt={settings.defaultSystemPrompt || ""}
             prompts={[]}
             publicPrompts={[]}
-            onChangePrompt={(prompt) => dispatch({ field: "defaultSystemPrompt", value: prompt })}
+            onChangePrompt={(prompt) => setSettings({ ...settings, defaultSystemPrompt: prompt })}
             placeholder={t('Enter a prompt or leave empty to use system default') || ""}
           />
         </div>

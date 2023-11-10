@@ -32,11 +32,11 @@ export const HomeMain = ({ }: HomeMainProps) => {
         <Chatbar />
 
         <div className="flex flex-1 relative">
-          <Chat />
-          {!selectedConversation && (<div className="absolute w-full h-full flex flex-1 self-stretch 
-            items-center justify-center bg-white dark:bg-[#343541] animate-fadeIn" >
+          {!selectedConversation && (<div className="absolute z-30 w-full h-full flex flex-1 self-stretch 
+            items-center justify-center bg-white dark:bg-[#343541]" >
             <Spinner size="25px" className="m-auto" />
           </div>)}
+          <Chat />
         </div>
 
         <Promptbar />

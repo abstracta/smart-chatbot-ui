@@ -35,7 +35,7 @@ export const ModelSelect = () => {
         options={models.filter(m => m.type == LlmType.CHAT).map((m) => {
           return {
             value: m.id,
-            label: m.id == defaultModelId ? `${t('Default')} (${m.name})` : m.name
+            label: m.id === defaultModelId ? `${t('Default')} (${m.name})` : m.name
           }
         })}
         onSelect={handleModelSelect}

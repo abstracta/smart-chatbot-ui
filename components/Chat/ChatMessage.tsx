@@ -269,7 +269,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                         attachment={a}
                         downloadable={true}
                         onDownload={() => {
-                          downloadFile(new Blob([a.content], { type: a.contentType }), a.name);
+                          downloadFile(new Blob([atob(a.content)], { type: a.contentType }), a.name);
                         }} />
                     })}
                   </div>

@@ -60,7 +60,7 @@ export function getMessageContent(message: Message) {
     message.content,
     ...[...message.attachments?.map(a =>
       `The following text between <<< and >>> are the contents of the file attachment named ${a.name}:
-      <<< ${a.content} >>>`
+      <<< ${atob(a.content)} >>>`
     ) || []]
   ].join("\n\n")
 }
