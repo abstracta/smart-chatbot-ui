@@ -17,14 +17,15 @@ export const TemperatureSlider: FC<Props> = ({
   return (
     <div className="flex flex-col">
       <ul className="items-center w-full text-sm font-medium 
-        rounded-lg sm:flex border border-neutral-200 bg-transparent text-neutral-900 dark:border-neutral-600 
-        dark:text-neutral-100 overflow-hidden">
-        {Object.values(LlmTemperature).map((temp, index) => {
+        sm:flex bg-transparent text-neutral-900 dark:border-neutral-600 
+        dark:text-neutral-100">
+        {Object.values(LlmTemperature).map((temp, index, arr) => {
           return (
-            <li className={`w-full border-b border-gray-200 sm:border-b-0 sm:border-r border-neutral-200 text-neutral-900 
-              dark:border-neutral-600 dark:text-neutral-100 ${temp == temperature ? "bg-slate-900/20 dark:bg-gray-900/30" :
-                "bg-white dark:bg-[#343541]"}
-              cursor-pointer transition-bg dark:hover:dark:bg-gray-900/30 focus:outline-black dark:focus:outline-white`}
+            <li className={`w-full border border-neutral-250 text-neutral-700 
+              dark:border-neutral-600 dark:text-neutral-100 ${temp == temperature ? "bg-neutral-200 border-neutral-500 dark:bg-[#343541] dark:brightness-125 " :
+                "bg-white dark:bg-[#343541] "} ${index == 0 ? "rounded-l-lg" : ""} ${index == arr.length - 1 ? "rounded-r-lg" : ""}
+              cursor-pointer transition-all  dark:hover:brightness-125 focus:outline-black dark:focus:outline-white
+              hover:bg-neutral-100 hover:border-neutral-300 focus:border-neutral-900`}
               key={index}
               onClick={() => onChangeTemperature(temp)}
               onKeyDown={(e) => {
@@ -35,8 +36,7 @@ export const TemperatureSlider: FC<Props> = ({
               }}
               tabIndex={0}>
               <div className="flex items-center justify-center px-4 py-1 cursor-pointer">
-                <label htmlFor="vue-checkbox-list" className="py-2 ml-2 text-sm font-medium text-gray-900 
-                dark:text-gray-300 cursor-pointer">
+                <label htmlFor="vue-checkbox-list" className="py-2 ml-2 text-sm font-medium cursor-pointer">
                   {t(temp)}
                 </label>
               </div>
