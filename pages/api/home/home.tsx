@@ -80,8 +80,9 @@ const Home = ({
   }, [modelsQuery.data, dispatch]);
 
   useEffect(() => {
-    dispatch({ field: 'modelError', value: modelsQuery.error || null });
-  }, [dispatch, modelsQuery.error]);
+    if (!modelsQuery.isLoading)
+      dispatch({ field: 'modelError', value: modelsQuery.error || null });
+  }, [dispatch, modelsQuery.isLoading, modelsQuery.error]);
 
   // FETCH MODELS ----------------------------------------------
 
@@ -231,12 +232,15 @@ const Home = ({
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      {settingsQuery.data && (
+      <div className='relative'>
         <HomeMain />
-      )}
-      {settingsQuery.isLoading && (<div className="absolute w-full h-full flex flex-1 self-stretch items-center justify-center bg-white dark:bg-[#343541]" >
-        <Spinner size="25px" className="m-auto" />
-      </div>)}
+        {(settingsQuery.isLoading || conversationsQuery.isLoading ||
+          promptsQuery.isLoading || publicPromptsQuery.isLoading ||
+          foldersQuery.isLoading || publicFoldersQuery.isLoading) &&
+          (<div className="absolute top-0 z-[100] w-full h-full flex flex-1 self-stretch items-center justify-center bg-[#343541]" >
+            <Spinner size="25px" className="m-auto stroke-white dark:stroke-white" />
+          </div>)}
+      </div>
     </HomeContext.Provider>
   );
 };

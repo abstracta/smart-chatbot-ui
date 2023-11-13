@@ -13,7 +13,7 @@ type HomeMainProps = {
 
 export const HomeMain = ({ }: HomeMainProps) => {
   const {
-    state: { settings, selectedConversation },
+    state: { settings, selectedConversation, modelError },
   } = useContext(HomeContext);
 
   const [_, conversationsAction] = useConversations();
@@ -32,7 +32,7 @@ export const HomeMain = ({ }: HomeMainProps) => {
         <Chatbar />
 
         <div className="flex flex-1 relative">
-          {!selectedConversation && (<div className="absolute z-30 w-full h-full flex flex-1 self-stretch 
+          {(!modelError && !selectedConversation) && (<div className="absolute z-30 w-full h-full flex flex-1 self-stretch 
             items-center justify-center bg-white dark:bg-[#343541]" >
             <Spinner size="25px" className="m-auto" />
           </div>)}
