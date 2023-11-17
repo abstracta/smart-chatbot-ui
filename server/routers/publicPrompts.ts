@@ -6,7 +6,7 @@ import { procedure, router } from '../trpc';
 
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
-import { Context, isAdminUser } from '../context';
+import { Context, isAdminUser, isPublicPromptEditor } from '../context';
 
 export const publicPrompts = router({
   list: procedure.query(async ({ ctx }) => {
@@ -41,7 +41,7 @@ export const publicPrompts = router({
 });
 
 async function validateOwnerOrAdminAccess(promptId: string, ctx: Context) {
-  if (!isAdminUser(ctx)) {
+  if (!isAdminUser(ctx) && !isPublicPromptEditor(ctx)) {
     const publicPromptsDb = new PublicPromptsDb(await getDb());
     const prompt = await publicPromptsDb.getPrompt(promptId);
     if (!prompt || prompt.userId != ctx.userHash!) {

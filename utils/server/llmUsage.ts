@@ -1,11 +1,26 @@
 import { LlmUsageMode, TokenUsageCount, NewUserLlmUsage } from "@/types/llmUsage";
-import { OpenAIModelID } from "@/types/openai";
-import { UserDb, LlmsDb, getDb } from "./storage";
+import { UserDb, LlmsDb, getDb, UserInfoDb } from "./storage";
 import { DEFAULT_USER_LIMIT_USD_MONTHLY } from "../app/const";
+import { LlmID } from "@/types/llm";
+import { ApiError, ErrorResponseCode } from "@/types/error";
 
-export async function verifyUserLlmUsage(userId: string, modelId: OpenAIModelID) {
-    const remainingBudget = await getMonthlyUsedBudgetPercent(userId);
-    if (remainingBudget === 100) throw new Error("Uh-oh! You've reached the monthly API limit. Please reach out to the admin team for assistance.");
+export async function verifyUserLlmUsage(userId: string, modelId: LlmID) {
+    const usedBudget = await getMonthlyUsedBudgetPercent(userId);
+    if (usedBudget >= 100) throw new ApiError({
+        code: ErrorResponseCode.USER_USAGE_LIMIT_REACHED,
+        message: `Usage limit reached for user: ${userId}`
+    });
+
+    const modelConfig = await (new LlmsDb(await getDb())).getModelConfig(modelId);
+    if (modelConfig && modelConfig?.monthlyUsageLimitUSD >= 0) {
+        const monthlyUsageLimitUSD = modelConfig?.monthlyUsageLimitUSD;
+        const monthlyModelUsage = await getMonthlyModelUsageUSD(modelId);
+        if (monthlyUsageLimitUSD && monthlyUsageLimitUSD >= 0 && monthlyModelUsage > monthlyUsageLimitUSD)
+            throw new ApiError({
+                code: ErrorResponseCode.MODEL_USAGE_LIMIT_REACHED,
+                message: `Usage limit reached for model: ${modelId}`
+            });
+    }
 }
 
 export async function getMonthlyUsedBudgetPercent(userId: string): Promise<number> {
@@ -20,7 +35,16 @@ export async function getMonthlyUsedBudgetPercent(userId: string): Promise<numbe
     return Math.min(100, usedBudgetUSD / userBudgetLimit * 100);
 }
 
-export async function saveLlmUsage(userId: string, modelId: OpenAIModelID, mode: LlmUsageMode, tokens: TokenUsageCount) {
+export async function getMonthlyModelUsageUSD(modelId: LlmID): Promise<number> {
+    const userInfoDb = new UserInfoDb(await getDb())
+    const currentDate = new Date();
+    let startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    let nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    const modelUsage = await userInfoDb.queryLlmUsageStatsByModel(modelId, startOfMonth, nextMonth);
+    return modelUsage?.totalUSD || 0;
+}
+
+export async function saveLlmUsage(userId: string, modelId: LlmID, mode: LlmUsageMode, tokens: TokenUsageCount) {
     const userDb = await UserDb.fromUserHash(userId);
     const llmDb = new LlmsDb(await getDb());
     const modelUsage: NewUserLlmUsage = {
@@ -29,10 +53,10 @@ export async function saveLlmUsage(userId: string, modelId: OpenAIModelID, mode:
         modelId: modelId,
         mode: mode,
     };
-    const modelPriceRate1000 = await llmDb.getModelPriceRate(modelId);
-    if (modelPriceRate1000) {
-        modelUsage.totalPriceUSD = tokens.prompt / 1000 * modelPriceRate1000.promptPriceUSDPer1000
-            + tokens.completion / 1000 * modelPriceRate1000.completionPriceUSDPer1000;
+    const modelConfig = await llmDb.getModelConfig(modelId);
+    if (modelConfig) {
+        modelUsage.totalPriceUSD = tokens.prompt / 1000 * modelConfig.promptPriceUSDPer1000
+            + tokens.completion / 1000 * modelConfig.completionPriceUSDPer1000;
     }
     return await userDb.addLlmUsage(modelUsage)
 }

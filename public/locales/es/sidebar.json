@@ -7,5 +7,10 @@
   "Are you sure?": "¿Estás seguro?",
   "Clear conversations": "Borrar conversaciones",
   "Settings": "Ajustes",
-  "Save": "Guardar"
+  "Save": "Guardar",
+  "Go to Admin": "Ir a panel de administración",
+  "Go to Chat": "Ir a Chat",
+  "Admin dashboard": "Panel de administración",
+  "Users": "Usuarios",
+  "Usage report": "Reporte de uso"
 }

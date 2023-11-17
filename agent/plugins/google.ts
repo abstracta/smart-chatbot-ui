@@ -1,4 +1,3 @@
-import { OPENAI_API_HOST } from '@/utils/app/const';
 import {
   extractTextFromHtml,
   getSimilarChunks as getChunksSortedBySimilarity,
@@ -13,9 +12,8 @@ import { TaskExecutionContext } from './executor';
 
 import chalk from 'chalk';
 import endent from 'endent';
-import { getOpenAIApi } from '@/utils/server/openai';
-import { OpenAIError } from '@/utils/server';
 import { saveLlmUsage } from '@/utils/server/llmUsage';
+import { LlmTemperature } from '@/types/llm';
 
 export default {
   nameForModel: 'google_search',
@@ -126,39 +124,23 @@ export default {
       console.log('');
     }
 
-    const answerMessage: Message = { role: 'user', content: answerPrompt };
-    const model = context.model;
-    const openai = getOpenAIApi(model.azureDeploymentId)
-    let answerRes;
-    try {
-      answerRes = await openai.createChatCompletion({
-        model: model.id,
-        messages: [
-          {
-            role: 'system',
-            content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
-          },
-          answerMessage,
-        ],
-        max_tokens: 1000,
-        temperature: 0,
-        stream: false,
-      })
-    } catch (error: any) {
-      if (error.response) {
-        const { message, type, param, code } = error.response.data.error;
-        throw new OpenAIError(message, type, param, code)
-      } else throw error
-    }
+    const answerMessage: Message[] = [
+      {
+        role: 'system',
+        content: `Use the sources to provide an accurate response. Respond in markdown format. Cite the sources you used as [1](link), etc, as you use them. Maximum 4 sentences.`,
+      },
+      { role: 'user', content: answerPrompt }
+    ];
+    const llmApi = await context.llmApiAggregator.getApiForModel(context.model.id);
+    const { message, usage } = await llmApi.chatCompletion(context.model.id, answerMessage, { temperature: LlmTemperature.PRECISE });
 
-    const { choices, usage } = answerRes.data;
-    const answer = choices[0].message!.content!;
+    const answer = message.content;
     encoding.free();
 
     await saveLlmUsage(context.userId, context.model.id, "agentPlugin", {
-      prompt: usage?.prompt_tokens ?? 0,
-      completion: usage?.completion_tokens ?? 0,
-      total: usage?.total_tokens ?? 0
+      prompt: usage?.prompt ?? 0,
+      completion: usage?.completion ?? 0,
+      total: usage?.total ?? 0
     })
 
     if (context.verbose) {

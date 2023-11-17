@@ -1,6 +1,5 @@
 import { useContext } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 
 import useApiService from '@/services/useApiService';
@@ -10,7 +9,6 @@ import { HomeUpdater } from '@/utils/app/homeUpdater';
 import {
   ChatModeRunner,
   ChatModeRunnerParams,
-  Conversation,
 } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -18,7 +16,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import useConversations from '../useConversations';
 import useApiError from '@/services/useApiError';
 
-export function useGoogleMode(conversations: Conversation[]): ChatModeRunner {
+export function useGoogleMode(): ChatModeRunner {
   const {
     state: { chatModeKeys },
     dispatch: homeDispatch,
@@ -54,7 +52,7 @@ export function useGoogleMode(conversations: Conversation[]): ChatModeRunner {
         role: 'assistant',
         content: answer,
       });
-      
+
       await conversationsAction.update(updatedConversation);
       homeDispatch({ field: 'loading', value: false });
       homeDispatch({ field: 'messageIsStreaming', value: false });

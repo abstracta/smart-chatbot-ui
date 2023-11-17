@@ -28,6 +28,12 @@
   height: 6px;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding:.5rem;
+  margin: -.5rem;
+}
+
 html {
   background: #202123;
 }

@@ -4,7 +4,6 @@ import { Message } from '@/types/chat';
 import {
   DebugCallbackHandler,
   createAgentHistory,
-  messagesToOpenAIMessages,
 } from './agentUtil';
 import { TaskExecutionContext } from './plugins/executor';
 import { listToolsBySpecifiedPlugins } from './plugins/list';
@@ -13,10 +12,8 @@ import prompts from './prompts/agentConvo';
 import chalk from 'chalk';
 import { CallbackManager } from 'langchain/callbacks';
 import { PromptTemplate } from 'langchain/prompts';
-import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from 'openai';
-import { getOpenAIApi } from '@/utils/server/openai';
-import { OpenAIError } from '@/utils/server';
 import { saveLlmUsage } from '@/utils/server/llmUsage';
+import { LlmTemperature } from '@/types/llm';
 
 const setupCallbackManager = (verbose: boolean): void => {
   const callbackManager = new CallbackManager();
@@ -53,8 +50,8 @@ const createPrompts = (): {
 const createToolResponse = async (
   pluginResults: PluginResult[],
   toolResponsePrompt: PromptTemplate,
-): Promise<ChatCompletionRequestMessage[]> => {
-  let toolResponse: ChatCompletionRequestMessage[] = [];
+): Promise<Message[]> => {
+  let toolResponse: Message[] = [];
   if (pluginResults.length > 0) {
     for (const actionResult of pluginResults) {
       const toolResponseContent = await toolResponsePrompt.format({
@@ -77,7 +74,7 @@ const createFormattedPrompts = async (
   userPrompt: PromptTemplate,
   input: string,
   toolDescriptions: string,
-  toolResponse: ChatCompletionRequestMessage[],
+  toolResponse: Message[],
 ): Promise<{ systemContent: string; userContent: string }> => {
   const systemContent = await sytemPrompt.format({
     locale: context.locale,
@@ -102,7 +99,7 @@ const createMessages = async (
   history: Message[],
   modelId: string,
   input: string,
-): Promise<ChatCompletionRequestMessage[]> => {
+): Promise<Message[]> => {
   const { sytemPrompt, formatPrompt, userPrompt, toolResponsePrompt } =
     createPrompts();
   const toolResponse = await createToolResponse(
@@ -125,9 +122,7 @@ const createMessages = async (
   );
 
   const encoding = await context.getEncoding();
-  const agentHistory = messagesToOpenAIMessages(
-    createAgentHistory(encoding, modelId, 500, history),
-  );
+  const agentHistory = createAgentHistory(encoding, context.model, 500, history);
 
   return [
     {
@@ -143,7 +138,7 @@ const createMessages = async (
   ];
 };
 
-const logVerboseRequest = (messages: ChatCompletionRequestMessage[]): void => {
+const logVerboseRequest = (messages: Message[]): void => {
   console.log(chalk.greenBright('LLM Request:'));
   for (const message of messages) {
     console.log(chalk.blue(message.role + ': ') + message.content);
@@ -171,7 +166,6 @@ export const executeReactAgent = async (
   setupCallbackManager(verbose);
   const tools = await listToolsBySpecifiedPlugins(context, enabledToolNames);
   const modelId = context.model.id;
-  const openai = getOpenAIApi(context.model.azureDeploymentId);
 
   const messages = await createMessages(
     context,
@@ -186,28 +180,16 @@ export const executeReactAgent = async (
   if (verbose) {
     logVerboseRequest(messages);
   }
-  let result;
-  try {
-    result = await openai.createChatCompletion({
-      model: modelId,
-      messages,
-      temperature: 0.0,
-      stop: ['\nObservation:'],
-    });
-  } catch (error: any) {
-    if (error.response) {
-      const { message, type, param, code } = error.response.data.error;
-      throw new OpenAIError(message, type, param, code)
-    } else throw error
-  }
-
+  const llmApi = await context.llmApiAggregator.getApiForModel(modelId);
+  const { message, usage } = await llmApi.chatCompletion(context.model.id, messages, { temperature: LlmTemperature.PRECISE })
+ 
   await saveLlmUsage(context.userId, context.model.id, "agentConv", {
-    prompt: result.data.usage!.prompt_tokens,
-    completion: result.data.usage!.completion_tokens,
-    total: result.data.usage!.total_tokens
+    prompt: usage?.prompt ?? 0,
+    completion: usage?.completion ?? 0,
+    total: usage?.total ?? 0
   })
 
-  const responseText = result.data.choices[0].message?.content;
+  const responseText = message.content;
   const ellapsed = Date.now() - start;
   if (verbose) {
     logVerboseResponse(ellapsed, responseText);

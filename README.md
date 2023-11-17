@@ -121,11 +121,12 @@ When deploying the application, the following environment variables can be set:
 | OPENAI_API_HOST                   | `https://api.openai.com`       | The base url, for Azure use `https://<endpoint>.openai.azure.com`                                                                         |
 | OPENAI_API_TYPE                   | `openai`                       | The API type, options are `openai` or `azure`                                                                                             |
 | OPENAI_API_VERSION                | `2023-05-15`                   | Only applicable for Azure OpenAI                                                                                                          |
+| OPENAI_INSTANCE_NAME              |                                | Azure OpenAI instance name                                                                                                                |
 | OPENAI_ORGANIZATION               |                                | Your OpenAI organization ID                                                                                                               |
 | DEFAULT_MODEL                     | `gpt-3.5-turbo`                | The default model to use on new conversations, for Azure use `gpt-35-turbo`                                                               |
 | DEFAULT_MODEL_EMBEDDINGS          | `text-embedding-ada-002`       | The default model to use for embeddings                                                                                                   |
 | AZURE_OPENAI_DEPLOYMENTS          |                                | Used to configure Azure OpenAI deployments. It follows the syntax `${modelId}:${azureDeploymentId}`, allowing multiple deployments separated by commas. For example, `AZURE_OPENAI_DEPLOYMENTS=gpt-35-turbo:gpt-3,text-embedding-ada-002:ada-002` |
-| NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT | [see here](utils/app/const.ts) | The default system prompt to use on new conversations                                                                                     |
+| DEFAULT_SYSTEM_PROMPT | [see here](utils/app/const.ts) | The default system prompt to use on new conversations                                                                                     |
 | GOOGLE_API_KEY                    |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
 | GOOGLE_CSE_ID                     |                                | See [Custom Search JSON API documentation][GCSE]                                                                                          |
 | MONGODB_URI                       |                                | See [Official Document](https://www.mongodb.com/docs/manual/reference/connection-string/)                                                 |
@@ -147,6 +148,11 @@ When deploying the application, the following environment variables can be set:
 | SUPPORT_EMAIL                     |                                | Specify the support email address to show users in case of errors or issues are encountered while using the application.                  |
 | PROMPT_SHARING_ENABLED            | `false`                        | Enable prompt sharing between users. Only admin users are allowed to modify public folders. Add admins by setting db collection field `users.role` to `admin` for each individual user.   |
 | DEFAULT_USER_LIMIT_USD_MONTHLY    |                                | Requires API pricing to be configured. Set a default monthly limit on api consumption per user. Leave unset for unrestricted access       |
+| CAN_UPDATE_USER_QUOTAS            | `false`                        | Allow admin users to modify per-user monthly quotas                                                                                       |
+| AWS_BEDROCK_ACCESS_KEY            |                                | Api key used for authentication with AWS Bedrock service                                                                                  |
+| AWS_BEDROCK_SECRET_KEY            |                                | Api key secret used for authentication with AWS Bedrock service                                                                           |
+| AWS_BEDROCK_MODELS                |                                | Filter AWS Bedrock foundational models. It allows you to provide the model id(s) in a comma-separated format to select multiple models. If left empty, all supported models will be used. |
+| AWS_BEDROCK_REGION                |                                | AWS Bedrock region                                                                                                                        |
 
 If you do not provide an OpenAI API key with `OPENAI_API_KEY`, users will have to provide their own key.
 If you don't have an OpenAI API key, you can get one [here](https://platform.openai.com/account/api-keys).
@@ -162,7 +168,7 @@ Here is an example document for the gpt-3.5-turbo model:
     completionPriceUSDPer1000: 0.002  
 }
 ```
-To identify the model IDs available, you can refer to the `/types/openai.ts` file.
+To identify the model IDs available, you can refer to the `/types/llm.ts` file.
 By updating the pricing rates in this manner, you can ensure accurate tracking of API consumption and associated costs in USD.
 
 #### Initial Database Configuration

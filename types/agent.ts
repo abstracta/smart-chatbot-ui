@@ -1,7 +1,7 @@
 import { Message } from './chat';
-import { OpenAIModel } from './openai';
 
 import { TaskExecutionContext } from '@/agent/plugins/executor';
+import { LlmID } from './llm';
 
 export type Action = {
   type: 'action';
@@ -27,7 +27,7 @@ export interface PluginResult {
 
 export interface PlanningRequest {
   taskId?: string;
-  model: OpenAIModel;
+  modelId: LlmID;
   messages: Message[];
   enabledToolNames: string[];
   pluginResults: PluginResult[];
@@ -35,7 +35,7 @@ export interface PlanningRequest {
 
 export interface RunPluginRequest {
   taskId: string;
-  model: OpenAIModel;
+  modelId: LlmID;
   input: string;
   action: Action;
 }

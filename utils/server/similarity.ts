@@ -1,23 +1,20 @@
-import { OpenAIApi } from 'openai';
 import { saveLlmUsage } from './llmUsage';
-import { OpenAIModels } from '@/types/openai';
+import { LlmList } from '@/types/llm';
 import { DEFAULT_MODEL_EMBEDDINGS } from '../app/const';
+import { LlmApiAggregator } from './llm';
 export const createEmbedding = async (
   text: string,
-  openai: OpenAIApi,
+  llmApiAggregator: LlmApiAggregator,
   userId: string,
 ): Promise<number[]> => {
-  const modelId = OpenAIModels[DEFAULT_MODEL_EMBEDDINGS].id;
-  const result = await openai.createEmbedding({
-    model: modelId,
-    input: text,
-  });
-  await saveLlmUsage(userId, modelId, "embedding", {
-    prompt: result.data.usage?.prompt_tokens,
+  const modelId = LlmList[DEFAULT_MODEL_EMBEDDINGS].id;
+  const { content, usage } = await llmApiAggregator.getApiForModel(modelId).createEmbeddings(modelId, text);
+  await saveLlmUsage(userId, modelId, "chat", {
+    prompt: usage?.prompt ?? 0,
     completion: 0,
-    total: result.data.usage?.total_tokens
+    total: usage?.total ?? 0
   })
-  return result.data.data[0].embedding;
+  return content;
 };
 
 export function calcCosineSimilarity(a: number[], b: number[]) {

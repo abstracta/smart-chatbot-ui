@@ -1,4 +1,6 @@
+import { UserRole } from '@/types/user';
 import type { Context } from './context';
+import superjson from 'superjson';
 
 import { TRPCError, initTRPC } from '@trpc/server';
 
@@ -6,9 +8,31 @@ import { TRPCError, initTRPC } from '@trpc/server';
 // since it's not very descriptive.
 // For instance, the use of a t variable
 // is common in i18n libraries.
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+  transformer: superjson,
+});
 
 export const middleware = t.middleware;
+
+const loggerMiddleware = middleware(async (opts) => {
+  const start = Date.now();
+  const result = await opts.next();
+  const durationMs = Date.now() - start;
+  const meta = {
+    path: opts.path,
+    type: opts.type, durationMs,
+    userId: opts.ctx.userHash,
+    input: opts.rawInput
+  };
+
+  if (meta.type === "mutation" && (meta.path.startsWith("publicPrompt") ||
+    meta.path.startsWith("publicFolder"))) {
+    result.ok ? console.log('OK request timing:', meta)
+      : console.error('Non-OK request timing', meta);
+  }
+
+  return result;
+});
 
 const secure = middleware(async ({ ctx, next }) => {
   if (!ctx.userHash) {
@@ -21,7 +45,19 @@ const secure = middleware(async ({ ctx, next }) => {
   });
 });
 
+const admin = middleware(async ({ ctx, next }) => {
+  if (!ctx.userHash || ctx.session?.user?.role !== UserRole.ADMIN) {
+    throw new TRPCError({ code: 'UNAUTHORIZED' });
+  }
+  return next({
+    ctx: {
+      userHash: ctx.userHash,
+    },
+  });
+});
+
 // Base router and procedure helpers
 export const router = t.router;
-export const publicProcedure = t.procedure;
-export const procedure = t.procedure.use(secure);
+export const publicProcedure = t.procedure.use(loggerMiddleware);
+export const procedure = t.procedure.use(secure).use(loggerMiddleware);
+export const adminProcedure = t.procedure.use(admin).use(loggerMiddleware);

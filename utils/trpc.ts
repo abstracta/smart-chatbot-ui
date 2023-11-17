@@ -2,6 +2,7 @@ import { TRPCClientError, httpBatchLink } from '@trpc/client';
 import { createTRPCNext } from '@trpc/next';
 import type { AppRouter } from '../server/routers/_app';
 import Router from 'next/router';
+import superjson from 'superjson';
 
 function getBaseUrl() {
   if (typeof window !== 'undefined')
@@ -23,12 +24,13 @@ function getBaseUrl() {
 export const trpc = createTRPCNext<AppRouter>({
   config({ ctx }) {
     return {
+      transformer: superjson,
       queryClientConfig: {
         defaultOptions: {
           queries: {
             retry: (failureCount, error) => {
               if (error instanceof TRPCClientError) {
-                if (error.data.code === "UNAUTHORIZED") {
+                if (error.data?.code === "UNAUTHORIZED") {
                   Router.push("/api/auth/signin");
                 }
               }

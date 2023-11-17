@@ -21,7 +21,7 @@ import HomeContext from '@/pages/api/home/home.context';
 import { ChatModeIcon } from '@/components/Chat/ChatModeIcon';
 
 import ChatContext from './Chat.context';
-import { ChatInputTokenCount } from './ChatInputTokenCount';
+import ChatInputTokenCount from './ChatInputTokenCount';
 import { ChatModeSelect } from './ChatModeSelect';
 import { ChatPluginList } from './ChatPluginList';
 import { PromptList } from './PromptList';
