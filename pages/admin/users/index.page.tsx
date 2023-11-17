@@ -6,7 +6,7 @@ import { NextPageWithLayout } from '@/pages/_app.page';
 import { User, UserRole } from '@/types/user';
 import useUsers from '@/hooks/useUsers';
 import UserTable from '@/components/UserTable';
-import { DEFAULT_USER_LIMIT_USD_MONTHLY, CAN_UPDATE_USER_QUOTAS } from '@/utils/app/const';
+import { DEFAULT_USER_LIMIT_USD_MONTHLY, CAN_UPDATE_USER_QUOTAS, APP_NAME } from '@/utils/app/const';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { GetServerSideProps } from 'next';
 import { getServerSession } from 'next-auth/next';
@@ -24,12 +24,13 @@ import { downloadFile } from '@/utils/app/download';
 interface Props {
   defaultUserLimitUSD: number | undefined;
   canUpdateUserQuotas: boolean;
+  appName: string;
 }
 
-const Users: NextPageWithLayout<Props> = ({
+const Users: NextPageWithLayout<typeof getServerSideProps> = ({
   defaultUserLimitUSD,
   canUpdateUserQuotas,
-}: Props) => {
+}) => {
   const { t } = useTranslation('admin');
   const contextValue = useCreateReducer<UsersInitialState>({
     initialState: {
@@ -105,9 +106,9 @@ const Users: NextPageWithLayout<Props> = ({
   );
 };
 
-Users.getLayout = function getLayout(page: ReactElement) {
+Users.getLayout = function getLayout(page: ReactElement, { appName }: Props) {
   return (
-    <AdminLayout>
+    <AdminLayout pageName="Users" appName={appName}>
       {page}
     </AdminLayout>
   )
@@ -116,7 +117,7 @@ Users.getLayout = function getLayout(page: ReactElement) {
 export default Users;
 
 
-export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
+export const getServerSideProps: GetServerSideProps<Props> = async ({ locale, req, res }) => {
   const session = await getServerSession(req, res, authOptions)
   if (!session || session?.user?.role !== UserRole.ADMIN) {
     return {
@@ -128,6 +129,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   }
   return {
     props: {
+      appName: APP_NAME,
       defaultUserLimitUSD: DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
         ? DEFAULT_USER_LIMIT_USD_MONTHLY : undefined,
       canUpdateUserQuotas: CAN_UPDATE_USER_QUOTAS,

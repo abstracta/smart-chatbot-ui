@@ -6,14 +6,23 @@ import { AdminInitialState, initialState } from "./admin.state";
 import { useCreateReducer } from "@/hooks/useCreateReducer";
 import AdminContext from "./admin.context";
 import Spinner from "@/components/Spinner";
+import { useTranslation } from "react-i18next";
 
+interface Props extends PropsWithChildren {
+  pageName: string;
+  appName: string;
+}
 
 const AdminLayout = ({
+  pageName,
+  appName,
   children
-}: PropsWithChildren) => {
+}: Props) => {
+  const { t } = useTranslation('admin');
   const contextValue = useCreateReducer<AdminInitialState>({
     initialState: {
       ...initialState,
+      appName,
     } as AdminInitialState,
   });
   const { state: { }, dispatch } = contextValue;
@@ -24,6 +33,7 @@ const AdminLayout = ({
     if (showNavBar != null) dispatch({ field: 'showNavBar', value: showNavBar === 'true' });
   }, [dispatch]);
 
+  const pageTitle = `${t(pageName)} | ${appName}`
   return (
     <AdminContext.Provider
       value={{
@@ -31,7 +41,7 @@ const AdminLayout = ({
       }}
     >
       <Head>
-        <title>Chatbot UI - Admin</title>
+        <title>{pageTitle}</title>
         <meta name="description" content="Chatbot UI - Admin page" />
         <meta
           name="viewport"

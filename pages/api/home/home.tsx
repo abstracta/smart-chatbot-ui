@@ -8,7 +8,7 @@ import Head from 'next/head';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
 import { cleanConversationHistory } from '@/utils/app/clean';
-import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
+import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
@@ -24,6 +24,7 @@ import { getServerSession } from 'next-auth/next';
 import { LlmID } from '@/types/llm';
 
 interface Props {
+  appName: string;
   serverSideApiKeyIsSet: boolean;
   serverSidePluginKeysSet: boolean;
   consumptionLimitEnabled: boolean;
@@ -35,6 +36,7 @@ interface Props {
 }
 
 const Home = ({
+  appName,
   serverSideApiKeyIsSet,
   serverSidePluginKeysSet,
   consumptionLimitEnabled,
@@ -56,6 +58,7 @@ const Home = ({
   const contextValue = useCreateReducer<HomeInitialState>({
     initialState: {
       ...initialState,
+      appName,
       stopConversationRef: stopConversationRef,
       consumptionLimitEnabled: consumptionLimitEnabled,
       isAzureOpenAI,
@@ -252,7 +255,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>Chatbot UI</title>
+        <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -284,6 +287,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
 
   return {
     props: {
+      appName: APP_NAME,
       serverSideApiKeyIsSet: !!process.env.OPENAI_API_KEY,
       isAzureOpenAI: OPENAI_API_TYPE === "azure",
       serverSidePluginKeysSet,

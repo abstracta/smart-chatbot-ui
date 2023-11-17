@@ -10,17 +10,17 @@ import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { trpc } from '../utils/trpc';
 import { ReactElement, ReactNode } from 'react';
-import { NextPage } from 'next';
+import { InferGetServerSidePropsType, NextPage } from 'next';
 import nextI18NextConfig from '../next-i18next.config'
 
 const inter = Inter({ subsets: ['latin'] });
 
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
-  getLayout?: (page: ReactElement) => ReactNode
+export type NextPageWithLayout<Props extends (args: any) => any> = NextPage<InferGetServerSidePropsType<Props>> & {
+  getLayout?: (page: ReactElement, props: InferGetServerSidePropsType<Props>) => ReactNode
 }
 
 type AppPropsWithLayout<P> = AppProps<P> & {
-  Component: NextPageWithLayout
+  Component: NextPageWithLayout<any>
 }
 
 function App({ Component, pageProps: { session, ...pageProps } }: AppPropsWithLayout<{ session: Session }>) {
@@ -32,7 +32,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppPropsWithLa
       <div className={inter.className}>
         <Toaster />
         <QueryClientProvider client={queryClient}>
-          {getLayout(<Component {...pageProps} />)}
+          {getLayout(<Component {...pageProps} />, pageProps)}
         </QueryClientProvider>
       </div>
     </SessionProvider>
