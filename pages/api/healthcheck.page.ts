@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { getDb } from '@/utils/server/storage';
-import { getOpenAIApi } from '@/utils/server/openai';
+import { getLlmApiAggregator } from '@/utils/server/llm';
 
 const mongoDBCheck = async () => {
   try {
@@ -14,20 +14,21 @@ const mongoDBCheck = async () => {
   }
 }
 
-const openAICheck = async () => {
+const llmApisCheck = async () => {
   try {
-    await getOpenAIApi().listModels();
-    return true
+    const llmApi = await getLlmApiAggregator();
+    const models = await llmApi.listModels();
+    return models.length > 0
   }
   catch (e) {
-    console.error("OpenAI health check failed.", e);
+    console.error("LlmApis health check failed.", e);
     return false;
   }
 }
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const checks: (Promise<boolean>)[] = [
-    openAICheck(),
+    llmApisCheck(),
     mongoDBCheck()
   ]
   const checkResults = await Promise.all(checks);

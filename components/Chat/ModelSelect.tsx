@@ -5,10 +5,9 @@ import { useTranslation } from 'next-i18next';
 
 import useConversations from '@/hooks/useConversations';
 
-import { OpenAIModel, OpenAIModelType } from '@/types/openai';
-
 import HomeContext from '@/pages/api/home/home.context';
 import { Select } from '../Input/Select';
+import { Llm, LlmType } from '@/types/llm';
 
 export const ModelSelect = () => {
   const { t } = useTranslation('chat');
@@ -23,7 +22,7 @@ export const ModelSelect = () => {
         key: 'model',
         value: models.find(
           (model) => model.id === modelId,
-        ) as OpenAIModel,
+        ) as Llm,
       });
   };
 
@@ -33,7 +32,7 @@ export const ModelSelect = () => {
         {t('Model')}
       </label>
       <Select placeholder={t('Select a model') || ""}
-        options={models.filter(m => m.type == OpenAIModelType.CHAT).map((m) => {
+        options={models.filter(m => m.type == LlmType.CHAT).map((m) => {
           return {
             value: m.id,
             label: m.id == defaultModelId ? `${t('Default')} (${m.name})` : m.name

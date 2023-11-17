@@ -1,16 +1,15 @@
 import * as z from 'zod';
-import { OpenAIModelID } from './openai';
 import { User } from './user';
+import { LlmID } from './llm';
 
-export const OpenAIModelIdEnumSchema = z.nativeEnum(OpenAIModelID);
-
-export const LlmPriceRate = z.object({
-  modelId: OpenAIModelIdEnumSchema,
+export const LlmInfoSchema = z.object({
+  _id: z.nativeEnum(LlmID),
   promptPriceUSDPer1000: z.number(),
-  completionPriceUSDPer1000: z.number()
+  completionPriceUSDPer1000: z.number(),
+  monthlyUsageLimitUSD: z.number(),
 });
 
-export type LlmPriceRate = z.infer<typeof LlmPriceRate>;
+export type LlmInfo = z.infer<typeof LlmInfoSchema>;
 
 export const TokenUsageCountSchema = z.object({
   prompt: z.number(),
@@ -46,4 +45,10 @@ export type AggregationLlmUsageStatsPerUser = {
     totalTokens: UserLlmUsage['tokens']['total'] | undefined
     totalUSD: UserLlmUsage['totalPriceUSD']
   }[]
+}
+
+export type AggregationLlmUsageStatsPerModel = {
+  modelId: LlmID,
+  totalTokens: UserLlmUsage['tokens']['total'] | undefined,
+  totalUSD: UserLlmUsage['totalPriceUSD'],
 }

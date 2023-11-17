@@ -1,6 +1,6 @@
 
 import { useTranslation } from 'next-i18next';
-import { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useEffect, useMemo, useState } from 'react';
 import AdminLayout from '@/pages/admin/adminLayout';
 import { NextPageWithLayout } from '@/pages/_app.page';
 import { UserRole } from '@/types/user';
@@ -17,12 +17,20 @@ import Spinner from '@/components/Spinner';
 import { IconAlertCircle, IconDotsVertical, IconReload } from '@tabler/icons-react';
 import { InputDate } from '@/components/Input/InputDate';
 import Dropdown from '@/components/Buttons/Dropdown/';
-import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 import { DropdownItem } from '@/components/Buttons/Dropdown/DropItem';
 import { downloadFile } from '@/utils/app/download';
+import { Llm, LlmID, LlmList } from '@/types/llm';
+import { ModelsDropdown } from '@/components/ModelsDropdown/ModelsDropdown';
 
 
 interface Props {
+}
+
+const modelNames: Record<string, string> = {
+  [LlmID.GPT_3_5]: LlmList[LlmID.GPT_3_5].name + " (OAI)",
+  [LlmID.GPT_3_5_16K]: LlmList[LlmID.GPT_3_5_16K].name + " (OAI)",
+  [LlmID.GPT_3_5_AZ]: LlmList[LlmID.GPT_3_5_AZ].name + " (AZ)",
+  [LlmID.GPT_3_5_16K_AZ]: LlmList[LlmID.GPT_3_5_16K_AZ].name + " (AZ)",
 }
 
 const Reports: NextPageWithLayout<Props> = ({
@@ -35,12 +43,18 @@ const Reports: NextPageWithLayout<Props> = ({
     } as ReportsInitialState,
   });
 
+  const models = useMemo(() => {
+    return Object.values(LlmList)
+      .map(m => { return { ...m, name: modelNames[m.id] || m.name } })
+  }, []);
   const currentDate = () => new Date()
   const date = currentDate();
   let startOfMonth = () => new Date(date.getFullYear(), date.getMonth(), 1);
 
   const [startDate, setStartDate] = useState(startOfMonth);
   const [endDate, setEndDate] = useState<Date>(date);
+  const [selectedModels, setSelectedModels] = useState<Llm[]>(models)
+  const [disabledModels, setDisabledModels] = useState<Llm[]>()
 
   const queryEndDate = useMemo(() => {
     const date = new Date(endDate.getTime());
@@ -48,9 +62,15 @@ const Reports: NextPageWithLayout<Props> = ({
     return date;
   }, [endDate]);
 
+  const modelIdsQuery = trpc.llmUsage.getLlmUsageIds.useQuery({
+    start: startDate,
+    end: queryEndDate,
+  }, { refetchOnWindowFocus: false });
+
   const usageQuery = trpc.llmUsage.getLlmUsageStatsPerUser.useQuery({
     start: startDate,
-    end: queryEndDate
+    end: queryEndDate,
+    modelIds: selectedModels.map(m => m.id)
   });
 
   const handleReset = () => {
@@ -58,18 +78,22 @@ const Reports: NextPageWithLayout<Props> = ({
     setEndDate(currentDate());
   }
 
-  const models = useMemo(() => {
-    const showModelIds: OpenAIModelID[] = [
-      OpenAIModelID.GPT_3_5_AZ, OpenAIModelID.GPT_3_5_16K_AZ,
-      OpenAIModelID.GPT_4, OpenAIModelID.GPT_4_32K, OpenAIModelID.TEXT_EMBEDDING_ADA_002
-    ]
-    return Object.values(OpenAIModels).filter(m => showModelIds.includes(m.id))
-  }, []);
+  useEffect(() => {
+    if (modelIdsQuery.data) {
+      const modelsWithData = modelIdsQuery.data;
+      setDisabledModels(models.filter(m => !modelsWithData.includes(m.id)));
+      const selected = (modelsWithData
+        .map(id => models.find(m => m.id == id))
+        .filter((m) => m != undefined) as Llm[])
+        .sort((a, b) => a.id.localeCompare(b.id));
+      setSelectedModels(selected);
+    }
+  }, [modelIdsQuery.data, models])
 
   const exportCSV = () => {
     const headers = [
       "Name",
-      ...(models.reduce((prev, curr) => {
+      ...(selectedModels.reduce((prev, curr) => {
         prev.push(`${curr.name} tokens`);
         prev.push(`${curr.name} USD`);
         return prev;
@@ -83,7 +107,7 @@ const Reports: NextPageWithLayout<Props> = ({
       ...(usageQuery.data ? usageQuery.data?.map((data) => {
         return [
           data.userName,
-          ...(models.reduce((prev, curr) => {
+          ...(selectedModels.reduce((prev, curr) => {
             const modelUsage = data.usage.find(u => u.modelId == curr.id);
             prev.push(modelUsage?.totalTokens?.toString() || "");
             prev.push(modelUsage?.totalUSD?.toString() || "");
@@ -105,11 +129,19 @@ const Reports: NextPageWithLayout<Props> = ({
         ...contextValue
       }}>
       <div className="mt-[70px] px-6 w-full">
-        <div className='flex flex-1 gap-2'>
+        <div className='flex flex-1 flex-col md:flex-row gap-2'>
           <div>
             <h1 className="text-xl text-gray-800 dark:text-white mb-3">{t('Usage report')}</h1>
           </div>
-          <div className='flex gap-2 ml-auto mr-0 items-end'>
+          <div className='flex flex-wrap gap-2 ml-auto mr-0 items-end'>
+            <div className='flex flex-col'>
+              <ModelsDropdown models={models}
+                selectedModels={selectedModels}
+                disabledModels={disabledModels}
+                disabledText={t("No data") as string}
+                onChange={(models) => setSelectedModels(models.sort((a, b) => a.id.localeCompare(b.id)))}
+              />
+            </div>
             <div className='flex flex-col'>
               <label htmlFor='start-date'>{t('From')}</label>
               <InputDate id="start-date" value={startDate}
@@ -124,7 +156,7 @@ const Reports: NextPageWithLayout<Props> = ({
             </div>
             <div className='mr-5'>
               <button
-                className="flex items-center gap-2 p-2 rounded border hover:bg-black/10 dark:hover:bg-white/10 transition
+                className="flex items-center gap-2 p-2 leading-[22px] rounded border hover:bg-black/10 dark:hover:bg-white/10 transition
                   disabled:bg-slate-50 disabled:text-slate-400 disabled:border-slate-300 dark:border-white/20
                   dark:disabled:bg-gray-500 dark:disabled:text-gray-600 dark:disabled:border-gray-500"
                 onClick={handleReset}
@@ -135,7 +167,7 @@ const Reports: NextPageWithLayout<Props> = ({
               </button>
             </div>
             <div className='flex items-end'>
-              <Dropdown buttonContent={<IconDotsVertical size={20} />}
+              <Dropdown buttonContent={<IconDotsVertical size={22} />}
                 items={[
                   <DropdownItem onClick={exportCSV} key="export-csv">{t('Export CSV')}</DropdownItem>
                 ]}
@@ -145,14 +177,14 @@ const Reports: NextPageWithLayout<Props> = ({
           </div>
         </div>
         <div className="flex min-h-[300px] relative">
-          <UserUsageTable data={usageQuery.data || []} models={models} />
+          <UserUsageTable data={usageQuery.data || []} models={selectedModels} />
           {usageQuery.isLoading && (<div className="absolute w-full h-full flex flex-1 self-stretch items-center justify-center bg-white dark:bg-[#343541]" >
             <Spinner size="25px" className="m-auto" />
           </div>)}
           {usageQuery.isError && (<div className="absolute w-full h-full flex flex-1 self-stretch items-center justify-center bg-white dark:bg-[#343541]" >
             <div className='flex flex-col items-center gap-2 text-red-600 dark:text-red-400'>
               <IconAlertCircle size={35} />
-              <span className="text-lg">An error occurred.</span>
+              <span className="text-lg">{t("An error occurred")}.</span>
             </div>
           </div>)}
         </div>

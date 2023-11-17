@@ -79,7 +79,7 @@ const Users: NextPageWithLayout<Props> = ({
             <h1 className="text-xl text-gray-800 dark:text-white mb-3">{t('Users')}</h1>
           </div>
           <div className='flex items-end ml-auto mr-0'>
-            <Dropdown buttonContent={<IconDotsVertical size={20} />}
+            <Dropdown buttonContent={<IconDotsVertical size={22} />}
               items={[
                 <DropdownItem onClick={exportCSV} key="export-csv">{t('Export CSV')}</DropdownItem>
               ]}

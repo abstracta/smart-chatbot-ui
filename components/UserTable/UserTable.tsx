@@ -98,7 +98,7 @@ export const UserTable: FC<Props> = ({ data, updateUser }) => {
   );
 
   return (
-    <div className="min-w-[600px] w-full max-w-[1400px] py-2">
+    <div className="w-full max-w-[1400px] py-2">
       <Table columns={columns} data={data}
         initialSorting={initialSorting}
         updateRow={updateUser} />

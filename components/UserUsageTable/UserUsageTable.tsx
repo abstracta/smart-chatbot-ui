@@ -7,12 +7,12 @@ import { FC, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import Table from '../Table'
 import { AggregationLlmUsageStatsPerUser } from '@/types/llmUsage'
-import { OpenAIModel } from '@/types/openai'
+import { Llm } from '@/types/llm'
 
 
 interface Props {
   data: AggregationLlmUsageStatsPerUser[];
-  models: OpenAIModel[]
+  models: Llm[]
 }
 
 export const UserUsageTable: FC<Props> = ({
@@ -27,6 +27,9 @@ export const UserUsageTable: FC<Props> = ({
       columnHelper.accessor('userName', {
         header: t('Name') as string,
         minSize: 100,
+        meta: {
+          minWidth: "150px"
+        }
       }),
       columnHelper.group({
         id: 'models',
@@ -116,9 +119,10 @@ export const UserUsageTable: FC<Props> = ({
   );
 
   return (
-    <div className="min-w-[1000px] w-full py-2">
+    <div className="w-full py-2">
       <Table columns={columns} data={data}
         initialSorting={initialSorting}
+        resize={false}
       />
     </div>
   )

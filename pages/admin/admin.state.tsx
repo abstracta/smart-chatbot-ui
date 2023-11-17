@@ -1,4 +1,5 @@
 
+import { LlmTemperature } from '@/types/llm';
 import { Settings } from '@/types/settings';
 
 export interface AdminInitialState {
@@ -11,7 +12,7 @@ export const initialState: Partial<AdminInitialState> = {
   settings: {
     userId: '',
     theme: 'dark',
-    defaultTemperature: 1.0,
+    defaultTemperature: LlmTemperature.NEUTRAL,
     defaultModelId: undefined,
     defaultSystemPrompt: '',
   },

@@ -7,25 +7,12 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   Row,
-  RowData,
-  SortingFn,
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
 import { IconGripVertical, IconSortAscending, IconSortDescending } from '@tabler/icons-react'
 import { PagingControls } from './components/PagingControls'
 
-declare module '@tanstack/react-table' {
-  interface TableMeta<TData extends RowData> {
-    updateRow: (rowIndex: number, columnId: string, value: TData) => void
-  }
-}
-
-declare module '@tanstack/table-core' {
-  interface SortingFns {
-    numberIgnoreUndefined: SortingFn<unknown>
-  }
-}
 
 function useSkipper() {
   const shouldSkipRef = React.useRef(true)
@@ -48,9 +35,10 @@ interface Props<T> {
   data: T[];
   updateRow?(updatedRow: T): Promise<void>;
   initialSorting?: ColumnSort[];
+  resize?: boolean;
 }
 
-export const Table = <T,>({ columns, data, initialSorting, updateRow, }: Props<T>) => {
+export const Table = <T,>({ columns, data, initialSorting, updateRow, resize = true }: Props<T>) => {
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting || [])
   const [autoResetPageIndex, skipAutoResetPageIndex] = useSkipper()
 
@@ -61,7 +49,7 @@ export const Table = <T,>({ columns, data, initialSorting, updateRow, }: Props<T
       sorting,
     },
     autoResetExpanded: false,
-    enableColumnResizing: true,
+    enableColumnResizing: resize,
     columnResizeMode: 'onChange',
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -96,9 +84,9 @@ export const Table = <T,>({ columns, data, initialSorting, updateRow, }: Props<T
   })
 
   return (
-    <div className='w-full overflow-x-auto'>
+    <div className='w-full'>
       <div className="h-2" />
-      <div className="border rounded-lg overflow-hidden dark:border-white/30">
+      <div className="border rounded-lg overflow-hidden dark:border-white/30 overflow-x-auto">
         <table className="table-auto border-collapse w-full divide-y divide-gray-200 dark:divide-white/30 m-[-1px]">
           <thead className="bg-gray-50 dark:bg-gray-700">
             {table.getHeaderGroups().map(headerGroup => (
@@ -106,7 +94,7 @@ export const Table = <T,>({ columns, data, initialSorting, updateRow, }: Props<T
                 {headerGroup.headers.map(header => {
                   return (
                     <th className="group text-left" key={header.id} colSpan={header.colSpan}
-                      style={{ position: 'relative', width: header.getSize() }}>
+                      style={{ position: 'relative', width: header.getSize(), minWidth: header.column.columnDef.meta?.minWidth }}>
                       {header.isPlaceholder ? null : (
                         <div
                           {...{

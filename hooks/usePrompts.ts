@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { trpc } from '@/utils/trpc';
 
-import { OpenAIModels } from '@/types/openai';
+import { LlmList } from '@/types/llm';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -102,7 +102,7 @@ export default function usePrompts(): [Prompt[], PromptsAction] {
       name: `Prompt ${(promptsListQuery.data?.length || 0) + 1}`,
       description: '',
       content: '',
-      model: OpenAIModels[defaultModelId],
+      model: LlmList[defaultModelId],
       folderId: null,
     };
     await promptsUpdate.mutateAsync(newPrompt);

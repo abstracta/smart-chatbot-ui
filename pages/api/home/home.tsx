@@ -12,7 +12,6 @@ import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_E
 import { trpc } from '@/utils/trpc';
 
 import { Conversation } from '@/types/chat';
-import { OpenAIModelID } from '@/types/openai';
 
 import { HomeMain } from '@/components/Home/HomeMain';
 
@@ -22,6 +21,7 @@ import { HomeInitialState, initialState } from './home.state';
 import { v4 as uuidv4 } from 'uuid';
 import { authOptions } from '../auth/[...nextauth].page';
 import { getServerSession } from 'next-auth/next';
+import { LlmID } from '@/types/llm';
 
 interface Props {
   serverSideApiKeyIsSet: boolean;
@@ -30,7 +30,8 @@ interface Props {
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
-  systemDefaultModelId: OpenAIModelID;
+  systemDefaultModelId: LlmID;
+  systemDefaultSystemPrompt: string;
 }
 
 const Home = ({
@@ -41,6 +42,7 @@ const Home = ({
   supportEmail,
   promptSharingEnabled,
   systemDefaultModelId,
+  systemDefaultSystemPrompt,
 }: Props) => {
   const { t } = useTranslation('chat');
   const settingsQuery = trpc.settings.get.useQuery();
@@ -59,6 +61,7 @@ const Home = ({
       isAzureOpenAI,
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
+      defaultSystemPrompt: systemDefaultSystemPrompt,
     } as HomeInitialState,
   });
 
@@ -67,7 +70,7 @@ const Home = ({
     dispatch,
   } = contextValue;
 
-  const modelsQuery = trpc.models.list.useQuery({ key: apiKey });
+  const modelsQuery = trpc.models.list.useQuery(undefined, { staleTime: 60000 });
 
   useEffect(() => {
     if (modelsQuery.data)
@@ -75,9 +78,7 @@ const Home = ({
   }, [modelsQuery.data, dispatch]);
 
   useEffect(() => {
-    if (modelsQuery.error) {
-      dispatch({ field: 'modelError', value: modelsQuery.error });
-    }
+    dispatch({ field: 'modelError', value: modelsQuery.error || null });
   }, [dispatch, modelsQuery.error]);
 
   // FETCH MODELS ----------------------------------------------
@@ -99,9 +100,11 @@ const Home = ({
 
   useEffect(() => {
     dispatch({ field: 'systemDefaultModelId', value: systemDefaultModelId });
-    dispatch({ field: 'defaultModelId', value: settings.defaultModelId || systemDefaultModelId });
+    const defaultModelId = models.length > 0 ?
+      models.find(m => m.id == settings.defaultModelId || m.id == systemDefaultModelId) || models[0] : undefined;
+    dispatch({ field: 'defaultModelId', value: defaultModelId?.id });
 
-    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || t(DEFAULT_SYSTEM_PROMPT) });
+    dispatch({ field: 'defaultSystemPrompt', value: settings.defaultSystemPrompt || systemDefaultSystemPrompt });
 
     serverSideApiKeyIsSet &&
       dispatch({
@@ -116,11 +119,12 @@ const Home = ({
   }, [
     t,
     systemDefaultModelId,
-    defaultSystemPrompt,
+    systemDefaultSystemPrompt,
     dispatch,
     serverSideApiKeyIsSet,
     serverSidePluginKeysSet,
     settings,
+    models,
   ]);
 
   // ON LOAD --------------------------------------------
@@ -164,6 +168,7 @@ const Home = ({
       const cleanedConversationHistory: Conversation[] =
         cleanConversationHistory(history, {
           temperature: settings.defaultTemperature,
+          defaultSystemPrompt
         });
       dispatch({ field: 'conversations', value: cleanedConversationHistory });
 
@@ -171,14 +176,15 @@ const Home = ({
         cleanedConversationHistory.length > 0
           ? cleanedConversationHistory[0]
           : undefined;
-      if (!selectedConversation && models.length) {
+      if (!selectedConversation && modelsQuery.isFetched && modelsQuery.data) {
         dispatch({
           field: 'selectedConversation',
           value: conversation ?? {
             id: uuidv4(),
             name: t('New Conversation'),
             messages: [],
-            model: models.find(m => m.id == defaultModelId),
+            model: modelsQuery.data.find(m => m.id == defaultModelId) ||
+              modelsQuery.data.length > 0 && modelsQuery.data[0],
             prompt: defaultSystemPrompt,
             temperature: settings.defaultTemperature,
             folderId: null,
@@ -193,7 +199,8 @@ const Home = ({
     conversationsQuery.data,
     settings.defaultTemperature,
     t,
-    models,
+    modelsQuery.data,
+    modelsQuery.isFetched,
     selectedConversation
   ]);
 
@@ -293,6 +300,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,
       systemDefaultModelId: DEFAULT_MODEL,
+      systemDefaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
     },
   };
 };
