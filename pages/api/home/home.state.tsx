@@ -2,11 +2,13 @@ import { MutableRefObject } from 'react';
 
 import { Conversation, ConversationListing, Message } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
+import { Prompt, PublicPrompt } from '@/types/prompt';
 import { Llm, LlmID, LlmTemperature } from '@/types/llm';
-import { Prompt } from '@/types/prompt';
 import { Settings } from '@/types/settings';
 
 export interface HomeInitialState {
+  appName: string;
+  apiKey: string;
   loading: boolean;
   settings: Settings;
   messageIsStreaming: boolean;
@@ -19,7 +21,7 @@ export interface HomeInitialState {
   selectedConversation: Conversation | undefined;
   currentMessage: Message | undefined;
   prompts: Prompt[];
-  publicPrompts: Prompt[];
+  publicPrompts: PublicPrompt[];
   showChatbar: boolean;
   showPromptbar: boolean;
   currentFolder: FolderInterface | undefined;
@@ -37,6 +39,7 @@ export interface HomeInitialState {
 }
 
 export const initialState: Partial<HomeInitialState> = {
+  appName: '',
   loading: false,
   settings: {
     userId: '',

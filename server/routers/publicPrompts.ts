@@ -1,6 +1,6 @@
 import { PublicPromptsDb, UserDb, getDb } from '@/utils/server/storage';
 
-import { PromptSchema } from '@/types/prompt';
+import { PublicPromptSchema } from '@/types/prompt';
 
 import { procedure, router } from '../trpc';
 
@@ -13,7 +13,7 @@ export const publicPrompts = router({
     const publicPromptsDb = new PublicPromptsDb(await getDb());
     return await publicPromptsDb.getPrompts();
   }),
-  add: procedure.input(PromptSchema).mutation(async ({ ctx, input }) => {
+  add: procedure.input(PublicPromptSchema).mutation(async ({ ctx, input }) => {
     const userDb = await UserDb.fromUserHash(ctx.userHash);
     await userDb.publishPrompt(input);
     return { success: true };
@@ -26,12 +26,18 @@ export const publicPrompts = router({
       await publicPromptsDb.removePrompt(input.id);
       return { success: true };
     }),
-  update: procedure.input(PromptSchema).mutation(async ({ ctx, input }) => {
+  update: procedure.input(PublicPromptSchema).mutation(async ({ ctx, input }) => {
     const publicPromptsDb = new PublicPromptsDb(await getDb());
     await validateOwnerOrAdminAccess(input.id, ctx);
     await publicPromptsDb.savePrompt(input);
     return { success: true };
-  })
+  }),
+  increaseUsageCount: procedure.input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const publicPromptsDb = new PublicPromptsDb(await getDb());
+      await publicPromptsDb.increasePromptUsageCount(input.id);
+      return { success: true };
+    }),
 });
 
 async function validateOwnerOrAdminAccess(promptId: string, ctx: Context) {

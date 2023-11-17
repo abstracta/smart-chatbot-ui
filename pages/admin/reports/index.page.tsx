@@ -19,11 +19,13 @@ import { InputDate } from '@/components/Input/InputDate';
 import Dropdown from '@/components/Buttons/Dropdown/';
 import { DropdownItem } from '@/components/Buttons/Dropdown/DropItem';
 import { downloadFile } from '@/utils/app/download';
+import { APP_NAME } from '@/utils/app/const';
 import { Llm, LlmID, LlmList } from '@/types/llm';
 import { ModelsDropdown } from '@/components/ModelsDropdown/ModelsDropdown';
 
 
 interface Props {
+  appName: string;
 }
 
 const modelNames: Record<string, string> = {
@@ -33,10 +35,9 @@ const modelNames: Record<string, string> = {
   [LlmID.GPT_3_5_16K_AZ]: LlmList[LlmID.GPT_3_5_16K_AZ].name + " (AZ)",
 }
 
-const Reports: NextPageWithLayout<Props> = ({
-}: Props) => {
+const Reports: NextPageWithLayout<typeof getServerSideProps> = ({
+}) => {
   const { t } = useTranslation('admin');
-
   const contextValue = useCreateReducer<ReportsInitialState>({
     initialState: {
       ...initialState,
@@ -193,9 +194,9 @@ const Reports: NextPageWithLayout<Props> = ({
   );
 };
 
-Reports.getLayout = function getLayout(page: ReactElement) {
+Reports.getLayout = function getLayout(page: ReactElement, { appName }: Props) {
   return (
-    <AdminLayout>
+    <AdminLayout pageName="Usage report" appName={appName}>
       {page}
     </AdminLayout>
   )
@@ -204,7 +205,7 @@ Reports.getLayout = function getLayout(page: ReactElement) {
 export default Reports;
 
 
-export const getServerSideProps: GetServerSideProps = async ({ locale, req, res }) => {
+export const getServerSideProps: GetServerSideProps<Props> = async ({ locale, req, res }) => {
   const session = await getServerSession(req, res, authOptions)
   if (!session || session?.user?.role !== UserRole.ADMIN) {
     return {
@@ -216,6 +217,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   }
   return {
     props: {
+      appName: APP_NAME,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
         'sidebar',
@@ -226,5 +228,3 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
     },
   };
 };
-
-

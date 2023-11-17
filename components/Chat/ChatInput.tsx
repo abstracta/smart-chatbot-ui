@@ -34,6 +34,7 @@ import ChatInputFileAttachment from './ChatInputFileAttachment';
 import { Tiktoken } from 'tiktoken/lite';
 import { getTiktokenEncoding } from '@/utils/server/tiktoken';
 import { ChatInitialState } from './Chat.state';
+import usePublicPrompts from '@/hooks/usePublicPrompts';
 
 interface Props {
   onSend: (
@@ -130,6 +131,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
 
   const {
     state: {
+      appName,
       selectedConversation,
       messageIsStreaming,
       prompts,
@@ -143,6 +145,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     state: { selectedPlugins, chatMode, attachments, userMessageTokens, attachmentsTokens, tokenizer },
     dispatch: chatDispatch,
   } = useContext(ChatContext);
+
+  const publicPromptActions = usePublicPrompts()[1];
 
   const [content, setContent] = useState<string>();
   const [isTyping, setIsTyping] = useState<boolean>(false);
@@ -324,6 +328,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
         return updatedContent;
       });
       updatePromptListVisibility(prompt.content);
+      if (publicPrompts.find(p => p.id === prompt.id)) publicPromptActions.increaseUsage(prompt);
     }
   };
 
@@ -334,6 +339,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     });
 
     setContent(newContent);
+    const prompt = [...filteredPrompts, ...filteredPublicPrompts][activePromptIndex];
+    if (publicPrompts.find(p => p.id === prompt.id)) publicPromptActions.increaseUsage(prompt);
 
     if (textareaRef && textareaRef.current) {
       textareaRef.current.focus();
@@ -576,17 +583,17 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
       </ChatInputContainer>
       <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">
         <a
-          href="https://github.com/dotneet/smart-chatbot-ui"
+          href="https://github.com/abstracta/smart-chatbot-ui.git"
           target="_blank"
           rel="noreferrer"
           className="underline"
         >
-          Smart ChatBot UI
+          {appName}
         </a>
         .{' '}
-        {t(
-          "Smart Chatbot UI is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
-        )}
+        {t("{{appName}} is an advanced chatbot kit for OpenAI's chat models aiming to mimic ChatGPT's interface and functionality.",
+          { appName: appName })
+        }
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY } from '@/utils/app/const';
+import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation, ConversationListing } from '@/types/chat';
@@ -25,23 +25,25 @@ import useSettings from '@/hooks/useSettings';
 import Spinner from '@/components/Spinner';
 
 interface Props {
-  isEnabledGoogleSearch: boolean;
+  appName: string;
   consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
   systemDefaultModelId: LlmID;
   systemDefaultSystemPrompt: string;
+  isEnabledGoogleSearch: boolean;
 }
 
 const Home = ({
-  isEnabledGoogleSearch,
+  appName,
   consumptionLimitEnabled,
   isAzureOpenAI,
   supportEmail,
   promptSharingEnabled,
   systemDefaultModelId,
   systemDefaultSystemPrompt,
+  isEnabledGoogleSearch,
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -49,6 +51,7 @@ const Home = ({
   const contextValue = useCreateReducer<HomeInitialState>({
     initialState: {
       ...initialState,
+      appName,
       stopConversationRef: stopConversationRef,
       consumptionLimitEnabled: consumptionLimitEnabled,
       isAzureOpenAI,
@@ -224,7 +227,7 @@ const Home = ({
       }}
     >
       <Head>
-        <title>Chatbot UI</title>
+        <title>{appName}</title>
         <meta name="description" content="ChatGPT but better." />
         <meta
           name="viewport"
@@ -256,6 +259,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
 
   return {
     props: {
+      appName: APP_NAME,
       isAzureOpenAI: OPENAI_API_TYPE === "azure",
       isEnabledGoogleSearch: !!(googleApiKey && googleCSEId),
       supportEmail: SUPPORT_EMAIL,
