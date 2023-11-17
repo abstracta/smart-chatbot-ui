@@ -1,4 +1,6 @@
 import {
+  IconCaretDown,
+  IconCaretUp,
   IconCheck,
   IconCopy,
   IconEdit,
@@ -6,7 +8,7 @@ import {
   IconTrash,
   IconUser,
 } from '@tabler/icons-react';
-import { FC, memo, useContext, useEffect, useRef, useState } from 'react';
+import { FC, memo, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -36,7 +38,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
   const sendMessage = useMesseageSender();
 
   const {
-    state: { selectedConversation, conversations },
+    state: { selectedConversation },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const {
@@ -47,11 +49,18 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
   const [messagedCopied, setMessageCopied] = useState(false);
+  const [shouldTruncate, setShouldTruncate] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  const messageParagraphRef = useRef<HTMLParagraphElement>(null);
+  
   const toggleEditing = () => {
     setIsEditing(!isEditing);
+  };
+  
+  const toggleExpand = () => {
+    setExpanded(!expanded);
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -139,9 +148,22 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
     });
   };
 
-  useEffect(() => {
-    setMessageContent(message.content);
-  }, [message.content]);
+  useLayoutEffect(
+    () => {
+      const node = messageParagraphRef.current;
+      if (node?.parentElement) {
+        const elHeight = node.offsetHeight;
+        const styles = window.getComputedStyle(node);
+        const lineHeight = styles
+          .getPropertyValue('line-height')
+          .replace('px', '');
+        const elLineCount = elHeight / parseInt(lineHeight, 10);
+
+        setShouldTruncate(elLineCount > 25);
+      }
+    },
+    [message.content]
+  );
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -152,11 +174,10 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
 
   return (
     <div
-      className={`group md:px-4 ${
-        message.role === 'assistant'
-          ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
-          : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
-      }`}
+      className={`group md:px-4 ${message.role === 'assistant'
+        ? 'border-b border-black/10 bg-gray-50 text-gray-800 dark:border-gray-900/50 dark:bg-[#444654] dark:text-gray-100'
+        : 'border-b border-black/10 bg-white text-gray-800 dark:border-gray-900/50 dark:bg-[#343541] dark:text-gray-100'
+        }`}
       style={{ overflowWrap: 'anywhere' }}
     >
       <div className="relative m-auto flex p-4 text-base md:max-w-2xl md:gap-6 md:py-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
@@ -188,6 +209,8 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                       padding: '0',
                       margin: '0',
                       overflow: 'hidden',
+                      maxHeight: 'calc(100vh - 320px)',
+                      overflowY: 'auto',
                     }}
                   />
 
@@ -212,7 +235,16 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                 </div>
               ) : (
                 <div className="prose whitespace-pre-wrap dark:prose-invert flex-1">
-                  {message.content}
+                  <p className={`${shouldTruncate && !expanded ? `line-clamp-[25]` : 'line-clamp-none'}`}
+                    ref={messageParagraphRef}>
+                    {message.content}</p>
+                  {shouldTruncate && (
+                    <button
+                      className='flex w-fit items-center gap-2 text-sm py-1 rounded border border-neutral-200 bg-white px-4 text-black hover:opacity-70 dark:border-neutral-600 dark:bg-[#343541] dark:text-white'
+                      onClick={toggleExpand}>
+                      {expanded ? <>{t('Collapse')} <IconCaretUp /> </> : <>{t('Expand')} <IconCaretDown /></>}
+                    </button>
+                  )}
                 </div>
               )}
 

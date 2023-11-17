@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
-import { OpenAIError } from '@/utils/server';
 import { ensureHasValidSession, getUserHash } from '@/utils/server/auth';
 
 import { PlanningRequest, PlanningResponse } from '@/types/agent';
@@ -25,18 +24,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   try {
     const {
-      model,
+      modelId,
       messages,
       enabledToolNames,
       pluginResults: toolActionResults,
     } = req.body as PlanningRequest;
 
-    try {
-      await verifyUserLlmUsage(userId, model.id);
-    } catch (e: any) {
-      return res.status(429).json({ error: e.message });
-    }
-    
+    await verifyUserLlmUsage(userId, modelId);
+
     let { taskId } = req.body;
     if (!taskId) {
       taskId = v4();
@@ -44,7 +39,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const lastMessage = messages[messages.length - 1];
     const verbose = process.env.DEBUG_AGENT_LLM_LOGGING === 'true';
-    const context = await createContext(taskId, req, res, model, verbose);
+    const context = await createContext(taskId, req, res, modelId, verbose);
     const result = await executeNotConversationalReactAgent(
       context,
       enabledToolNames,

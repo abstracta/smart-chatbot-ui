@@ -3,8 +3,8 @@ import { calcCosineSimilarity, createEmbedding } from './similarity';
 import { Tiktoken } from 'tiktoken';
 import { Readability } from '@mozilla/readability';
 import jsdom, { JSDOM } from 'jsdom';
-import { getOpenAIApiEmbeddings } from './openai';
 import { TaskExecutionContext } from '@/agent/plugins/executor';
+import { getLlmApiAggregator } from './llm';
 
 export const extractTextFromHtml = (html: string): string => {
   const virtualConsole = new jsdom.VirtualConsole();
@@ -62,13 +62,13 @@ export const getSimilarChunks = async (
   chunkSize: number,
   context: TaskExecutionContext,
 ): Promise<string[]> => {
-  const openAIApi = getOpenAIApiEmbeddings();
-  const inputEmbedding = await createEmbedding(input, openAIApi, context.userId);
+  const llmApi = await getLlmApiAggregator();
+  const inputEmbedding = await createEmbedding(input, llmApi, context.userId);
   const chunks = chunkTextByTokenSize(encoding, text, chunkSize);
   // get embedding for each chunk
   const chunkEmbeddings = await Promise.all(
     chunks.map((chunk) => {
-      return createEmbedding(chunk, openAIApi, context.userId).then((embedding) => {
+      return createEmbedding(chunk, llmApi, context.userId).then((embedding) => {
         return {
           embedding,
           chunk,
