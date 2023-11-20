@@ -20,8 +20,7 @@ export const DEFAULT_MODEL_EMBEDDINGS: LlmID = (process.env.DEFAULT_MODEL_EMBEDD
 
 export const APP_NAME = process.env.APP_NAME || 'Chatbot UI';
 
-export const OPENAI_API_HOST =
-  process.env.OPENAI_API_HOST || 'https://api.openai.com';
+export const OPENAI_API_HOST = process.env.OPENAI_API_HOST || "";
   
 export const OPENAI_INSTANCE_NAME = process.env.OPENAI_INSTANCE_NAME || undefined;
 
