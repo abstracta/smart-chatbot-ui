@@ -32,5 +32,6 @@
   "precise": "Preciso",
   "neutral": "Neutral",
   "creative": "Creativo",
-  "New Conversation": "Nueva Conversación"
+  "New Conversation": "Nueva Conversación",
+  "Selected model is currently unavailable, please start a new chat": "El modelo seleccionado no esta disponible, por favor inicia una nueva conversación"
 }
