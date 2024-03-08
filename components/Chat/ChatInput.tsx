@@ -185,7 +185,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const inputTokens = tokenizer.current?.encode(value).length || 0;
+    const inputTokens = tokenizer?.encode(value).length || 0;
     chatDispatch({ field: "userMessageTokens", value: inputTokens });
     if (!checkTokenLength(inputTokens, attachmentsTokens)) return false;
     setContent(value);
@@ -433,13 +433,9 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     let model: Tiktoken | null;
     if (selectedConversation?.model) {
       model = getTiktokenEncoding(selectedConversation?.model.id || "");
-      tokenizer.current = model;
+      chatDispatch({ field: "tokenizer", value: model });
     }
-    return () => {
-      model?.free();
-      tokenizer.current = null;
-    };
-  }, [selectedConversation?.model, tokenizer]);
+  }, [selectedConversation?.model, chatDispatch]);
 
   useEffect(() => {
     chatDispatch({ field: "attachments", value: [] });
