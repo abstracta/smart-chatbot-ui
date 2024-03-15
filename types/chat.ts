@@ -1,5 +1,6 @@
 import { Plugin } from './agent';
 import { LlmID, LlmTemperature } from './llm';
+import { TokenUsageCountSchema } from './llmUsage';
 import { AzureOpenAIModelSchema } from './openai';
 
 import * as z from 'zod';
@@ -18,10 +19,18 @@ export const MessageAttachmentSchema = z.object({
 
 export type MessageAttachment = z.infer<typeof MessageAttachmentSchema>;
 
+export const MessageUsageSchema = z.object({
+  tokens: TokenUsageCountSchema.optional(),
+  totalPriceUSD: z.number().optional()
+})
+
+export type MessageUsage = z.infer<typeof MessageUsageSchema>;
+
 export const MessageSchema = z.object({
   role: RoleSchema,
   content: z.string(),
   attachments: z.array(MessageAttachmentSchema).optional(),
+  usage: MessageUsageSchema.optional(),
 });
 
 export type Message = z.infer<typeof MessageSchema>;
@@ -36,6 +45,13 @@ export const ChatBodySchema = z.object({
 });
 
 export type ChatBody = z.infer<typeof ChatBodySchema>;
+
+export const ChatResponseJSONBodySchema = z.object({
+  message: z.string(),
+  usage: TokenUsageCountSchema,
+});
+
+export type ChatResponseJSONBody = z.infer<typeof ChatResponseJSONBodySchema>;
 
 export interface ChatModeRunner {
   run: (params: ChatModeRunnerParams) => void;

@@ -2,6 +2,7 @@ import { Message } from '@/types/chat';
 import { Llm, LlmID, LlmList, LlmType } from '@/types/llm';
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from 'langchain/schema';
 import { Tiktoken } from 'tiktoken';
+import { getTiktokenEncoding } from './tiktoken';
 
 export const createMessagesToSend = (
   encoding: Tiktoken,
@@ -24,8 +25,7 @@ export const createMessagesToSend = (
       ...messagesToSend,
       message,
     ];
-    const serialized = serializeMessages(model.id, serializingMessages);
-    let encodedLength = encoding.encode(serialized, 'all').length;
+    let encodedLength = calculateMessagesTokens(model.id, serializingMessages, encoding);
     if (encodedLength + reservedForCompletion > model.tokenLimit) {
       break;
     }
@@ -39,12 +39,19 @@ export const createMessagesToSend = (
   };
 };
 
+export function calculateMessagesTokens(modelId: LlmID, messages: Message[], encoding?: Tiktoken) {
+  if (!encoding) encoding = getTiktokenEncoding(modelId);
+  const serialized = serializeMessages(modelId, messages);
+  return encoding.encode(serialized, 'all').length;
+}
+
 // Borrow from:
 // https://github.com/dqbd/tiktoken/issues/23#issuecomment-1483317174
 export function serializeMessages(modelId: LlmID, messages: Message[]): string {
-  const isChat = LlmList[modelId].type == LlmType.CHAT;
-  const msgSep = isChat ? '\n' : '';
-  const roleSep = isChat ? '\n' : '<|im_sep|>';
+  const isOAIChat = modelId in LlmList && modelId.toLocaleLowerCase().includes("gpt") ?
+    LlmList[modelId].type == LlmType.CHAT : false;
+  const msgSep = isOAIChat ? '\n' : '';
+  const roleSep = isOAIChat ? '\n' : '<|im_sep|>';
   return [
     messages
       .map((message) => {

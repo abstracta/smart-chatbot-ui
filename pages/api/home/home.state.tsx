@@ -32,6 +32,7 @@ export interface HomeInitialState {
   defaultSystemPrompt: string;
   stopConversationRef: MutableRefObject<boolean>;
   consumptionLimitEnabled: boolean;
+  userConsumptionLimitUSD: number | undefined;
   isAzureOpenAI: boolean;
   supportEmail: string;
   promptSharingEnabled: boolean;
@@ -66,6 +67,7 @@ export const initialState: Partial<HomeInitialState> = {
   defaultModelId: undefined,
   defaultSystemPrompt: '',
   consumptionLimitEnabled: false,
+  userConsumptionLimitUSD: undefined,
   isAzureOpenAI: false,
   supportEmail: '',
   promptSharingEnabled: false,

@@ -12,6 +12,7 @@ export interface ChatInitialState {
   userMessageTokens: number;
   tokenizer: MutableRefObject<Tiktoken | null>;
   droppedFiles: File[];
+  selectedMessageIndex: number | undefined;
 }
 
 export const initialState: ChatInitialState = {
@@ -21,6 +22,7 @@ export const initialState: ChatInitialState = {
   attachmentsTokens: {},
   userMessageTokens: 0,
   tokenizer: { current: null },
-  droppedFiles: []
+  droppedFiles: [],
+  selectedMessageIndex: undefined,
 };
 

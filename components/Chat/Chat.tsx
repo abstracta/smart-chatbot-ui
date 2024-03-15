@@ -32,6 +32,7 @@ import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 import { LlmTemperature } from '@/types/llm';
 import useIsomorphicLayoutEffect from '@/hooks/useIsomorphicLayoutEffect';
+import { MessageInfoDialog } from './MessageInfoDialog';
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -64,6 +65,7 @@ export const Chat = memo(() => {
   const [temperature, setTemperature] = useState<LlmTemperature>(
     settings.defaultTemperature,
   );
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -139,6 +141,16 @@ export const Chat = memo(() => {
       });
     }
   };
+
+  const handleMessageInfoDialogOpen = (index: number) => {
+    chatContextValue.dispatch({ field: "selectedMessageIndex", value: index })
+    setIsMessageDialogOpen(true);
+  }
+
+  const handleMessageInfoDialogClose = () => {
+    setIsMessageDialogOpen(false);
+    chatContextValue.dispatch({ field: "selectedMessageIndex", value: undefined })
+  }
 
   useEffect(() => {
     setSystemPrompt(defaultSystemPrompt);
@@ -262,6 +274,7 @@ export const Chat = memo(() => {
                       key={selectedConversation.id + index}
                       message={message}
                       messageIndex={index}
+                      handleOpenInfoDialog={() => handleMessageInfoDialogOpen(index)}
                     />
                   ))}
 
@@ -299,6 +312,7 @@ export const Chat = memo(() => {
             </button>
           </div>
         )}
+        <MessageInfoDialog open={isMessageDialogOpen} onClose={handleMessageInfoDialogClose} />
       </div>
     </ChatContext.Provider>
   );
