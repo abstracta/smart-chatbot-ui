@@ -18,7 +18,7 @@ export const ChatModeSelect: FC<Props> = ({
 }) => {
   const { t } = useTranslation('chat');
   const {
-    state: { isEnabledGoogleSearch },
+    state: { isGoogleSearchEnabled, isAgentEnabled },
   } = useContext(HomeContext);
   const selectRef = useRef<HTMLSelectElement>(null);
 
@@ -91,9 +91,8 @@ export const ChatModeSelect: FC<Props> = ({
         >
           {[
             ChatModes[ChatModeID.DIRECT],
-            ChatModes[ChatModeID.AGENT],
-            ChatModes[ChatModeID.CONVERSATIONAL_AGENT],
-            ...(isEnabledGoogleSearch ? [ChatModes[ChatModeID.GOOGLE_SEARCH]] : [])
+            ...(isAgentEnabled ? [ChatModes[ChatModeID.AGENT], ChatModes[ChatModeID.CONVERSATIONAL_AGENT]] : []),
+            ...(isGoogleSearchEnabled ? [ChatModes[ChatModeID.GOOGLE_SEARCH]] : [])
           ].map((plugin) => (
             <option
               key={plugin.id}
