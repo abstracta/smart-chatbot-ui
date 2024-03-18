@@ -1,5 +1,5 @@
-export function downloadFile(content: string, name: string): void {
-    const encodedUri = encodeURI(content);
+export function downloadFile(blob: Blob, name: string): void {
+    const encodedUri = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", name);
@@ -7,4 +7,5 @@ export function downloadFile(content: string, name: string): void {
 
     link.click();
     link.remove();
+    URL.revokeObjectURL(encodedUri);
 }

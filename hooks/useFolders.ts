@@ -2,7 +2,7 @@ import { useCallback, useContext } from 'react';
 
 import { trpc } from '@/utils/trpc';
 
-import { Conversation } from '@/types/chat';
+import { Conversation, ConversationListing } from '@/types/chat';
 import { FolderInterface, FolderType } from '@/types/folder';
 import { Prompt } from '@/types/prompt';
 
@@ -142,7 +142,7 @@ export default function useFolders(): [FolderInterface[], FoldersAction] {
     async (folderId: string) => {
       await folderRemove.mutateAsync({ id: folderId });
 
-      const updatedConversations: Conversation[] = conversations.map((c) => {
+      const updatedConversations: ConversationListing[] = conversations.map((c) => {
         if (c.folderId === folderId) {
           return {
             ...c,

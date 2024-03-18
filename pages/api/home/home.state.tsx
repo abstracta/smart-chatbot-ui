@@ -1,7 +1,6 @@
 import { MutableRefObject } from 'react';
 
-import { Conversation, Message } from '@/types/chat';
-import { ChatModeKey } from '@/types/chatmode';
+import { Conversation, ConversationListing, Message } from '@/types/chat';
 import { FolderInterface } from '@/types/folder';
 import { Prompt, PublicPrompt } from '@/types/prompt';
 import { Llm, LlmID, LlmTemperature } from '@/types/llm';
@@ -10,7 +9,6 @@ import { Settings } from '@/types/settings';
 export interface HomeInitialState {
   appName: string;
   apiKey: string;
-  chatModeKeys: ChatModeKey[];
   loading: boolean;
   settings: Settings;
   messageIsStreaming: boolean;
@@ -18,7 +16,8 @@ export interface HomeInitialState {
   models: Llm[];
   folders: FolderInterface[];
   publicFolders: FolderInterface[];
-  conversations: Conversation[];
+  conversations: ConversationListing[];
+  selectedConversationId: Conversation["id"] | undefined;
   selectedConversation: Conversation | undefined;
   currentMessage: Message | undefined;
   prompts: Prompt[];
@@ -31,20 +30,18 @@ export interface HomeInitialState {
   systemDefaultModelId: LlmID;
   defaultModelId: LlmID | undefined;
   defaultSystemPrompt: string;
-  serverSideApiKeyIsSet: boolean;
-  serverSidePluginKeysSet: boolean;
   stopConversationRef: MutableRefObject<boolean>;
   consumptionLimitEnabled: boolean;
   isAzureOpenAI: boolean;
   supportEmail: string;
   promptSharingEnabled: boolean;
+  isGoogleSearchEnabled: boolean;
+  isAgentEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
   appName: '',
-  apiKey: '',
   loading: false,
-  chatModeKeys: [],
   settings: {
     userId: '',
     theme: 'dark',
@@ -58,7 +55,6 @@ export const initialState: Partial<HomeInitialState> = {
   folders: [],
   publicFolders: [],
   conversations: [],
-  selectedConversation: undefined,
   currentMessage: undefined,
   prompts: [],
   publicPrompts: [],
@@ -70,10 +66,10 @@ export const initialState: Partial<HomeInitialState> = {
   systemDefaultModelId: undefined,
   defaultModelId: undefined,
   defaultSystemPrompt: '',
-  serverSideApiKeyIsSet: false,
-  serverSidePluginKeysSet: false,
   consumptionLimitEnabled: false,
   isAzureOpenAI: false,
   supportEmail: '',
   promptSharingEnabled: false,
+  isGoogleSearchEnabled: false,
+  isAgentEnabled: false,
 };

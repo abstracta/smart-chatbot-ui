@@ -3,5 +3,8 @@
     "llmServiceOverloaded": "¡Ups! Debido a la alta demanda, nuestro servicio esté temporalmente no disponible. Por favor, ten paciencia y vuelve a intentarlo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}.",
     "userUsageLimitReached": "¡Ups! Has alcanzado el límite mensual de la API. Por favor, ponte en contacto con el equipo administrativo para recibir asistencia, en {{supportEmail}}.",
     "modelUsageLimitReached": "Parece que se ha alcanzado el límite de cuota del modelo de LLM seleccionado. Por favor, intenta usar otro modelo o ponte en contacto con nuestro equipo de soporte para recibir ayuda, en {{supportEmail}}.",
-    "errorDefault": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}."
+    "errorDefault": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo en un momento. Si el problema persiste, por favor contacta a {{supportEmail}}.",
+    "The selected file {{fileName}} is not in a supported format. Please select a text file.": "El archivo {{fileName}} no es de un tipo de archivo soportado. Por favor seleccione un archivo de texto.",
+    "The file {{fileName}} size exceeds the maximum allowed limit. Please choose a file that is smaller than {{maxFileSize}}.": "El tamaño del archivo {{fileName}} supera el límite máximo permitido. Por favor, seleccione un archivo que sea menor a {{maxFileSize}}.",
+    "You have selected more than {{maxAttachments}} files. Please select up to {{maxAttachments}} files only.": "Has seleccionado más de {{maxAttachments}} archivos. Por favor, selecciona hasta {{maxAttachments}} archivos."
 }

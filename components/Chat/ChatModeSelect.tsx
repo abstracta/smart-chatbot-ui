@@ -1,8 +1,9 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useContext, useEffect, useRef } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
-import { ChatMode, ChatModeList } from '@/types/chatmode';
+import { ChatMode, ChatModeID, ChatModeList, ChatModes } from '@/types/chatmode';
+import HomeContext from '@/pages/api/home/home.context';
 
 interface Props {
   chatMode: ChatMode;
@@ -16,7 +17,9 @@ export const ChatModeSelect: FC<Props> = ({
   onKeyDown,
 }) => {
   const { t } = useTranslation('chat');
-
+  const {
+    state: { isGoogleSearchEnabled, isAgentEnabled },
+  } = useContext(HomeContext);
   const selectRef = useRef<HTMLSelectElement>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
@@ -86,7 +89,11 @@ export const ChatModeSelect: FC<Props> = ({
             handleKeyDown(e);
           }}
         >
-          {ChatModeList.map((plugin) => (
+          {[
+            ChatModes[ChatModeID.DIRECT],
+            ...(isAgentEnabled ? [ChatModes[ChatModeID.AGENT], ChatModes[ChatModeID.CONVERSATIONAL_AGENT]] : []),
+            ...(isGoogleSearchEnabled ? [ChatModes[ChatModeID.GOOGLE_SEARCH]] : [])
+          ].map((plugin) => (
             <option
               key={plugin.id}
               value={plugin.id}

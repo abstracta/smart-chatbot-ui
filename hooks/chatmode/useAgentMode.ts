@@ -1,6 +1,6 @@
 import { MutableRefObject, useContext } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 import { useMutation } from 'react-query';
 
 import useApiService from '@/services/useApiService';

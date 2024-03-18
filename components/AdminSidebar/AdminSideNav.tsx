@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { SidebarButton } from '../Sidebar/SidebarButton';
 import AdminSettingDialog from './AdminSettingDialog';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 import { SidebarButtonLink } from '../Sidebar/SidebarButtonLink';
 
 

@@ -37,3 +37,20 @@ export const watchRefToAbort = async <R>(
     }
   }
 };
+
+export function readFileAsText(file: File): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsText(file, "utf-8");
+  });
+}

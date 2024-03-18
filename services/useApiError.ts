@@ -1,7 +1,7 @@
 import HomeContext from "@/pages/api/home/home.context";
 import { ErrorResponseCode } from "@/types/error";
 import { useContext } from "react";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "next-i18next";
 
 interface TranslationContext {
   supportEmail?: string | null

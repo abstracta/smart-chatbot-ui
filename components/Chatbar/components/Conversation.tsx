@@ -16,7 +16,7 @@ import {
 
 import useConversations from '@/hooks/useConversations';
 
-import { Conversation } from '@/types/chat';
+import { ConversationListing } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -25,7 +25,7 @@ import ChatbarContext from '@/components/Chatbar/Chatbar.context';
 import { InputText } from '@/components/Input/InputText';
 
 interface Props {
-  conversation: Conversation;
+  conversation: ConversationListing;
 }
 
 export const ConversationComponent = ({ conversation }: Props) => {
@@ -50,14 +50,14 @@ export const ConversationComponent = ({ conversation }: Props) => {
 
   const handleDragStart = (
     e: DragEvent<HTMLButtonElement>,
-    conversation: Conversation,
+    conversation: ConversationListing,
   ) => {
     if (e.dataTransfer) {
       e.dataTransfer.setData('conversation', JSON.stringify(conversation));
     }
   };
 
-  const handleRename = (conversation: Conversation) => {
+  const handleRename = (conversation: ConversationListing) => {
     if (renameValue.trim().length > 0) {
       conversationsAction.updateValue(conversation, {
         key: 'name',
@@ -71,7 +71,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
   const handleConfirm: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
     if (isDeleting) {
-      handleDeleteConversation(conversation);
+      handleDeleteConversation(conversation.id);
     } else if (isRenaming) {
       handleRename(conversation);
     }
@@ -126,7 +126,7 @@ export const ConversationComponent = ({ conversation }: Props) => {
               ? 'bg-[#343541]/90'
               : ''
           }`}
-          onClick={() => handleSelectConversation(conversation)}
+          onClick={() => handleSelectConversation(conversation.id)}
           disabled={messageIsStreaming}
           draggable="true"
           onDragStart={(e) => handleDragStart(e, conversation)}

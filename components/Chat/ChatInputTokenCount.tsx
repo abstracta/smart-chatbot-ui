@@ -1,38 +1,32 @@
-import { memo, useContext, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { memo, useContext, useEffect, useState } from 'react';
+import { useTranslation } from 'next-i18next';
 
+import ChatContext from './Chat.context';
 import HomeContext from '@/pages/api/home/home.context';
 
-import { Tiktoken } from 'tiktoken/lite';
-import { getTiktokenEncoding } from '@/utils/server/tiktoken';
-
-const ChatInputTokenCount = memo(function (props: { content: string | undefined }) {
+const ChatInputTokenCount = memo(function () {
   const { t } = useTranslation('chat');
   const {
     state: { selectedConversation },
   } = useContext(HomeContext);
+  const {
+    state: { userMessageTokens, attachmentsTokens },
+  } = useContext(ChatContext);
 
-  const tokenizer = useRef<Tiktoken | null>(null);
+  const [count, setCount] = useState<number>(0);
 
   useEffect(() => {
-    let model: Tiktoken | null;
-    if (selectedConversation?.model) {
-      model = getTiktokenEncoding(selectedConversation?.model.id);
-      tokenizer.current = model;
-    }
-    return () => {
-      model?.free();
-    };
-  }, [selectedConversation?.model]);
+    const filesTokens = Object.values(attachmentsTokens)
+      .reduce((prev, curr) => prev + curr, 0)
+    setCount(userMessageTokens + filesTokens);
+  }, [userMessageTokens, attachmentsTokens])
 
-  const serialized = `${props.content || ''}`;
-  const count = tokenizer.current?.encode(serialized, 'all').length;
-  if (count == null) return null;
   return (
-    <div className="py-1 px-2 text-neutral-400 pointer-events-auto text-xs">
-      {t('{{count}} tokens', {
-        count,
-      })}
+    <div className={`py-1 px-2 text-neutral-400 pointer-events-auto text-xs 
+      ${selectedConversation?.model.tokenLimit && count > selectedConversation.model.tokenLimit ?
+        'text-red-400' : ''}`}
+    >
+      {t('{{count}} tokens', { count })}
     </div>
   );
 })

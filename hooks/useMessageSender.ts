@@ -10,7 +10,7 @@ import { useChatModeRunner } from './chatmode/useChatModeRunner';
 
 export const useMesseageSender = () => {
   const {
-    state: { selectedConversation, apiKey },
+    state: { selectedConversation },
   } = useContext(HomeContext);
 
   const chatModeSelector = useChatModeRunner();
@@ -44,7 +44,6 @@ export const useMesseageSender = () => {
     const chatBody: ChatBody = {
       modelId: updatedConversation.model.id,
       messages: updatedConversation.messages,
-      key: apiKey,
       prompt: conversation.prompt,
       temperature: conversation.temperature,
     };

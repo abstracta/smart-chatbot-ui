@@ -13,7 +13,7 @@ import { useTranslation } from 'next-i18next';
 
 import { Plugin } from '@/types/agent';
 import { Message } from '@/types/chat';
-import { ChatMode, ChatModeID, ChatModes } from '@/types/chatmode';
+import { ChatMode, ChatModeID } from '@/types/chatmode';
 import { Prompt } from '@/types/prompt';
 
 import HomeContext from '@/pages/api/home/home.context';
@@ -29,6 +29,11 @@ import { VariableModal } from './VariableModal';
 
 import classNames from 'classnames';
 import { ChatInputUsedBudget } from './ChatInputUsedBudget';
+import ChatInputFileSelector from './ChatInputFileSelector';
+import ChatInputFileAttachment from './ChatInputFileAttachment';
+import { Tiktoken } from 'tiktoken/lite';
+import { getTiktokenEncoding } from '@/utils/server/tiktoken';
+import { ChatInitialState } from './Chat.state';
 import usePublicPrompts from '@/hooks/usePublicPrompts';
 
 interface Props {
@@ -43,9 +48,11 @@ interface Props {
 
 function ChatInputContainer({
   className,
+  classNameInner,
   children,
 }: {
   className?: string;
+  classNameInner?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -55,7 +62,13 @@ function ChatInputContainer({
         className,
       )}
     >
-      <div className="relative mx-2 flex w-full flex-grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
+      <div className={classNames(
+        `relative mx-2 flex w-full flex-grow flex-col rounded-md border border-black/10 bg-white 
+        shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white 
+        dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4 rounded focus-within:ring-1 focus-within:ring-white`,
+        classNameInner,
+      )
+      }>
         {children}
       </div>
     </div>
@@ -129,7 +142,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
   } = useContext(HomeContext);
 
   const {
-    state: { selectedPlugins, chatMode },
+    state: { selectedPlugins, chatMode, attachments, userMessageTokens, attachmentsTokens, tokenizer },
     dispatch: chatDispatch,
   } = useContext(ChatContext);
 
@@ -147,28 +160,39 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
   const [endComposing, setEndComposing] = useState<boolean>(false);
   const [filteredPrompts, setFilteredPrompts] = useState<Prompt[]>(prompts);
   const [filteredPublicPrompts, setFilteredPublicPrompts] = useState<Prompt[]>(publicPrompts);
+  const [isDraggingFile, setIsDraggingFile] = useState<boolean>(false);
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
+  const rootContainer = useRef<HTMLDivElement | null>(null);
+
+  const checkTokenLength = (textInputTokens: number, attachmentsTokens: ChatInitialState["attachmentsTokens"]) => {
+    const maxLength = selectedConversation?.model.tokenLimit;
+    if (maxLength) {
+      const tokens = (textInputTokens +
+        Object.values(attachmentsTokens).reduce((prev, curr) => prev += curr, 0))
+      if (tokens > maxLength) {
+        alert(
+          t(
+            `Message limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
+            { maxLength, valueLength: tokens },
+          ),
+        );
+        return false;
+      }
+    }
+    return true;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
-    const maxLength = selectedConversation?.model.maxLength;
-
-    if (maxLength && value.length > maxLength) {
-      alert(
-        t(
-          `Message limit is {{maxLength}} characters. You have entered {{valueLength}} characters.`,
-          { maxLength, valueLength: value.length },
-        ),
-      );
-      return;
-    }
-
+    const inputTokens = tokenizer.current?.encode(value).length || 0;
+    chatDispatch({ field: "userMessageTokens", value: inputTokens });
+    if (!checkTokenLength(inputTokens, attachmentsTokens)) return false;
     setContent(value);
     updatePromptListVisibility(value);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (messageIsStreaming) {
       return;
     }
@@ -177,9 +201,14 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
       alert(t('Please enter a message'));
       return;
     }
-
-    onSend({ role: 'user', content }, chatMode, selectedPlugins);
+    onSend({
+      role: 'user', content,
+      attachments
+    }, chatMode, selectedPlugins);
     setContent('');
+    chatDispatch({ field: "userMessageTokens", value: 0 });
+    chatDispatch({ field: "attachments", value: [] });
+    chatDispatch({ field: "attachmentsTokens", value: [] });
 
     if (window.innerWidth < 640 && textareaRef && textareaRef.current) {
       textareaRef.current.blur();
@@ -318,6 +347,42 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     }
   };
 
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (chatMode.id === ChatModeID.DIRECT) {
+      setIsDraggingFile(false);
+      const files = Array.from(e.dataTransfer.files);
+      chatDispatch({ field: "droppedFiles", value: files });
+    }
+  }
+
+  useEffect(() => {
+    const isDirectMode = chatMode.id === ChatModeID.DIRECT;
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (isDirectMode && rootContainer.current &&
+        (rootContainer.current == e.target || rootContainer.current.contains(e.target as Node))) {
+        window.document.addEventListener("mouseenter", handleMouseEnter);
+        setIsDraggingFile(true);
+      }
+    };
+    const handleDragLeave = (e: DragEvent) => {
+      if (rootContainer.current && !rootContainer.current.contains(e.target as Node))
+        setIsDraggingFile(false);
+    };
+    const handleMouseEnter = (e: MouseEvent) => {
+      if (rootContainer.current && !rootContainer.current.contains(e.target as Node))
+        setIsDraggingFile(false);
+    }
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('dragleave', handleDragLeave);
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('dragleave', handleDragLeave);
+      window.document.removeEventListener('mouseenter', handleMouseEnter);
+    };
+  }, [chatMode, setIsDraggingFile]);
+
   useEffect(() => {
     const filteredPrompts = prompts.filter((prompt) =>
       prompt.name.toLowerCase().includes(promptInputValue.toLowerCase()),
@@ -342,9 +407,8 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     if (textareaRef && textareaRef.current) {
       textareaRef.current.style.height = 'inherit';
       textareaRef.current.style.height = `${textareaRef.current?.scrollHeight}px`;
-      textareaRef.current.style.overflow = `${
-        textareaRef?.current?.scrollHeight > 400 ? 'auto' : 'hidden'
-      }`;
+      textareaRef.current.style.overflow = `${textareaRef?.current?.scrollHeight > 400 ? 'auto' : 'hidden'
+        }`;
     }
   }, [content, textareaRef]);
 
@@ -365,6 +429,23 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     };
   }, []);
 
+  useEffect(() => {
+    let model: Tiktoken | null;
+    if (selectedConversation?.model) {
+      model = getTiktokenEncoding(selectedConversation?.model.id || "");
+      tokenizer.current = model;
+    }
+    return () => {
+      model?.free();
+      tokenizer.current = null;
+    };
+  }, [selectedConversation?.model, tokenizer]);
+
+  useEffect(() => {
+    chatDispatch({ field: "attachments", value: [] });
+    chatDispatch({ field: "attachmentsTokens", value: [] });
+  }, [chatMode, chatDispatch]);
+
   const showStopButton = messageIsStreaming;
   const showRegenerateButton =
     !messageIsStreaming &&
@@ -372,7 +453,10 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
     selectedConversation.messages.length > 0;
 
   return (
-    <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2">
+    <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2"
+      ref={rootContainer}
+      onDrop={handleDrop}
+    >
       <ChatControlPanel
         chatMode={chatMode}
         showStopButton={showStopButton}
@@ -382,23 +466,33 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
       />
       {(chatMode.id === ChatModeID.AGENT ||
         chatMode.id === ChatModeID.CONVERSATIONAL_AGENT) && (
-        <ChatInputContainer>
-          <ChatPluginList
-            selectedPlugins={selectedPlugins}
-            onChange={(plugins) =>
-              chatDispatch({ field: 'selectedPlugins', value: plugins })
-            }
-          />
-        </ChatInputContainer>
-      )}
-      <ChatInputContainer className="mb-4">
+          <ChatInputContainer>
+            <ChatPluginList
+              selectedPlugins={selectedPlugins}
+              onChange={(plugins) =>
+                chatDispatch({ field: 'selectedPlugins', value: plugins })
+              }
+            />
+          </ChatInputContainer>
+        )}
+      <ChatInputContainer className={`mb-4`} classNameInner={`${isDraggingFile ? 'transition-all dark:border-white border-dashed brightness-90 dark:brightness-125' : ''}`}>
         <button
-          className="absolute left-2 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+          className="absolute left-2 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 
+          dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
           onClick={() => setShowPluginSelect(!showPluginSelect)}
-          onKeyDown={(e) => {}}
+          onKeyDown={(e) => { }}
         >
           <ChatModeIcon chatMode={chatMode} />
         </button>
+        {chatMode.id === ChatModeID.DIRECT &&
+          <ChatInputFileSelector onSelect={(newAttachments, newAttachmentTokens) => {
+            if (checkTokenLength(userMessageTokens, newAttachmentTokens)) {
+              chatDispatch({ field: "attachments", value: [...attachments, ...newAttachments] })
+              chatDispatch({ field: "attachmentsTokens", value: { ...attachmentsTokens, ...newAttachmentTokens } })
+            }
+          }}
+          />
+        }
         {showPluginSelect && (
           <div className="absolute left-0 bottom-14 rounded bg-white dark:bg-[#343541]">
             <ChatModeSelect
@@ -423,16 +517,16 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
         )}
         <textarea
           ref={textareaRef}
-          className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
+          className={`m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 text-black dark:bg-transparent dark:text-white md:py-3
+            outline-none ${chatMode.id === ChatModeID.DIRECT ? 'pl-20 ' : 'pl-11'}`}
           style={{
             resize: 'none',
             bottom: `${textareaRef?.current?.scrollHeight}px`,
             maxHeight: '400px',
-            overflow: `${
-              textareaRef.current && textareaRef.current.scrollHeight > 400
-                ? 'auto'
-                : 'hidden'
-            }`,
+            overflow: `${textareaRef.current && textareaRef.current.scrollHeight > 400
+              ? 'auto'
+              : 'hidden'
+              }`,
           }}
           placeholder={
             t('Type a message or type "/" to select a prompt...') || ''
@@ -461,6 +555,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
             <IconSend size={18} />
           )}
         </button>
+        <ChatInputFileAttachment />
         {showPromptList && (filteredPrompts.length > 0 || filteredPublicPrompts.length > 0) && (
           <div className="absolute bottom-12 w-full">
             <PromptList
@@ -483,7 +578,7 @@ export const ChatInput = ({ onSend, onRegenerate, textareaRef }: Props) => {
         )}
         <div className={`absolute -bottom-6 mx-auto flex w-full pointer-events-none ${consumptionLimitEnabled ? "justify-between" : "justify-center md:justify-end"}`}>
           {consumptionLimitEnabled && <ChatInputUsedBudget />}
-          <ChatInputTokenCount content={content} />
+          <ChatInputTokenCount />
         </div>
       </ChatInputContainer>
       <div className="px-3 pt-2 pb-3 text-center text-[12px] text-black/50 dark:text-white/50 md:px-4 md:pt-3 md:pb-6">

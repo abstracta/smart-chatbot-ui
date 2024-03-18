@@ -47,19 +47,30 @@ export function serializeMessages(modelId: LlmID, messages: Message[]): string {
   const roleSep = isChat ? '\n' : '<|im_sep|>';
   return [
     messages
-      .map(({ role, content }) => {
-        return `<|im_start|>${role}${roleSep}${content}<|im_end|>`;
+      .map((message) => {
+        return `<|im_start|>${message.role}${roleSep}${getMessageContent(message)}<|im_end|>`;
       })
       .join(msgSep),
     `<|im_start|>assistant${roleSep}`,
   ].join(msgSep);
 }
 
+export function getMessageContent(message: Message) {
+  return [
+    message.content,
+    ...[...message.attachments?.map(a =>
+      `The following text between <<< and >>> are the contents of the file attachment named ${a.name}:
+      <<< ${atob(a.content)} >>>`
+    ) || []]
+  ].join("\n\n")
+}
+
 export function mapMessageToLangchainMessage(messages: Message[]): BaseMessage[] {
-  return messages.map(({ role, content }) => {
-    if (role == "user") return new HumanMessage(content);
-    else if (role == "assistant") return new AIMessage(content);
-    else if (role == "system") return new SystemMessage(content);
+  return messages.map((m) => {
+    const content = getMessageContent(m);
+    if (m.role == "user") return new HumanMessage(content);
+    else if (m.role == "assistant") return new AIMessage(content);
+    else if (m.role == "system") return new SystemMessage(content);
     else return new HumanMessage(content);
   })
 }

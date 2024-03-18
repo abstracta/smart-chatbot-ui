@@ -2,7 +2,7 @@ import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight 
 import { Table } from '@tanstack/react-table';
 import { Select } from './Select';
 import { MouseEventHandler, ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 
 interface Props<T> {
   table: Table<T>;
