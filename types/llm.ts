@@ -13,6 +13,7 @@ export enum LlmID {
   GPT_3_5_16K_AZ = 'gpt-35-turbo-16k',
   GPT_4 = 'gpt-4',
   GPT_4_32K = 'gpt-4-32k',
+  GPT_4_TURBO_128K = 'gpt-4-1106-preview',
   TEXT_EMBEDDING_ADA_002 = 'text-embedding-ada-002',
   CLAUDE_INSTANT_AWS = 'anthropic.claude-instant-v1',
   CLAUDE_2_AWS = 'anthropic.claude-v2',
@@ -34,6 +35,7 @@ export const LlmSchema = z.object({
   name: z.string(),
   maxLength: z.number(), // max length of a message.
   tokenLimit: z.number(),
+  outputTokenLimit: z.number().optional(),
   type: z.nativeEnum(LlmType)
 });
 
@@ -80,6 +82,14 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'GPT-4_32K',
     maxLength: 96000,
     tokenLimit: 32000,
+    type: LlmType.CHAT
+  },
+  [LlmID.GPT_4_TURBO_128K]: {
+    id: LlmID.GPT_4_TURBO_128K,
+    name: 'GPT-4-TURBO_128K',
+    maxLength: 384000,
+    tokenLimit: 128000,
+    outputTokenLimit: 4096,
     type: LlmType.CHAT
   },
   [LlmID.TEXT_EMBEDDING_ADA_002]: {
