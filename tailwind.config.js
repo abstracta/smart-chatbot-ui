@@ -7,7 +7,21 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+
+      // that is animation class
+      animation: {
+        fadeIn: 'fadeIn .2s ease-in-out',
+      },
+
+      // that is actual animation
+      keyframes: theme => ({
+        fadeIn: {
+          '0%': { opacity: 0.9 },
+          '100%': { opacity: 1 },
+        },
+      }),
+    },
   },
   variants: {
     extend: {

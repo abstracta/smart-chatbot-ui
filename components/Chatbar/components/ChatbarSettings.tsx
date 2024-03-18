@@ -10,10 +10,8 @@ import HomeContext from '@/pages/api/home/home.context';
 
 import { SettingDialog } from '@/components/Settings/SettingDialog';
 
-import { Key } from '../../Settings/Key';
 import { SidebarButton } from '../../Sidebar/SidebarButton';
 import ChatbarContext from '../Chatbar.context';
-import { ChatModeKeys } from './ChatModeKeys';
 import { ClearConversations } from './ClearConversations';
 import { SidebarButtonLink } from '@/components/Sidebar/SidebarButtonLink';
 import { useSession } from 'next-auth/react';
@@ -25,9 +23,6 @@ export const ChatbarSettings = () => {
 
   const {
     state: {
-      apiKey,
-      serverSideApiKeyIsSet,
-      serverSidePluginKeysSet,
       conversations,
       folders
     },
@@ -38,7 +33,6 @@ export const ChatbarSettings = () => {
 
   const {
     handleClearConversations,
-    handleApiKeyChange,
   } = useContext(ChatbarContext);
 
   return (
@@ -52,12 +46,6 @@ export const ChatbarSettings = () => {
         icon={<IconSettings size={18} />}
         onClick={() => setIsSettingDialog(true)}
       />
-
-      {!serverSideApiKeyIsSet ? (
-        <Key apiKey={apiKey} onApiKeyChange={handleApiKeyChange} />
-      ) : null}
-
-      {!serverSidePluginKeysSet ? <ChatModeKeys /> : null}
 
       {isAdmin && <SidebarButtonLink
         text={t('Go to Admin')}

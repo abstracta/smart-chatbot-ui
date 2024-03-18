@@ -3,7 +3,7 @@ import Dropdown from '../Buttons/Dropdown';
 import { DropdownItem } from '../Buttons/Dropdown/DropItem';
 import { IconCaretDown } from '@tabler/icons-react';
 import { Llm, LlmID } from '@/types/llm';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'next-i18next';
 import { DropdownItemCheck } from '../Buttons/Dropdown/DropdownItemCheck';
 
 interface Props {

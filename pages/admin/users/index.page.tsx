@@ -65,7 +65,7 @@ const Users: NextPageWithLayout<typeof getServerSideProps> = ({
       }) : []),
     ];
 
-    downloadFile(`data:text/csv;charset=utf-8,${rows.map(e => e.join(",")).join("\n")}`,
+    downloadFile(new Blob([rows.map(e => e.join(",")).join("\n")], { type: "text/csv" }),
       `chatbot-users_${new Date().toISOString().slice(0, 10)}`);
   }
 

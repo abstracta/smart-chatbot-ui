@@ -35,7 +35,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   const userId = await getUserHash(req, res);
-  const { modelId, messages, key, prompt, temperature } = ChatBodySchema.parse(
+  const { modelId, messages, prompt, temperature } = ChatBodySchema.parse(
     req.body,
   );
 

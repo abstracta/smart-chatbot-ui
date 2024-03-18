@@ -4,7 +4,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table'
 import { FC, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from 'next-i18next'
 import Table from '../Table'
 import { AggregationLlmUsageStatsPerUser } from '@/types/llmUsage'
 import { Llm } from '@/types/llm'

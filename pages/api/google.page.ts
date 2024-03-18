@@ -31,7 +31,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
 
   let encoding: Tiktoken | null = null;
   try {
-    const { messages, key, modelId, googleAPIKey, googleCSEId } =
+    const { messages, modelId, googleAPIKey, googleCSEId } =
       req.body as GoogleBody;
       
     await verifyUserLlmUsage(userId, modelId);

@@ -120,7 +120,7 @@ const Reports: NextPageWithLayout<typeof getServerSideProps> = ({
       }) : []),
     ];
 
-    downloadFile(`data:text/csv;charset=utf-8,${rows.map(e => e.join(",")).join("\n")}`,
+    downloadFile(new Blob([rows.map(e => e.join(",")).join("\n")], { type: "text/csv" }),
       `chatbot-user-usage_${startDate.toISOString().slice(0, 10)}_${endDate.toISOString().slice(0, 10)}`);
   }
 

@@ -36,6 +36,7 @@
     "fuse.js": "^6.6.2",
     "i18next": "^22.4.15",
     "langchain": "^0.0.167",
+    "mongo-dot-notation": "^3.1.0",
     "mongodb": "^5.5.0",
     "next": "13.3.1",
     "next-auth": "^4.22.1",
@@ -56,6 +57,7 @@
     "superjson": "^1.13.3",
     "tiktoken": "^1.0.10",
     "uuid": "^9.0.0",
+    "wildcard-match": "^5.1.2",
     "zod": "^3.21.4"
   },
   "devDependencies": {

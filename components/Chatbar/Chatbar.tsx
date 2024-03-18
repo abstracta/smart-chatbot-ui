@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect } from 'react';
+import { useContext, useEffect } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -7,8 +7,7 @@ import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useFolders from '@/hooks/useFolders';
 
 
-import { Conversation } from '@/types/chat';
-import { ChatModeKey } from '@/types/chatmode';
+import { Conversation, ConversationListing } from '@/types/chat';
 
 import HomeContext from '@/pages/api/home/home.context';
 
@@ -32,7 +31,7 @@ export const Chatbar = () => {
   });
 
   const {
-    state: { showChatbar, chatModeKeys: pluginKeys, settings },
+    state: { showChatbar },
     dispatch: homeDispatch,
   } = useContext(HomeContext);
   const [conversations, conversationsAction] = useConversations();
@@ -42,64 +41,13 @@ export const Chatbar = () => {
     dispatch: chatDispatch,
   } = chatBarContextValue;
 
-  const handleApiKeyChange = useCallback(
-    (apiKey: string) => {
-      homeDispatch({ field: 'apiKey', value: apiKey });
-
-      localStorage.setItem('apiKey', apiKey);
-    },
-    [homeDispatch],
-  );
-
-  const handlePluginKeyChange = (pluginKey: ChatModeKey) => {
-    if (pluginKeys.some((key) => key.chatModeId === pluginKey.chatModeId)) {
-      const updatedPluginKeys = pluginKeys.map((key) => {
-        if (key.chatModeId === pluginKey.chatModeId) {
-          return pluginKey;
-        }
-
-        return key;
-      });
-
-      homeDispatch({ field: 'chatModeKeys', value: updatedPluginKeys });
-
-      localStorage.setItem('chatModeKeys', JSON.stringify(updatedPluginKeys));
-    } else {
-      homeDispatch({
-        field: 'chatModeKeys',
-        value: [...pluginKeys, pluginKey],
-      });
-
-      localStorage.setItem(
-        'chatModeKeys',
-        JSON.stringify([...pluginKeys, pluginKey]),
-      );
-    }
-  };
-
-  const handleClearPluginKey = (pluginKey: ChatModeKey) => {
-    const updatedPluginKeys = pluginKeys.filter(
-      (key) => key.chatModeId !== pluginKey.chatModeId,
-    );
-
-    if (updatedPluginKeys.length === 0) {
-      homeDispatch({ field: 'chatModeKeys', value: [] });
-      localStorage.removeItem('pluginKeys');
-      return;
-    }
-
-    homeDispatch({ field: 'chatModeKeys', value: updatedPluginKeys });
-
-    localStorage.setItem('pluginKeys', JSON.stringify(updatedPluginKeys));
-  };
-
   const handleClearConversations = async () => {
     await conversationsAction.clear();
     await foldersAction.clear();
   };
 
-  const handleDeleteConversation = async (conversation: Conversation) => {
-    await conversationsAction.remove(conversation);
+  const handleDeleteConversation = async (conversationId: Conversation["id"]) => {
+    await conversationsAction.remove(conversationId);
     chatDispatch({ field: 'searchTerm', value: '' });
   };
 
@@ -129,7 +77,7 @@ export const Chatbar = () => {
       const results = fuse.search((searchTerm))
       chatDispatch({
         field: 'filteredConversations',
-        value: results.map(r=>r.item),
+        value: results.map(r => r.item),
       });
     } else {
       chatDispatch({
@@ -145,12 +93,9 @@ export const Chatbar = () => {
         ...chatBarContextValue,
         handleDeleteConversation,
         handleClearConversations,
-        handlePluginKeyChange,
-        handleClearPluginKey,
-        handleApiKeyChange,
       }}
     >
-      <Sidebar<Conversation>
+      <Sidebar<ConversationListing>
         side={'left'}
         isOpen={showChatbar}
         addItemButtonTitle={t('New chat')}

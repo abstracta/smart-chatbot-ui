@@ -1,6 +1,6 @@
 import { UserDb } from '@/utils/server/storage';
 
-import { ConversationSchema, ConversationSchemaArray } from '@/types/chat';
+import { ConversationSchema, ConversationSchemaArray, ConversationSchemaListing, ConversationSchemaListingArray } from '@/types/chat';
 
 import { procedure, router } from '../trpc';
 
@@ -11,6 +11,12 @@ export const conversations = router({
     const userDb = await UserDb.fromUserHash(ctx.userHash);
     return await userDb.getConversations();
   }),
+  get: procedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userDb = await UserDb.fromUserHash(ctx.userHash);
+      return await userDb.getConversation(input.id);
+    }),
   remove: procedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -24,14 +30,14 @@ export const conversations = router({
     return { success: true };
   }),
   update: procedure
-    .input(ConversationSchema)
+    .input(z.union([ConversationSchema, ConversationSchemaListing]))
     .mutation(async ({ ctx, input }) => {
       const userDb = await UserDb.fromUserHash(ctx.userHash);
       await userDb.saveConversation(input);
       return { success: true };
     }),
   updateAll: procedure
-    .input(ConversationSchemaArray)
+    .input(z.union([ConversationSchemaArray, ConversationSchemaListingArray]))
     .mutation(async ({ ctx, input }) => {
       const userDb = await UserDb.fromUserHash(ctx.userHash);
       await userDb.saveConversations(input);

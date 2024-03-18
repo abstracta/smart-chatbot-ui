@@ -14,8 +14,6 @@ import useConversations from '@/hooks/useConversations';
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 import useMesseageSender from '@/hooks/useMessageSender';
 
-import { throttle } from '@/utils/data/throttle';
-
 import { Plugin } from '@/types/agent';
 import { Message } from '@/types/chat';
 import { ChatMode } from '@/types/chatmode';
@@ -33,6 +31,7 @@ import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 import { LlmTemperature } from '@/types/llm';
+import useIsomorphicLayoutEffect from '@/hooks/useIsomorphicLayoutEffect';
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -42,9 +41,6 @@ export const Chat = memo(() => {
       appName,
       selectedConversation,
       models,
-      apiKey,
-      chatModeKeys: chatModeKeys,
-      serverSideApiKeyIsSet,
       modelError,
       loading,
       prompts,
@@ -144,21 +140,14 @@ export const Chat = memo(() => {
     }
   };
 
-  const scrollDown = () => {
-    if (autoScrollEnabled) {
-      messagesEndRef.current?.scrollIntoView(true);
-    }
-  };
-
   useEffect(() => {
     setSystemPrompt(defaultSystemPrompt);
     setTemperature(settings.defaultTemperature);
   }, [selectedConversation, settings.defaultTemperature, defaultSystemPrompt]);
 
-  const throttledScrollDown = throttle(scrollDown, 250);
-  useEffect(() => {
-    throttledScrollDown();
-  }, [selectedConversation, throttledScrollDown]);
+  useIsomorphicLayoutEffect(() => {
+    messagesEndRef.current?.scrollIntoView(true);
+  }, [selectedConversation]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -187,47 +176,7 @@ export const Chat = memo(() => {
   return (
     <ChatContext.Provider value={{ ...chatContextValue }}>
       <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
-        {!(apiKey || serverSideApiKeyIsSet) ? (
-          <div className="mx-auto flex h-full w-[300px] flex-col justify-center space-y-6 sm:w-[600px]">
-            <div className="text-center text-4xl font-bold text-black dark:text-white">
-              Welcome to {appName}
-            </div>
-            <div className="text-center text-lg text-black dark:text-white">
-              <div className="mb-8">{`${appName} is an open source clone of OpenAI's ChatGPT UI.`}</div>
-              <div className="mb-2 font-bold">
-                Important: {appName} is 100% unaffiliated with OpenAI.
-              </div>
-            </div>
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              <div className="mb-2">
-                {appName} allows you to plug in your API key to use this UI
-                with their API.
-              </div>
-              <div className="mb-2">
-                It is <span className="italic">only</span> used to communicate
-                with their API.
-              </div>
-              <div className="mb-2">
-                {t(
-                  'Please set your OpenAI API key in the bottom left of the sidebar.',
-                )}
-              </div>
-              <div>
-                {t(
-                  "If you don't have an OpenAI API key, you can get one here: ",
-                )}
-                <a
-                  href="https://platform.openai.com/account/api-keys"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  openai.com
-                </a>
-              </div>
-            </div>
-          </div>
-        ) : modelError ? (
+        {modelError ? (
           <ErrorMessageDiv error={modelError} />
         ) : (
           <>
