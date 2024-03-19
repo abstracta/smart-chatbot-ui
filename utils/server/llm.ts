@@ -19,9 +19,9 @@ import { Bedrock } from "@aws-sdk/client-bedrock";
 import { OpenAiError } from ".";
 import { ApiError, ErrorResponseCode } from "@/types/error";
 import { BaseBedrockInput } from "langchain/dist/util/bedrock";
-import { OllamaInput } from "langchain/dist/util/ollama";
 import { BaseLanguageModelParams } from "langchain/dist/base_language";
 import { BaseChatModelParams } from "langchain/dist/chat_models/base";
+import { OllamaInput } from "@langchain/community/dist/utils/ollama";
 
 export interface ChatCompletionResponse {
   usage?: {
