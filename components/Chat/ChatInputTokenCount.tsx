@@ -4,13 +4,13 @@ import { useTranslation } from 'next-i18next';
 import ChatContext from './Chat.context';
 import HomeContext from '@/pages/api/home/home.context';
 import { createMessagesToSend } from '@/utils/server/message';
-import { IconSend, IconMessages, IconInfoCircle, IconInfoCircleFilled } from '@tabler/icons-react';
+import { IconInfoCircle } from '@tabler/icons-react';
 import Tooltip from '../Tooltip';
 
 const ChatInputTokenCount = memo(function () {
   const { t } = useTranslation('chat');
   const {
-    state: { selectedConversation, defaultSystemPrompt },
+    state: { selectedConversation, defaultSystemPrompt, messageIsStreaming },
   } = useContext(HomeContext);
   const {
     state: { userMessageTokens, attachmentsTokens, tokenizer },
@@ -26,17 +26,19 @@ const ChatInputTokenCount = memo(function () {
   }, [userMessageTokens, attachmentsTokens])
 
   useEffect(() => {
-    if (tokenizer && selectedConversation?.messages) {
-      let { tokenCount } = createMessagesToSend(
-        tokenizer,
-        selectedConversation.model,
-        defaultSystemPrompt,
-        1000,
-        selectedConversation?.messages
-      )
-      setContextCount(tokenCount);
-    } else setContextCount(0);
-  }, [selectedConversation?.messages, selectedConversation?.model, tokenizer, defaultSystemPrompt]);
+    if (!messageIsStreaming && tokenizer) {
+      if (selectedConversation?.messages) {
+        let { tokenCount } = createMessagesToSend(
+          tokenizer,
+          selectedConversation.model,
+          defaultSystemPrompt,
+          1000,
+          selectedConversation?.messages
+        )
+        setContextCount(tokenCount);
+      } else setContextCount(0);
+    }
+  }, [selectedConversation?.messages, selectedConversation?.model, tokenizer, defaultSystemPrompt, messageIsStreaming]);
 
   const formatTokens = (tokenCount: number): string => {
     if (tokenCount > 1000) return (tokenCount / 1000).toFixed(1) + "k";
