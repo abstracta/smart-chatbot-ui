@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -173,6 +174,10 @@ export const Chat = memo(() => {
     };
   }, [messagesEndRef]);
 
+  const isModelAvailable = useMemo(() => {
+    return models.some((m) => selectedConversation?.model.id === m.id)
+  }, [models, selectedConversation])
+
   return (
     <ChatContext.Provider value={{ ...chatContextValue }}>
       <div className="relative flex-1 overflow-hidden bg-white dark:bg-[#343541]">
@@ -235,12 +240,12 @@ export const Chat = memo(() => {
                   <div className="sticky top-0 z-20 bg-neutral-100 text-neutral-500 dark:bg-[#444654] dark:text-neutral-200">
                     <div className="flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
                       {selectedConversation?.name}
-                      <button
+                      {isModelAvailable && <button
                         className="ml-2 cursor-pointer hover:opacity-50"
                         onClick={handleSettings}
                       >
                         <IconSettings size={18} />
-                      </button>
+                      </button>}
                       <button
                         className="ml-2 cursor-pointer hover:opacity-50"
                         onClick={onClearAll}
@@ -255,6 +260,11 @@ export const Chat = memo(() => {
                         </div>
                       </div>
                     )}
+                    {!isModelAvailable &&
+                      <div className="flex w-100 justify-center px-4 py-1 bg-red-500">
+                        <span className="text-white">{t('Selected model is currently unavailable, please start a new chat')}</span>
+                      </div>
+                    }
                   </div>
 
                   {selectedConversation?.messages.map((message, index) => (
@@ -286,6 +296,7 @@ export const Chat = memo(() => {
                   handleSend(selectedConversation!.messages[latestIndex],
                     selectedConversation!.messages.length - latestIndex, chatMode, plugins);
               }}
+              disabled={!isModelAvailable}
             />
           </>
         )}

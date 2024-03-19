@@ -1,9 +1,9 @@
 import { Llm, LlmID, LlmTemperature } from "@/types/llm";
 import { AzureOpenAIInput, ChatOpenAI, OpenAIChatInput } from "langchain/chat_models/openai";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { ChatBedrock } from "langchain/chat_models/bedrock";
-import { ChatOllama } from "langchain/chat_models/ollama";
-import { OllamaEmbeddings } from "langchain/embeddings/ollama";
+import { BedrockChat } from "@langchain/community/chat_models/bedrock";
+import { ChatOllama } from "@langchain/community/chat_models/ollama";
+import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
 import {
   AZURE_OPENAI_DEPLOYMENTS, OPENAI_API_VERSION, OPENAI_API_HOST,
   OPENAI_API_TYPE, AWS_BEDROCK_MODELS, OPENAI_INSTANCE_NAME,
@@ -184,7 +184,7 @@ class OpenAiApi extends LlmApi {
       });
 
       return {
-        message: { content: modelRes.content, role: "assistant" },
+        message: { content: modelRes.content as string, role: "assistant" },
         usage: {
           prompt: promptTokens,
           completion: completionTokens,
@@ -283,7 +283,7 @@ class AzureOpenAiApi extends LlmApi {
         ]
       });
       return {
-        message: { content: modelRes.content, role: "assistant" },
+        message: { content: modelRes.content as string, role: "assistant" },
         usage: {
           prompt: promptTokens,
           completion: completionTokens,
@@ -380,7 +380,8 @@ class AwsBedrockApi extends LlmApi {
 
   async chatCompletion(modelId: LlmID, messages: Message[], options?: ChatCompletionOptions)
     : Promise<ChatCompletionResponse> {
-    const model = new ChatBedrock({
+    const model = new BedrockChat({
+      region: AWS_BEDROCK_REGION,
       ...this.baseOptions,
       temperature: options?.temperature ? this.getTemperature(options.temperature) : undefined,
       model: modelId,
@@ -405,7 +406,7 @@ class AwsBedrockApi extends LlmApi {
       let response = "";
       for await (const chunk of modelRes) {
         response += chunk.content;
-        options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(chunk.content);
+        options?.callbacks?.handleNewToken && options.callbacks.handleNewToken(chunk.content as string);
       }
       return {
         message: { content: response, role: "assistant" },
@@ -491,7 +492,7 @@ class OLlamaApi extends LlmApi {
       ]
     });
     return {
-      message: { content: modelRes.content, role: "assistant" },
+      message: { content: modelRes.content as string, role: "assistant" },
       usage: {
         prompt: promptTokens,
         completion: completionTokens,

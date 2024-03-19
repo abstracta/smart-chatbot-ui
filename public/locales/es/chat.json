@@ -35,5 +35,6 @@
   "New Conversation": "Nueva Conversación",
   "tokenCountTooltipTotalTokens": "El mensaje actual enviará {{inputCount}} tokens en adición a los {{contextCount}} tokens de mensajes anteriores en el chat actual.",
   "tokenCountTooltipAboutConsumtion": "Esta cantidad de tokens, en conjunto con el modelo de LLM seleccionado y la respuesta del chatbot, determina la cantidad de presupuesto consumido en el mensaje.",
-  "tokenCountTooltipHowToReduceConsumption": "Para reducir el consumo, puedes seleccionar un modelo más barato, reducir el tamaño del mensaje enviado o crear chats nuevos para evitar enviar mensajes anteriores que no sean necesarios."
+  "tokenCountTooltipHowToReduceConsumption": "Para reducir el consumo, puedes seleccionar un modelo más barato, reducir el tamaño del mensaje enviado o crear chats nuevos para evitar enviar mensajes anteriores que no sean necesarios.",
+  "Selected model is currently unavailable, please start a new chat": "El modelo seleccionado no esta disponible, por favor inicia una nueva conversación"
 }
