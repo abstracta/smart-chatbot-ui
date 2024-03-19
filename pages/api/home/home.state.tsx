@@ -36,7 +36,8 @@ export interface HomeInitialState {
   isAzureOpenAI: boolean;
   supportEmail: string;
   promptSharingEnabled: boolean;
-  isEnabledGoogleSearch: boolean;
+  isGoogleSearchEnabled: boolean;
+  isAgentEnabled: boolean;
 }
 
 export const initialState: Partial<HomeInitialState> = {
@@ -71,5 +72,6 @@ export const initialState: Partial<HomeInitialState> = {
   isAzureOpenAI: false,
   supportEmail: '',
   promptSharingEnabled: false,
-  isEnabledGoogleSearch: false,
+  isGoogleSearchEnabled: false,
+  isAgentEnabled: false,
 };

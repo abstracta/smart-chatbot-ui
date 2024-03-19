@@ -1,10 +1,9 @@
 import cl100k from 'tiktoken/encoders/cl100k_base.json';
 import p50k from 'tiktoken/encoders/p50k_base.json';
 import { Tiktoken } from 'tiktoken/lite';
-import { encoding_for_model } from 'tiktoken';
+import { TiktokenModel, encoding_for_model } from 'tiktoken';
 import claudeJson from '@anthropic-ai/tokenizer/claude.json';
 import { LlmID } from '@/types/llm';
-import { TiktokenModel } from 'langchain/dist/types/openai-types';
 
 export const getTiktokenEncoding = (model: LlmID): Tiktoken => {
   if (model == LlmID.CLAUDE_2_AWS || model == LlmID.CLAUDE_INSTANT_AWS) {

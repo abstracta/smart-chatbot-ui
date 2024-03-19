@@ -20,9 +20,8 @@ export const DEFAULT_MODEL_EMBEDDINGS: LlmID = (process.env.DEFAULT_MODEL_EMBEDD
 
 export const APP_NAME = process.env.APP_NAME || 'Chatbot UI';
 
-export const OPENAI_API_HOST =
-  process.env.OPENAI_API_HOST || 'https://api.openai.com';
-  
+export const OPENAI_API_HOST = process.env.OPENAI_API_HOST || "";
+
 export const OPENAI_INSTANCE_NAME = process.env.OPENAI_INSTANCE_NAME || undefined;
 
 export const OPENAI_API_TYPE = process.env.OPENAI_API_TYPE || 'openai';
@@ -54,6 +53,8 @@ export const AWS_BEDROCK_MODELS: LlmID[] | undefined = process.env.AWS_BEDROCK_M
 export const AWS_BEDROCK_REGION: string | undefined = process.env.AWS_BEDROCK_REGION || undefined;
 
 export const OLLAMA_URL: string | undefined = process.env.OLLAMA_URL || undefined;
+
+export const AGENT_ENABLED: boolean = process.env.AGENT_ENABLED === "true" || false;
 
 function parseModelIdList(value: string): LlmID[] {
   return value.trim()

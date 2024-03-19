@@ -7,7 +7,7 @@ import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME } from '@/utils/app/const';
+import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME, AGENT_ENABLED } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation, ConversationListing } from '@/types/chat';
@@ -33,7 +33,8 @@ interface Props {
   supportEmail: string;
   systemDefaultModelId: LlmID;
   systemDefaultSystemPrompt: string;
-  isEnabledGoogleSearch: boolean;
+  isGoogleSearchEnabled: boolean;
+  isAgentEnabled: boolean;
 }
 
 const Home = ({
@@ -45,7 +46,8 @@ const Home = ({
   promptSharingEnabled,
   systemDefaultModelId,
   systemDefaultSystemPrompt,
-  isEnabledGoogleSearch,
+  isGoogleSearchEnabled,
+  isAgentEnabled,
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -61,7 +63,8 @@ const Home = ({
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
       defaultSystemPrompt: systemDefaultSystemPrompt,
-      isEnabledGoogleSearch,
+      isGoogleSearchEnabled,
+      isAgentEnabled,
     } as HomeInitialState,
   });
 
@@ -267,7 +270,8 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
     props: {
       appName: APP_NAME,
       isAzureOpenAI: OPENAI_API_TYPE === "azure",
-      isEnabledGoogleSearch: !!(googleApiKey && googleCSEId),
+      isGoogleSearchEnabled: !!(googleApiKey && googleCSEId),
+      isAgentEnabled: AGENT_ENABLED,
       supportEmail: SUPPORT_EMAIL,
       ...(await serverSideTranslations(locale ?? 'en', [
         'common',
