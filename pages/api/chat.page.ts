@@ -74,8 +74,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const canStream = llmApi.getCanStream();
     if (canStream) {
+      res.setHeader('Cache-Control', 'no-cache')
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Content-Encoding', 'none');
+      res.setHeader('X-Accel-Buffering', 'no');
     } else {
       res.setHeader('Content-Type', 'application/json');
     }
