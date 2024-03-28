@@ -19,6 +19,8 @@ export enum LlmID {
   TEXT_EMBEDDING_ADA_002 = 'text-embedding-ada-002',
   CLAUDE_INSTANT_AWS = 'anthropic.claude-instant-v1',
   CLAUDE_2_AWS = 'anthropic.claude-v2',
+  CLAUDE_3_HAIKU_V1_AWS = 'anthropic.claude-3-haiku-20240307-v1:0',
+  CLAUDE_3_SONNET_V1_AWS = 'anthropic.claude-3-sonnet-20240229-v1:0',
   LLAMA2_7B = 'llama2:7b',
   CODELLAMA_7B = 'codellama:7b',
   MISTRAL_7B = 'mistral:7b',
@@ -129,6 +131,20 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'CLAUDE-2_100K',
     maxLength: 300000,
     tokenLimit: 100000,
+    type: LlmType.CHAT
+  },
+  [LlmID.CLAUDE_3_HAIKU_V1_AWS]: {
+    id: LlmID.CLAUDE_3_HAIKU_V1_AWS,
+    name: 'CLAUDE-3-HAIKU_200K',
+    maxLength: 600000,
+    tokenLimit: 200000,
+    type: LlmType.CHAT
+  },
+  [LlmID.CLAUDE_3_SONNET_V1_AWS]: {
+    id: LlmID.CLAUDE_3_SONNET_V1_AWS,
+    name: 'CLAUDE-3-SONNET_200K',
+    maxLength: 600000,
+    tokenLimit: 200000,
     type: LlmType.CHAT
   },
   [LlmID.LLAMA2_7B]: {
