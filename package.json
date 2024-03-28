@@ -56,7 +56,7 @@
     "remark-math": "^5.1.1",
     "sass": "^1.62.1",
     "superjson": "^1.13.3",
-    "tiktoken": "^1.0.11",
+    "tiktoken": "^1.0.13",
     "uuid": "^9.0.0",
     "wildcard-match": "^5.1.2",
     "zod": "^3.21.4"
