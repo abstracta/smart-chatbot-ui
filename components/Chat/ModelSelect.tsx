@@ -7,9 +7,13 @@ import useConversations from '@/hooks/useConversations';
 
 import HomeContext from '@/pages/api/home/home.context';
 import { Select } from '../Input/Select';
-import { Llm, LlmType } from '@/types/llm';
+import { Llm, LlmID, LlmType } from '@/types/llm';
 
-export const ModelSelect = () => {
+interface Props {
+  selectedModelId: LlmID | undefined
+}
+
+export const ModelSelect = ({ selectedModelId }: Props) => {
   const { t } = useTranslation('chat');
   const [_, conversationsAction] = useConversations();
   const {
@@ -39,7 +43,7 @@ export const ModelSelect = () => {
           }
         })}
         onSelect={handleModelSelect}
-        selectedValue={selectedConversation?.model?.id || defaultModelId}
+        selectedValue={selectedModelId || ""}
       />
       {!isAzureOpenAI && <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
         <a

@@ -7,7 +7,7 @@ import Head from 'next/head';
 
 import { useCreateReducer } from '@/hooks/useCreateReducer';
 
-import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME, AGENT_ENABLED } from '@/utils/app/const';
+import { DEFAULT_MODEL, DEFAULT_SYSTEM_PROMPT, OPENAI_API_TYPE, PROMPT_SHARING_ENABLED, SUPPORT_EMAIL, DEFAULT_USER_LIMIT_USD_MONTHLY, APP_NAME, AGENT_ENABLED, MODEL_MIGRATIONS } from '@/utils/app/const';
 import { trpc } from '@/utils/trpc';
 
 import { Conversation, ConversationListing } from '@/types/chat';
@@ -34,6 +34,7 @@ interface Props {
   systemDefaultSystemPrompt: string;
   isGoogleSearchEnabled: boolean;
   isAgentEnabled: boolean;
+  modelMigrations: Record<LlmID, LlmID> | undefined;
 }
 
 const Home = ({
@@ -46,6 +47,7 @@ const Home = ({
   systemDefaultSystemPrompt,
   isGoogleSearchEnabled,
   isAgentEnabled,
+  modelMigrations,
 }: Props) => {
   const { t } = useTranslation('chat');
 
@@ -62,6 +64,7 @@ const Home = ({
       defaultSystemPrompt: systemDefaultSystemPrompt,
       isGoogleSearchEnabled,
       isAgentEnabled,
+      modelMigrations,
     } as HomeInitialState,
   });
 
@@ -280,6 +283,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       consumptionLimitEnabled,
       systemDefaultModelId: DEFAULT_MODEL,
       systemDefaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
+      modelMigrations: MODEL_MIGRATIONS,
     },
   };
 };

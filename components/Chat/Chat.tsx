@@ -4,7 +4,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -31,8 +30,14 @@ import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { ModelSelect } from './ModelSelect';
 import { SystemPrompt } from '../Home/SystemPrompt';
 import { TemperatureSlider } from './Temperature';
-import { LlmTemperature } from '@/types/llm';
+import { Llm, LlmTemperature } from '@/types/llm';
 import useIsomorphicLayoutEffect from '@/hooks/useIsomorphicLayoutEffect';
+
+enum ModelStatus {
+  Available,
+  NotAvailable,
+  Migrated,
+}
 
 export const Chat = memo(() => {
   const { t } = useTranslation('chat');
@@ -47,8 +52,10 @@ export const Chat = memo(() => {
       prompts,
       publicPrompts,
       settings,
-      defaultSystemPrompt
+      defaultSystemPrompt,
+      modelMigrations,
     },
+    dispatch: homeDispatch,
   } = useContext(HomeContext);
 
   const chatContextValue = useCreateReducer<ChatInitialState>({
@@ -65,6 +72,8 @@ export const Chat = memo(() => {
   const [temperature, setTemperature] = useState<LlmTemperature>(
     settings.defaultTemperature,
   );
+  const [selectedModel, setSelectedModel] = useState<Llm | undefined>();
+  const [modelStatus, setModelStatus] = useState<ModelStatus>(ModelStatus.Available);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -91,7 +100,7 @@ export const Chat = memo(() => {
         conversation.temperature = temperature;
         await conversationsAction.update(conversation);
       }
-      sendMessage(message, deleteCount, chatMode, plugins);
+      sendMessage(message, deleteCount, chatMode, plugins, selectedModel);
     },
     [
       selectedConversation,
@@ -174,9 +183,29 @@ export const Chat = memo(() => {
     };
   }, [messagesEndRef]);
 
-  const isModelAvailable = useMemo(() => {
-    return models.some((m) => selectedConversation?.model.id === m.id)
-  }, [models, selectedConversation])
+  useEffect(() => {
+    if (selectedConversation?.model) {
+      const selectedModel = selectedConversation?.model;
+      const isModelAvailable = models.some((m) => m.id === selectedModel.id);
+      if (!isModelAvailable) {
+        if (modelMigrations &&
+          selectedModel.id in modelMigrations &&
+          models.some(m => m.id === modelMigrations[selectedModel.id])) {
+          const newModel = models.find(m => m.id === modelMigrations[selectedModel.id])!;
+          setModelStatus(ModelStatus.Migrated);
+          setSelectedModel(newModel);
+        } else {
+          setModelStatus(ModelStatus.NotAvailable);
+          setSelectedModel(undefined);
+          setShowSettings(false);
+        }
+      } else {
+        setModelStatus(ModelStatus.Available);
+        setSelectedModel(selectedModel);
+      }
+    }
+  }, [models, selectedConversation, modelMigrations])
+
 
   return (
     <ChatContext.Provider value={{ ...chatContextValue }}>
@@ -205,7 +234,7 @@ export const Chat = memo(() => {
 
                     {models.length > 0 && (
                       <div className="flex h-full flex-col space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-600">
-                        <ModelSelect />
+                        <ModelSelect selectedModelId={selectedModel?.id} />
 
                         <div className="flex flex-col">
                           <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
@@ -240,29 +269,39 @@ export const Chat = memo(() => {
                   <div className="sticky top-0 z-20 bg-neutral-100 text-neutral-500 dark:bg-[#444654] dark:text-neutral-200">
                     <div className="flex justify-center border border-b-neutral-300 bg-neutral-100 py-2 text-sm text-neutral-500 dark:border-none dark:bg-[#444654] dark:text-neutral-200">
                       {selectedConversation?.name}
-                      {isModelAvailable && <button
-                        className="ml-2 cursor-pointer hover:opacity-50"
-                        onClick={handleSettings}
-                      >
-                        <IconSettings size={18} />
-                      </button>}
-                      <button
-                        className="ml-2 cursor-pointer hover:opacity-50"
-                        onClick={onClearAll}
-                      >
-                        <IconEraser size={18} />
-                      </button>
+                      {modelStatus != ModelStatus.NotAvailable &&
+                        <>
+                          <button
+                            className="ml-2 cursor-pointer hover:opacity-50"
+                            onClick={handleSettings}
+                          >
+                            <IconSettings size={18} />
+                          </button>
+                          <button
+                            className="ml-2 cursor-pointer hover:opacity-50"
+                            onClick={onClearAll}
+                          >
+                            <IconEraser size={18} />
+                          </button>
+                        </>}
                     </div>
                     {showSettings && (
                       <div className="flex flex-col space-y-10 md:mx-auto md:max-w-xl md:gap-6 md:py-3 md:pt-6 lg:max-w-2xl lg:px-0 xl:max-w-3xl">
                         <div className="flex h-full flex-col space-y-4 border-b border-neutral-200 p-4 dark:border-neutral-600 md:rounded-lg md:border">
-                          <ModelSelect />
+                          <ModelSelect selectedModelId={selectedModel?.id} />
                         </div>
                       </div>
                     )}
-                    {!isModelAvailable &&
+                    {modelStatus == ModelStatus.NotAvailable &&
                       <div className="flex w-100 justify-center px-4 py-1 bg-red-500">
                         <span className="text-white">{t('Selected model is currently unavailable, please start a new chat')}</span>
+                      </div>
+                    }
+                    {modelStatus == ModelStatus.Migrated &&
+                      <div className="flex w-100 justify-center px-4 py-1 bg-blue-500">
+                        <span className="text-white">
+                          {t('chatNotificationModelMigrated')}
+                        </span>
                       </div>
                     }
                   </div>
@@ -296,7 +335,7 @@ export const Chat = memo(() => {
                   handleSend(selectedConversation!.messages[latestIndex],
                     selectedConversation!.messages.length - latestIndex, chatMode, plugins);
               }}
-              disabled={!isModelAvailable}
+              disabled={modelStatus == ModelStatus.NotAvailable}
             />
           </>
         )}

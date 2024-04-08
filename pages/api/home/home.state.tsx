@@ -37,6 +37,7 @@ export interface HomeInitialState {
   promptSharingEnabled: boolean;
   isGoogleSearchEnabled: boolean;
   isAgentEnabled: boolean;
+  modelMigrations: Record<LlmID, LlmID> | undefined;
 }
 
 export const initialState: Partial<HomeInitialState> = {

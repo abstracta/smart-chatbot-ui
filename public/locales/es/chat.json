@@ -33,5 +33,6 @@
   "neutral": "Neutral",
   "creative": "Creativo",
   "New Conversation": "Nueva Conversación",
-  "Selected model is currently unavailable, please start a new chat": "El modelo seleccionado no esta disponible, por favor inicia una nueva conversación"
+  "Selected model is currently unavailable, please start a new chat": "El modelo seleccionado no esta disponible, por favor inicia una nueva conversación",
+  "chatNotificationModelMigrated": "El modelo de la conversación ha sido actualizado ya que el anterior ha dejado de soportarse"
 }

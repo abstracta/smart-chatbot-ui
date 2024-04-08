@@ -1,5 +1,6 @@
 {
     "precise": "Precise",
     "neutral": "Neutral",
-    "creative": "Creative"
+    "creative": "Creative",
+    "chatNotificationModelMigrated": "Your conversation model has been updated since the previous one is no longer supported"
 }

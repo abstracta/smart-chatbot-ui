@@ -7,6 +7,7 @@ import { ChatMode } from '@/types/chatmode';
 import HomeContext from '@/pages/api/home/home.context';
 
 import { useChatModeRunner } from './chatmode/useChatModeRunner';
+import { Llm } from '@/types/llm';
 
 export const useMesseageSender = () => {
   const {
@@ -20,11 +21,12 @@ export const useMesseageSender = () => {
     deleteCount = 0,
     chatMode: ChatMode | null = null,
     plugins: Plugin[] = [],
+    model?: Llm,
   ) => {
     if (!selectedConversation) {
       return;
     }
-    const conversation = selectedConversation;
+    const conversation = { ...selectedConversation, ...(model ? { model } : {}) };
     let updatedConversation: Conversation;
     if (deleteCount) {
       const updatedMessages = [...conversation.messages];
