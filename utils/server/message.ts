@@ -48,18 +48,23 @@ export function calculateMessagesTokens(modelId: LlmID, messages: Message[], enc
 // Borrow from:
 // https://github.com/dqbd/tiktoken/issues/23#issuecomment-1483317174
 export function serializeMessages(modelId: LlmID, messages: Message[]): string {
-  const isOAIChat = modelId in LlmList && modelId.toLocaleLowerCase().includes("gpt") ?
-    LlmList[modelId].type == LlmType.CHAT : false;
-  const msgSep = isOAIChat ? '\n' : '';
-  const roleSep = isOAIChat ? '\n' : '<|im_sep|>';
-  return [
-    messages
-      .map((message) => {
-        return `<|im_start|>${message.role}${roleSep}${getMessageContent(message)}<|im_end|>`;
-      })
-      .join(msgSep),
-    `<|im_start|>assistant${roleSep}`,
-  ].join(msgSep);
+  if (modelId in LlmList && modelId.toLocaleLowerCase().includes("gpt")) {
+    const isChat = LlmList[modelId].type == LlmType.CHAT;
+    const msgSep = isChat ? '\n' : '';
+    const roleSep = isChat ? '\n' : '<|im_sep|>';
+    return [
+      messages
+        .map((message) => {
+          return `<|im_start|>${message.role}${roleSep}${getMessageContent(message)}<|im_end|>`;
+        })
+        .join(msgSep),
+      `<|im_start|>assistant${roleSep}`,
+    ].join(msgSep);
+  }
+
+  return messages
+    .map((message) => `${message.role}: ${getMessageContent(message)}`)
+    .join("\n")
 }
 
 export function getMessageContent(message: Message) {

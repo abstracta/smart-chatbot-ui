@@ -10,7 +10,7 @@ export interface ChatInitialState {
   attachments: MessageAttachment[];
   attachmentsTokens: Record<MessageAttachment["_id"], number>;
   userMessageTokens: number;
-  tokenizer: MutableRefObject<Tiktoken | null>;
+  tokenizer: Tiktoken | null;
   droppedFiles: File[];
   selectedMessageIndex: number | undefined;
 }
@@ -21,7 +21,7 @@ export const initialState: ChatInitialState = {
   attachments: [],
   attachmentsTokens: {},
   userMessageTokens: 0,
-  tokenizer: { current: null },
+  tokenizer: null,
   droppedFiles: [],
   selectedMessageIndex: undefined,
 };

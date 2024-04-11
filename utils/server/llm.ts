@@ -387,18 +387,26 @@ class AwsBedrockApi extends LlmApi {
       model: modelId,
       maxTokens: options?.maxTokens,
     });
-    const encoding = getTiktokenEncoding(modelId);
-    const serialized = serializeMessages(modelId, messages);
-    let promptTokens = encoding.encode(serialized.normalize('NFKC'), 'all').length;
+
+    let promptTokens = 0;
     let completionTokens = 0;
     try {
       const modelRes = await model.stream(mapMessageToLangchainMessage(messages), {
         callbacks: [
           {
             handleLLMEnd: (output, runId, parentRunId?, tags?) => {
-              completionTokens = output.generations.flat()
-                .map(g => encoding.encode(g.text).length)
-                .reduce((prev, curr) => prev + curr, 0);
+              const generation = output.generations[0][0];
+              const invocationMetrics = generation.generationInfo?.["amazon-bedrock-invocationMetrics"];
+              if (invocationMetrics) {
+                promptTokens = invocationMetrics.inputTokenCount;
+                completionTokens = invocationMetrics.outputTokenCount;
+              } else {
+                const encoding = getTiktokenEncoding(modelId);
+                const serialized = serializeMessages(modelId, messages);
+                promptTokens = encoding.encode(serialized.normalize('NFKC'), 'all').length
+                completionTokens = encoding.encode(generation.text).length
+                encoding.free();
+              }
             },
           },
         ],

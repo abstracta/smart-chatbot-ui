@@ -69,7 +69,7 @@ const ChatInputFileSelector = ({ onSelect }: Props) => {
           content: btoa(content),
           size: file.size,
         })
-        newAttachmentTokens[_id] = (tokenizer.current?.encode(content, "all").length || 0);
+        newAttachmentTokens[_id] = (tokenizer?.encode(content, "all").length || 0);
       }
 
       onSelect(newAttachments, newAttachmentTokens);

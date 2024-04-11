@@ -6,7 +6,11 @@ import claudeJson from '@anthropic-ai/tokenizer/claude.json';
 import { LlmID } from '@/types/llm';
 
 export const getTiktokenEncoding = (model: LlmID): Tiktoken => {
-  if (model == LlmID.CLAUDE_2_AWS || model == LlmID.CLAUDE_INSTANT_AWS) {
+  if (
+    [
+      LlmID.CLAUDE_3_HAIKU_V1_AWS, LlmID.CLAUDE_3_SONNET_V1_AWS,
+      LlmID.CLAUDE_2_AWS, LlmID.CLAUDE_INSTANT_AWS
+    ].includes(model)) {
     return new Tiktoken(claudeJson.bpe_ranks, claudeJson.special_tokens, claudeJson.pat_str)
   }
   // Azure fix
