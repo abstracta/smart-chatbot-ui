@@ -56,6 +56,8 @@ export const OLLAMA_URL: string | undefined = process.env.OLLAMA_URL || undefine
 
 export const AGENT_ENABLED: boolean = process.env.AGENT_ENABLED === "true" || false;
 
+export const MODEL_MIGRATIONS: Record<LlmID, LlmID> | undefined = process.env.MODEL_MIGRATIONS ? parseModelMigrations(process.env.MODEL_MIGRATIONS) : undefined
+
 function parseModelIdList(value: string): LlmID[] {
   return value.trim()
     .split(",")
@@ -63,9 +65,17 @@ function parseModelIdList(value: string): LlmID[] {
     .filter(Boolean) as LlmID[];
 }
 
+function parseKeyValueString(value: string): Record<string, string> {
+  return value.trim().split(",").reduce((prev, curr) => {
+    const keyValue = curr.trim().split(":");
+    prev[keyValue[0]] = keyValue.length > 1 ? keyValue[1] : keyValue[0];
+    return prev;
+  }, {} as Record<string, string>);
+}
+
 function parseAzureDeployments(envVar: string): Record<LlmID, AzureOpenAIModel> {
-  return envVar.trim().split(",").reduce((prev, curr) => {
-    const [modelId, azureDeploymentId] = curr.split(":");
+  return Object.entries(parseKeyValueString(envVar)).reduce((prev, curr) => {
+    const [modelId, azureDeploymentId] = curr;
     if ((Object.values(LlmID) as string[]).includes(modelId)) {
       const model = LlmList[modelId as LlmID] as AzureOpenAIModel;
       model.azureDeploymentId = azureDeploymentId;
@@ -73,4 +83,15 @@ function parseAzureDeployments(envVar: string): Record<LlmID, AzureOpenAIModel> 
     }
     return prev;
   }, {} as Record<LlmID, AzureOpenAIModel>);
+}
+
+function parseModelMigrations(value: string): Record<LlmID, LlmID> {
+  const llmIDList = Object.values(LlmID) as string[];
+  return Object.entries(parseKeyValueString(value)).reduce((prev, curr) => {
+    const [oldModel, newModel] = curr;
+    if (llmIDList.includes(oldModel) && llmIDList.includes(newModel)) {
+      prev[oldModel as LlmID] = newModel as LlmID;
+    }
+    return prev;
+  }, {} as Record<LlmID, LlmID>);
 }

@@ -2,6 +2,7 @@
     "precise": "Precise",
     "neutral": "Neutral",
     "creative": "Creative",
+    "chatNotificationModelMigrated": "Your conversation model has been updated since the previous one is no longer supported",
     "tokenCountTooltipTotalTokens": "Current message will send {{inputCount}} tokens in addition to the {{contextCount}} tokens of previous messages in current chat.",
     "tokenCountTooltipAboutConsumtion": "This amount of tokens, in conjuction with the selected LLM model and chatbot response, determine the amount of budget consumed in the message.",
     "tokenCountTooltipHowToReduceConsumption": "To reduce consumption you can either select a cheaper model, reduce the size of the message sent or create new chats to avoid sending previous messages that are not needed."
