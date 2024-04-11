@@ -8,7 +8,7 @@ import { createMessagesToSend } from '@/utils/server/message';
 import { getTiktokenEncoding } from '@/utils/server/tiktoken';
 import { getErrorResponseBody } from '@/utils/server/error';
 
-import { ChatBodySchema } from '@/types/chat';
+import { ChatBodySchema, MessageUsage } from '@/types/chat';
 
 import { authOptions } from '@/pages/api/auth/[...nextauth].page';
 
@@ -64,28 +64,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     if (messagesToSend.length === 0) {
       throw new Error('message is too long');
     }
+
     const llmApi = llmApiAggregator.getApiForModel(modelId);
+
+    const sendEvent = (event: string, data: any) => {
+      const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+      res.write(payload);
+    };
+
+    const canStream = llmApi.getCanStream();
+    if (canStream) {
+      res.setHeader('Cache-Control', 'no-cache')
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Content-Encoding', 'none');
+      res.setHeader('X-Accel-Buffering', 'no');
+    } else {
+      res.setHeader('Content-Type', 'application/json');
+    }
+
     const { usage, message } = await llmApi.chatCompletion(modelId, messagesToSend,
       {
         temperature,
         maxTokens: maxToken,
         callbacks: {
-          ...(llmApi.getCanStream() ? {
+          ...(canStream ? {
             handleNewToken: (token: string) => {
-              res.write(token);
+              sendEvent("newToken", token);
             },
           } : {})
         }
       }
     );
-    if (!llmApi.getCanStream()) res.write(message.content);
-    res.end();
-
-    await saveLlmUsage(userId, model.id, "chat", {
+    const llmUsage = await saveLlmUsage(userId, model.id, "chat", {
       prompt: usage?.prompt ?? 0,
       completion: usage?.completion ?? 0,
       total: usage?.total ?? 0
     })
+    const usageRes: MessageUsage = { tokens: usage, totalPriceUSD: llmUsage.totalPriceUSD || 0 };
+    if (canStream) {
+      sendEvent("stats", { usage: usageRes });
+      res.end();
+    }
+    else res.json({ message: message.content, usage: usageRes });
+
 
   } catch (error) {
     console.error(error);

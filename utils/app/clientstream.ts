@@ -1,27 +1,37 @@
 import { MutableRefObject } from 'react';
+import { createParser, type ParsedEvent, type ReconnectInterval } from 'eventsource-parser'
 
-export const readStream = async (
+export const readEventStream = async (
   stream: ReadableStream<Uint8Array>,
   controller: AbortController,
   stopConversationRef: MutableRefObject<boolean>,
-  onNewChunk: (chunk: string) => void,
+  onNewEvent: (chunk: ParsedEvent) => void,
 ): Promise<void> => {
-  const reader = stream.getReader();
   const decoder = new TextDecoder();
-  let done = false;
-  let text = '';
-  while (!done) {
+  const parser = createParser(function onParse(event: ParsedEvent | ReconnectInterval) {
+    if (event.type === 'event') {
+      onNewEvent(event);
+    } else if (event.type === 'reconnect-interval') {
+      throw new Error()
+    }
+  })
+
+  for await (const chunk of readableStreamToAsyncIterator(stream.getReader())) {
     if (stopConversationRef.current === true) {
       stopConversationRef.current = false;
       controller.abort();
-      done = true;
       break;
     }
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    const chunkValue = decoder.decode(value);
-    text += chunkValue;
-    onNewChunk(chunkValue);
-    await new Promise(r => setTimeout(r, 10))
+    const chunkValue = decoder.decode(chunk);
+    parser.feed(chunkValue);
   }
 };
+
+
+async function* readableStreamToAsyncIterator(reader: ReadableStreamDefaultReader): AsyncIterable<Uint8Array> {
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    yield value;
+  }
+}

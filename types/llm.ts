@@ -10,15 +10,20 @@ export enum LlmID {
   GPT_3_5 = 'gpt-3.5-turbo',
   GPT_3_5_16K = 'gpt-3.5-turbo-16k',
   GPT_3_5_1106 = 'gpt-3.5-turbo-1106',
+  GPT_3_5_0125 = 'gpt-3.5-turbo-0125',
   GPT_3_5_AZ = 'gpt-35-turbo',
   GPT_3_5_16K_AZ = 'gpt-35-turbo-16k',
   GPT_3_5_1106_AZ = 'gpt-35-turbo-1106',
+  GPT_3_5_0125_AZ = 'gpt-35-turbo-0125',
   GPT_4 = 'gpt-4',
   GPT_4_32K = 'gpt-4-32k',
   GPT_4_TURBO_128K = 'gpt-4-1106-preview',
+  GPT_4_0125 = 'gpt-4-0125-preview',
   TEXT_EMBEDDING_ADA_002 = 'text-embedding-ada-002',
   CLAUDE_INSTANT_AWS = 'anthropic.claude-instant-v1',
   CLAUDE_2_AWS = 'anthropic.claude-v2',
+  CLAUDE_3_HAIKU_V1_AWS = 'anthropic.claude-3-haiku-20240307-v1:0',
+  CLAUDE_3_SONNET_V1_AWS = 'anthropic.claude-3-sonnet-20240229-v1:0',
   LLAMA2_7B = 'llama2:7b',
   CODELLAMA_7B = 'codellama:7b',
   MISTRAL_7B = 'mistral:7b',
@@ -66,6 +71,14 @@ export const LlmList: Record<LlmID, Llm> = {
     outputTokenLimit: 4096,
     type: LlmType.CHAT
   },
+  [LlmID.GPT_3_5_0125]: {
+    id: LlmID.GPT_3_5_0125,
+    name: 'GPT-3.5_16K',
+    maxLength: 48000,
+    tokenLimit: 16000,
+    outputTokenLimit: 4096,
+    type: LlmType.CHAT
+  },
   [LlmID.GPT_3_5_AZ]: {
     id: LlmID.GPT_3_5_AZ,
     name: 'GPT-3.5_4K',
@@ -82,6 +95,14 @@ export const LlmList: Record<LlmID, Llm> = {
   },
   [LlmID.GPT_3_5_1106_AZ]: {
     id: LlmID.GPT_3_5_1106_AZ,
+    name: 'GPT-3.5_16K',
+    maxLength: 48000,
+    tokenLimit: 16000,
+    outputTokenLimit: 4096,
+    type: LlmType.CHAT
+  },
+  [LlmID.GPT_3_5_0125_AZ]: {
+    id: LlmID.GPT_3_5_0125_AZ,
     name: 'GPT-3.5_16K',
     maxLength: 48000,
     tokenLimit: 16000,
@@ -110,6 +131,14 @@ export const LlmList: Record<LlmID, Llm> = {
     outputTokenLimit: 4096,
     type: LlmType.CHAT
   },
+  [LlmID.GPT_4_0125]: {
+    id: LlmID.GPT_4_0125,
+    name: 'GPT-4-TURBO_128K',
+    maxLength: 384000,
+    tokenLimit: 128000,
+    outputTokenLimit: 4096,
+    type: LlmType.CHAT
+  },
   [LlmID.TEXT_EMBEDDING_ADA_002]: {
     id: LlmID.TEXT_EMBEDDING_ADA_002,
     name: 'TEXT-EMBEDDING-ADA-002',
@@ -129,6 +158,20 @@ export const LlmList: Record<LlmID, Llm> = {
     name: 'CLAUDE-2_100K',
     maxLength: 300000,
     tokenLimit: 100000,
+    type: LlmType.CHAT
+  },
+  [LlmID.CLAUDE_3_HAIKU_V1_AWS]: {
+    id: LlmID.CLAUDE_3_HAIKU_V1_AWS,
+    name: 'CLAUDE-3-HAIKU_200K',
+    maxLength: 600000,
+    tokenLimit: 200000,
+    type: LlmType.CHAT
+  },
+  [LlmID.CLAUDE_3_SONNET_V1_AWS]: {
+    id: LlmID.CLAUDE_3_SONNET_V1_AWS,
+    name: 'CLAUDE-3-SONNET_200K',
+    maxLength: 600000,
+    tokenLimit: 200000,
     type: LlmType.CHAT
   },
   [LlmID.LLAMA2_7B]: {

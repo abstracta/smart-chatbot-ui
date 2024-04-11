@@ -12,7 +12,10 @@
     "lint": "next lint",
     "format": "prettier --write .",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "migrate:up": "migrate-mongo up",
+    "migrate:down": "migrate-mongo down",
+    "migrate:status": "migrate-mongo status"
   },
   "dependencies": {
     "@anthropic-ai/tokenizer": "^0.0.4",
@@ -20,7 +23,7 @@
     "@aws-sdk/client-bedrock": "^3.428.0",
     "@aws-sdk/credential-provider-node": "^3.428.0",
     "@aws-sdk/types": "^3.428.0",
-    "@langchain/community": "^0.0.15",
+    "@langchain/community": "^0.0.43",
     "@smithy/eventstream-codec": "^2.0.11",
     "@smithy/protocol-http": "^3.0.7",
     "@smithy/signature-v4": "^2.0.11",
@@ -34,6 +37,7 @@
     "@trpc/server": "^10.21.1",
     "chalk": "^5.2.0",
     "classnames": "^2.3.2",
+    "eventsource-parser": "^1.1.2",
     "fuse.js": "^6.6.2",
     "i18next": "^22.4.15",
     "langchain": "^0.0.214",
@@ -56,7 +60,7 @@
     "remark-math": "^5.1.1",
     "sass": "^1.62.1",
     "superjson": "^1.13.3",
-    "tiktoken": "^1.0.11",
+    "tiktoken": "^1.0.13",
     "uuid": "^9.0.0",
     "wildcard-match": "^5.1.2",
     "zod": "^3.21.4"
@@ -83,6 +87,7 @@
     "prettier-plugin-tailwindcss": "^0.2.7",
     "tailwindcss": "^3.3.2",
     "typescript": "4.9.5",
-    "vitest": "^0.30.1"
+    "vitest": "^0.30.1",
+    "migrate-mongo": "^11.0.0"
   }
 }

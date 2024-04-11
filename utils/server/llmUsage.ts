@@ -44,7 +44,7 @@ export async function getMonthlyModelUsageUSD(modelId: LlmID): Promise<number> {
     return modelUsage?.totalUSD || 0;
 }
 
-export async function saveLlmUsage(userId: string, modelId: LlmID, mode: LlmUsageMode, tokens: TokenUsageCount) {
+export async function saveLlmUsage(userId: string, modelId: LlmID, mode: LlmUsageMode, tokens: TokenUsageCount): Promise<NewUserLlmUsage> {
     const userDb = await UserDb.fromUserHash(userId);
     const llmDb = new LlmsDb(await getDb());
     const modelUsage: NewUserLlmUsage = {
@@ -58,5 +58,6 @@ export async function saveLlmUsage(userId: string, modelId: LlmID, mode: LlmUsag
         modelUsage.totalPriceUSD = tokens.prompt / 1000 * modelConfig.promptPriceUSDPer1000
             + tokens.completion / 1000 * modelConfig.completionPriceUSDPer1000;
     }
-    return await userDb.addLlmUsage(modelUsage)
+    await userDb.addLlmUsage(modelUsage);
+    return modelUsage;
 }

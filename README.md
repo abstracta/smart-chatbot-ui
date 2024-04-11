@@ -95,19 +95,35 @@ vim .env.local
 
 > Additionally, if you have multiple OpenAI Organizations, you can set `OPENAI_ORGANIZATION` to specify one.
 
-**4. Run MongoDB**
+**4. Start MongoDB and Other Services**
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-**5. Run App**
+**5. Setup Database Migrations**
+
+After the Docker services are running, set the necessary environment variables for migrations in your terminal:
+
+```bash
+# Replace <username>, <password>, <host>, <port>, and <database> with your actual MongoDB credentials and database information.
+export MONGODB_URI='mongodb://<username>:<password>@<host>:<port>'
+export MONGODB_DB='<database>'
+```
+
+Now apply the database migrations:
+
+```bash
+npm run migrate:up
+```
+
+**6. Run App**
 
 ```bash
 npm run dev
 ```
 
-**6. Use it**
+**7. Use it**
 
 You should be able to start chatting.
 
