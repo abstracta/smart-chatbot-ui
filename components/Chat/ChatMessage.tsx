@@ -4,6 +4,7 @@ import {
   IconCheck,
   IconCopy,
   IconEdit,
+  IconInfoCircle,
   IconRobot,
   IconTrash,
   IconUser,
@@ -26,9 +27,10 @@ import FileAttachment from './FileAttachment';
 export interface Props {
   message: Message;
   messageIndex: number;
+  handleOpenInfoDialog: () => void
 }
 
-export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
+export const ChatMessage: FC<Props> = memo(({ message, messageIndex, handleOpenInfoDialog }) => {
   const { t } = useTranslation('chat');
   const [_, conversationsAction] = useConversations();
   const sendMessage = useMesseageSender();
@@ -349,12 +351,20 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex }) => {
                     className="text-green-500 dark:text-green-400"
                   />
                 ) : (
-                  <button
-                    className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    onClick={copyOnClick}
-                  >
-                    <IconCopy size={20} />
-                  </button>
+                  <>
+                    <button
+                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      onClick={handleOpenInfoDialog}
+                    >
+                      <IconInfoCircle size={20} />
+                    </button>
+                    <button
+                      className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      onClick={copyOnClick}
+                    >
+                      <IconCopy size={20} />
+                    </button>
+                  </>
                 )}
               </div>
             </div>

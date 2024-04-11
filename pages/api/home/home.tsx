@@ -27,6 +27,7 @@ import Spinner from '@/components/Spinner';
 interface Props {
   appName: string;
   consumptionLimitEnabled: boolean;
+  userConsumptionLimitUSD: number | undefined;
   isAzureOpenAI: boolean;
   promptSharingEnabled: boolean;
   supportEmail: string;
@@ -39,6 +40,7 @@ interface Props {
 const Home = ({
   appName,
   consumptionLimitEnabled,
+  userConsumptionLimitUSD,
   isAzureOpenAI,
   supportEmail,
   promptSharingEnabled,
@@ -56,6 +58,7 @@ const Home = ({
       appName,
       stopConversationRef: stopConversationRef,
       consumptionLimitEnabled: consumptionLimitEnabled,
+      userConsumptionLimitUSD: userConsumptionLimitUSD,
       isAzureOpenAI,
       supportEmail,
       promptSharingEnabled: promptSharingEnabled,
@@ -259,6 +262,9 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
   const session = await getServerSession(req, res, authOptions)
   const consumptionLimitEnabled = (session?.user?.monthlyUSDConsumptionLimit && session.user.monthlyUSDConsumptionLimit >= 0)
     || DEFAULT_USER_LIMIT_USD_MONTHLY >= 0
+  const userConsumptionLimitUSD = session?.user?.monthlyUSDConsumptionLimit != undefined ?
+    session.user.monthlyUSDConsumptionLimit : DEFAULT_USER_LIMIT_USD_MONTHLY != undefined ?
+      DEFAULT_USER_LIMIT_USD_MONTHLY : undefined
 
   return {
     props: {
@@ -278,6 +284,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       ])),
       promptSharingEnabled: PROMPT_SHARING_ENABLED,
       consumptionLimitEnabled,
+      userConsumptionLimitUSD,
       systemDefaultModelId: DEFAULT_MODEL,
       systemDefaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
     },
