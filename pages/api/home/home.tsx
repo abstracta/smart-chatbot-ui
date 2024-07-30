@@ -290,7 +290,7 @@ export const getServerSideProps: GetServerSideProps = async ({ locale, req, res 
       userConsumptionLimitUSD,
       systemDefaultModelId: DEFAULT_MODEL,
       systemDefaultSystemPrompt: DEFAULT_SYSTEM_PROMPT,
-      modelMigrations: MODEL_MIGRATIONS,
+      modelMigrations: MODEL_MIGRATIONS || null,
     },
   };
 };
