@@ -1,4 +1,6 @@
-# Smart Chatbot UI
+# [DEPRECATED] Smart Chatbot UI
+
+Deprecation: We are no longer maintaining this repository and have started a new alternative through [Browser Copilot](https://github.com/abstracta/browser-copilot).
 
 This repo is forked from [chatbot-ui](https://github.com/mckaywrigley/chatbot-ui).
 
